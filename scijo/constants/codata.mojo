@@ -1,34 +1,36 @@
+# ===----------------------------------------------------------------------=== #
+# Scijo: CODATA Physical Constants
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
 """
 CODATA Physical Constants Module
 
-This module provides access to the CODATA 2022 recommended values of fundamental
-physical constants as published by the Committee on Data for Science and Technology.
+Provides access to the CODATA 2022 recommended values for fundamental
+physical constants. Constants are stored in a global dictionary, similar to
+SciPy's constants module.
 
-The constants are organized in a global dictionary structure following the same
-format as SciPy's constants module, ensuring compatibility and familiarity for
-scientific computing applications.
+Examples:
+    ```mojo
+    import scijo.constants as const
 
-Author: Shivasankar K.A
-Version: 0.1.0
-Date: July 2025
-
-Usage:
-    The constants can be accessed through the global dictionary and used in
-    scientific calculations requiring precise physical constants.
+    var c = const.value("speed_of_light_in_vacuum")
+    var h = const.value("Planck_constant")
+    var e = const.value("elementary_charge")
+    ```
 
 References:
-    - CODATA 2022 Internationally Recommended Values
+    - CODATA 2022 Recommended Values
     - https://github.com/scipy/scipy/blob/main/scipy/constants/_codata.py
 
-Note:
-    This implementation is based on the official CODATA 2022 adjustment of
-    fundamental physical constants, ensuring the highest accuracy for
-    scientific computations.
+Based on the official CODATA 2022 adjustment for maximum accuracy.
 """
 
-from builtin.value import materialize
-
-from numojo.core import f64
+# ===----------------------------------------------------------------------=== #
+# Data structure for physical constants
+# ===----------------------------------------------------------------------=== #
 
 
 struct PhysicalConstant[dtype: DType = DType.float64](
@@ -71,6 +73,10 @@ struct PhysicalConstant[dtype: DType = DType.float64](
         except e:
             print("Error writing to writer: ", e)
 
+
+# ===----------------------------------------------------------------------=== #
+# Global dictionary of physical constants (CODATA 2022 recommended values)
+# ===----------------------------------------------------------------------=== #
 
 comptime physical_constants: Dict[String, PhysicalConstant[f64]] = {
     "speed_of_light_in_vacuum": PhysicalConstant[f64](
@@ -374,118 +380,3 @@ comptime physical_constants: Dict[String, PhysicalConstant[f64]] = {
         1.920155716e-10, "m", 3.2e-18
     ),
 }
-
-
-fn value(key: String) raises -> Scalar[DType.float64]:
-    """
-    Get the value of a physical constant.
-
-    Args:
-        key: Name of the physical constant.
-
-    Returns:
-        The numerical value of the constant.
-    """
-    var physical_constants = materialize[physical_constants]()
-    if key in physical_constants:
-        return physical_constants[key].value
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return 0.0
-
-
-fn unit(key: String) raises -> String:
-    """
-    Get the unit of a physical constant.
-
-    Args:
-        key: Name of the physical constant.
-
-    Returns:
-        The unit string of the constant.
-    """
-    var physical_constants = materialize[physical_constants]()
-    if key in physical_constants:
-        return physical_constants[key].unit
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return ""
-
-
-fn precision(key: String) raises -> Scalar[DType.float64]:
-    """
-    Get the relative precision (uncertainty/value) of a physical constant.
-
-    Args:
-        key: Name of the physical constant.
-
-    Returns:
-        The relative precision of the constant.
-    """
-    var physical_constants = materialize[physical_constants]()
-    if key in physical_constants:
-        var constant = physical_constants[key]
-        if constant.value != 0.0:
-            return constant.uncertainty / constant.value
-        else:
-            return 0.0
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return 0.0
-
-
-fn find(substring: String = "") raises -> List[String]:
-    """
-    Find physical constants containing a substring in their name.
-
-    Args:
-        substring: Substring to search for (empty returns all constants).
-
-    Returns:
-        List of constant names containing the substring.
-    """
-    var physical_constants = materialize[physical_constants]()
-    var result = List[String]()
-
-    for item in physical_constants.items():
-        var key = item.key
-        if substring == "" or substring in key:
-            result.append(key)
-
-    return result^
-
-
-# Additional helper functions for common access patterns
-fn get_constant_tuple(
-    key: String,
-) raises -> Tuple[Scalar[DType.float64], String, Scalar[DType.float64]]:
-    """
-    Get a physical constant as a tuple (value, unit, uncertainty).
-
-    Args:
-        key: Name of the physical constant.
-
-    Returns:
-        Tuple containing (value, unit, uncertainty).
-    """
-    var physical_constants = materialize[physical_constants]()
-    if key in physical_constants:
-        var constant = physical_constants[key]
-        return (constant.value, constant.unit, constant.uncertainty)
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return (0.0, "", 0.0)
-
-
-fn list_all_constants() raises -> List[String]:
-    """
-    Get a list of all available physical constant names.
-
-    Returns:
-        List of all constant names in the database.
-    """
-    var physical_constants = materialize[physical_constants]()
-    var result = List[String]()
-    for item in physical_constants.items():
-        result.append(item.key)
-    return result^
