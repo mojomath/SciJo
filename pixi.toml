@@ -9,6 +9,28 @@ channels = [
 platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
+[dependencies]
+modular = ">=26.2.0.dev2026022717,<27"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.9"}
+
+[feature.test.dependencies]
+python = ">=3.13,<3.14"
+scipy = ">=1.14"
+
+[feature.test.tasks]
+t = "clear && pixi run --environment test package && bash ./tests/test_all.sh"
+test = "pixi run --environment test package && bash ./tests/test_all.sh"
+
+[environments]
+test = ["test"]
+
+[tasks]
+format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
+tests = "mojo package scijo && cp scijo.mojopkg tests/ && bash tests/test_all.sh"
+package = "mojo package scijo && cp scijo.mojopkg tests/"
+final = "pixi run format && mojo package scijo && cp scijo.mojopkg tests/ && bash tests/test_all.sh"
+build = "mojo build"
+
 [package]
 name = "scijo"
 version = "0.2.0"
@@ -29,14 +51,3 @@ numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.
 [package.run-dependencies]
 modular = ">=26.2.0.dev2026022717,<27"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.9"}
-
-[dependencies]
-modular = ">=26.2.0.dev2026022717,<27"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.9"}
-python = ">=3.14.3,<3.15"
-
-[tasks]
-format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
-tests = "pixi run package && bash tests/test_all.sh"
-build = "mojo build"
-package = "mojo package scijo && cp scijo.mojopkg tests/"
