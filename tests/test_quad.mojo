@@ -56,7 +56,9 @@ def test_quad_trigonometric():
     # Test ∫sin(x) dx from 0 to π = 2
     fn sine[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         return sin(x)
 
     var result = quad[sj.f64, sine](0.0, pi, None)
@@ -66,7 +68,9 @@ def test_quad_trigonometric():
     # Test ∫cos(x) dx from 0 to π/2 = 1
     fn cosine[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         return cos(x)
 
     var result2 = quad[sj.f64, cosine](0.0, pi / 2.0, None)
@@ -76,7 +80,9 @@ def test_quad_trigonometric():
     # Test ∫sin²(x) dx from 0 to π = π/2
     fn sin_squared[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         var s = sin(x)
         return s * s
 
@@ -91,7 +97,9 @@ def test_quad_exponential():
     # Test ∫e^x dx from 0 to 1 = e - 1
     fn exponential[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         return exp(x)
 
     var result = quad[sj.f64, exponential](0.0, 1.0, None)
@@ -102,7 +110,9 @@ def test_quad_exponential():
     # Test ∫e^(-x) dx from 0 to ∞ ≈ 1 (using large upper bound)
     fn exp_decay[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         return exp(-x)
 
     var result2 = quad[sj.f64, exp_decay](
@@ -166,7 +176,9 @@ def test_quad_difficult_integrands():
     # Using finite bounds that approximate infinity
     fn gaussian[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         return exp(-x * x)
 
     var result = quad[sj.f64, gaussian](-5.0, 5.0, None, epsrel=1e-8)
@@ -176,7 +188,9 @@ def test_quad_difficult_integrands():
     # Test oscillatory function sin(x)/x near origin (needs careful handling)
     fn sinc_like[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        dtype
+    ] where dtype.is_floating_point():
         if abs(x) < 1e-10:
             return 1.0  # limit as x→0 of sin(x)/x = 1
         return sin(x) / x
@@ -244,6 +258,7 @@ def test_quad_difficult_integrands():
 #     var result2 = quad[sj.f64, oscillatory](0.0, 2 * pi, None, limit=100)
 #     # This should integrate to near zero due to oscillation
 #     assert_almost_equal(result2.integral, 0.0, atol=1e-6)
+
 
 def main():
     TestSuite.discover_tests[__functions_in_module()]().run()

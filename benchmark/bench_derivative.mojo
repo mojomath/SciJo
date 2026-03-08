@@ -91,7 +91,9 @@ fn poly_func[
 
 fn sin_func[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     return sin(x)
 
 

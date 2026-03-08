@@ -313,9 +313,7 @@ fn test_edge_cases() raises:
         )
 
     # Test with very small intervals
-    var x_small = nm.array[nm.f64](
-        [0.0, 1e-10, 2e-10], [3]
-    )
+    var x_small = nm.array[nm.f64]([0.0, 1e-10, 2e-10], [3])
     var y_small = nm.array[nm.f64]([0.0, 1.0, 2.0], [3])
     var interp_small = LinearInterpolator(x_small, y_small)
 
@@ -327,7 +325,9 @@ fn test_edge_cases() raises:
 
     var small_test_point = 1.5e-10
     var result_small = interp_small(small_test_point)
-    var scipy_small = Float64(py=py_interp_small(PythonObject(small_test_point)))
+    var scipy_small = Float64(
+        py=py_interp_small(PythonObject(small_test_point))
+    )
     assert_almost_equal(
         result_small,
         scipy_small,
@@ -515,6 +515,7 @@ fn test_performance_comparison() raises:
             atol=1e-10,
             msg="Large dataset interpolation should match SciPy",
         )
+
 
 def main():
     TestSuite.discover_tests[__functions_in_module()]().run()

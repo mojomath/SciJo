@@ -263,5 +263,6 @@ fn test_error_conditions() raises:
     except:
         print("Non-power-of-2 error handling - PASSED")
 
+
 def main():
     TestSuite.discover_tests[__functions_in_module()]().run()

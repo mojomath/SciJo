@@ -43,7 +43,9 @@ fn cubic_function[
 
 fn sin_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
     F(x) = sin(x), f'(x) = cos(x).
     """
@@ -52,7 +54,9 @@ fn sin_function[
 
 fn cos_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
     F(x) = cos(x), f'(x) = -sin(x).
     """
@@ -61,7 +65,9 @@ fn cos_function[
 
 fn exp_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
     F(x) = e^x, f'(x) = e^x.
     """
@@ -383,6 +389,7 @@ fn test_step_size_parameters() raises:
             atol=1e-5,
             msg="Result should be consistent across step factors",
         )
+
 
 def main():
     TestSuite.discover_tests[__functions_in_module()]().run()

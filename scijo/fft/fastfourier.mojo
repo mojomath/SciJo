@@ -144,10 +144,7 @@ fn _ifft_unnormalized[
 
     for k in range(half_size):
         var angle = (
-            2.0
-            * Constants.pi
-            * Scalar[dtype.dtype](k)
-            / Scalar[dtype.dtype](n)
+            2.0 * Constants.pi * Scalar[dtype.dtype](k) / Scalar[dtype.dtype](n)
         )
         var twiddle = ComplexSIMD[dtype](
             cos(angle).cast[dtype.dtype](), sin(angle).cast[dtype.dtype]()
