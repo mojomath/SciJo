@@ -1,82 +1,77 @@
 from scijo.differentiate import derivative
+from scijo.prelude import *
 
 from testing import assert_almost_equal, assert_equal, assert_true, assert_false
 from testing import TestSuite
 import math
 
 
-fn constant_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+fn constant_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = 5, f'(x) = 0.
     """
     return 5.0
 
 
-fn linear_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+fn linear_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = 3x + 2, f'(x) = 3.
     """
     return 3.0 * x + 2.0
 
 
-fn quadratic_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+fn quadratic_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3.
     """
     return 2.0 * x * x + 3.0 * x + 1.0
 
 
-fn cubic_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+fn cubic_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1.
     """
     return x * x * x - 2.0 * x * x + x - 5.0
 
 
-fn sin_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-    dtype
-] where dtype.is_floating_point():
+fn sin_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = sin(x), f'(x) = cos(x).
     """
     return math.sin(x)
 
 
-fn cos_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-    dtype
-] where dtype.is_floating_point():
+fn cos_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = cos(x), f'(x) = -sin(x).
     """
     return math.cos(x)
 
 
-fn exp_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-    dtype
-] where dtype.is_floating_point():
+fn exp_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = e^x, f'(x) = e^x.
     """
     return math.exp(x)
 
 
-fn parameterized_function[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+fn parameterized_function(
+    x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+) -> Scalar[f64]:
     """
     F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b.
     """
@@ -90,9 +85,9 @@ fn test_basic_derivatives() raises:
     """Test derivatives of basic polynomial functions."""
 
     # Test constant function: F(x) = 5, f'(x) = 0
-    var result_const = derivative[
-        DType.float64, constant_function, step_direction=0
-    ](x0=2.0, args=None)
+    var result_const = derivative[constant_function, step_direction=0](
+        x0=2.0, args=None
+    )
     assert_true(
         result_const.success, "Constant function derivative should converge"
     )
@@ -104,9 +99,9 @@ fn test_basic_derivatives() raises:
     )
 
     # Test linear function: F(x) = 3x + 2, f'(x) = 3
-    var result_linear = derivative[
-        DType.float64, linear_function, step_direction=0
-    ](x0=1.5, args=None)
+    var result_linear = derivative[linear_function, step_direction=0](
+        x0=1.5, args=None
+    )
     assert_true(
         result_linear.success, "Linear function derivative should converge"
     )
@@ -117,9 +112,9 @@ fn test_basic_derivatives() raises:
     # Test quadratic function: F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3
     var x_quad = 2.0
     var expected_quad = 4.0 * x_quad + 3.0
-    var result_quad = derivative[
-        DType.float64, quadratic_function, step_direction=0
-    ](x0=x_quad, args=None)
+    var result_quad = derivative[quadratic_function, step_direction=0](
+        x0=x_quad, args=None
+    )
     assert_true(
         result_quad.success, "Quadratic function derivative should converge"
     )
@@ -140,9 +135,9 @@ fn test_cubic_derivatives() raises:
     for i in range(len(test_points)):
         var x = test_points[i]
         var expected = 3.0 * x * x - 4.0 * x + 1.0
-        var result = derivative[
-            DType.float64, cubic_function, step_direction=0
-        ](x0=x, args=None)
+        var result = derivative[cubic_function, step_direction=0](
+            x0=x, args=None
+        )
         assert_true(result.success, "Cubic function derivative should converge")
         assert_almost_equal(
             result.df,
@@ -158,7 +153,7 @@ fn test_trigonometric_derivatives() raises:
     # Test sin(x): f'(x) = cos(x)
     var x_sin = 0.5
     var expected_sin = math.cos(x_sin)
-    var result_sin = derivative[DType.float64, sin_function, step_direction=0](
+    var result_sin = derivative[sin_function, step_direction=0](
         x0=x_sin, args=None, order=6
     )
     assert_true(result_sin.success, "Sin function derivative should converge")
@@ -172,7 +167,7 @@ fn test_trigonometric_derivatives() raises:
     # Test cos(x): f'(x) = -sin(x)
     var x_cos = 1.0
     var expected_cos = -math.sin(x_cos)
-    var result_cos = derivative[DType.float64, cos_function, step_direction=0](
+    var result_cos = derivative[cos_function, step_direction=0](
         x0=x_cos, args=None, order=6
     )
     assert_true(result_cos.success, "Cos function derivative should converge")
@@ -190,7 +185,7 @@ fn test_exponential_derivative() raises:
     # Test exp(x): f'(x) = exp(x)
     var x_exp = 1.0
     var expected_exp = math.exp(x_exp)
-    var result_exp = derivative[DType.float64, exp_function, step_direction=0](
+    var result_exp = derivative[exp_function, step_direction=0](
         x0=x_exp, args=None, order=6
     )
     assert_true(result_exp.success, "Exp function derivative should converge")
@@ -210,9 +205,9 @@ fn test_parameterized_function() raises:
     var args: List[Scalar[DType.float64]] = [2.0, 5.0, 3.0]
     var x_param = 1.5
     var expected_param = 4.0 * x_param + 5.0  # = 11.0
-    var result_param = derivative[
-        DType.float64, parameterized_function, step_direction=0
-    ](x0=x_param, args=args^)
+    var result_param = derivative[parameterized_function, step_direction=0](
+        x0=x_param, args=args^
+    )
     assert_true(
         result_param.success,
         "Parameterized function derivative should converge",
@@ -232,9 +227,9 @@ fn test_different_step_directions() raises:
     var expected = 4.0 * x_test + 3.0
 
     # Central differences
-    var result_central = derivative[
-        DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None)
+    var result_central = derivative[quadratic_function, step_direction=0](
+        x0=x_test, args=None
+    )
     assert_true(result_central.success, "Central difference should converge")
     assert_almost_equal(
         result_central.df,
@@ -244,9 +239,9 @@ fn test_different_step_directions() raises:
     )
 
     # Forward differences
-    var result_forward = derivative[
-        DType.float64, quadratic_function, step_direction=1
-    ](x0=x_test, args=None, order=6, max_iter=50)
+    var result_forward = derivative[quadratic_function, step_direction=1](
+        x0=x_test, args=None, order=6, max_iter=50
+    )
     assert_true(result_forward.success, "Forward difference should converge")
     assert_almost_equal(
         result_forward.df,
@@ -256,9 +251,9 @@ fn test_different_step_directions() raises:
     )
 
     # Backward differences
-    var result_backward = derivative[
-        DType.float64, quadratic_function, step_direction= -1
-    ](x0=x_test, args=None, order=6, max_iter=50)
+    var result_backward = derivative[quadratic_function, step_direction= -1](
+        x0=x_test, args=None, order=6, max_iter=50
+    )
     assert_true(result_backward.success, "Backward difference should converge")
     assert_almost_equal(
         result_backward.df,
@@ -278,9 +273,9 @@ fn test_different_orders() raises:
 
     for i in range(len(orders)):
         var order = orders[i]
-        var result = derivative[
-            DType.float64, quadratic_function, step_direction=0
-        ](x0=x_test, args=None, order=order)
+        var result = derivative[quadratic_function, step_direction=0](
+            x0=x_test, args=None, order=order
+        )
         assert_true(result.success, "Higher order should converge")
         assert_almost_equal(
             result.df,
@@ -300,9 +295,9 @@ fn test_tolerance_settings() raises:
     strict_tolerance["atol"] = 1e-10
     strict_tolerance["rtol"] = 1e-10
 
-    var result_strict = derivative[
-        DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerances=strict_tolerance)
+    var result_strict = derivative[quadratic_function, step_direction=0](
+        x0=x_test, args=None, tolerances=strict_tolerance
+    )
     assert_almost_equal(
         result_strict.df,
         expected,
@@ -314,9 +309,9 @@ fn test_tolerance_settings() raises:
     loose_tolerance["atol"] = 1e-3
     loose_tolerance["rtol"] = 1e-3
 
-    var result_loose = derivative[
-        DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerances=loose_tolerance)
+    var result_loose = derivative[quadratic_function, step_direction=0](
+        x0=x_test, args=None, tolerances=loose_tolerance
+    )
     assert_almost_equal(
         result_loose.df,
         expected,
@@ -328,9 +323,9 @@ fn test_tolerance_settings() raises:
 fn test_convergence_properties() raises:
     """Test convergence properties and diagnostic information."""
 
-    var result = derivative[
-        DType.float64, quadratic_function, step_direction=0
-    ](x0=1.0, args=None, max_iter=5)
+    var result = derivative[quadratic_function, step_direction=0](
+        x0=1.0, args=None, max_iter=5
+    )
 
     assert_true(result.nit > 0, "Number of iterations should be positive")
     assert_true(
@@ -346,7 +341,7 @@ fn test_error_conditions() raises:
     """Test error conditions and invalid parameters."""
 
     try:
-        var _ = derivative[DType.float64, quadratic_function, step_direction=5](
+        var _ = derivative[quadratic_function, step_direction=5](
             x0=1.0, args=None
         )
         assert_false(True, "Invalid step direction should raise an error")
@@ -364,9 +359,9 @@ fn test_step_size_parameters() raises:
 
     for i in range(len(step_sizes)):
         var step = step_sizes[i]
-        var result = derivative[
-            DType.float64, quadratic_function, step_direction=0
-        ](x0=x_test, args=None, initial_step=step)
+        var result = derivative[quadratic_function, step_direction=0](
+            x0=x_test, args=None, initial_step=step
+        )
         assert_true(result.success, "Different initial step sizes should work")
         assert_almost_equal(
             result.df,
@@ -379,9 +374,9 @@ fn test_step_size_parameters() raises:
 
     for i in range(len(factors)):
         var factor = factors[i]
-        var result = derivative[
-            DType.float64, quadratic_function, step_direction=0
-        ](x0=x_test, args=None, step_factor=factor)
+        var result = derivative[quadratic_function, step_direction=0](
+            x0=x_test, args=None, step_factor=factor
+        )
         assert_true(result.success, "Different step factors should work")
         assert_almost_equal(
             result.df,
