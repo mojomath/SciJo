@@ -18,6 +18,7 @@ methods (secant).
 # Root scalar
 # ===----------------------------------------------------------------------=== #
 
+
 fn root_scalar[
     dtype: DType,
     f: fn[dtype: DType](
@@ -69,28 +70,36 @@ fn root_scalar[
     if method == "newton":
         if not fprime:
             raise Error(
-                "Scijo [root_scalar]: Derivative fprime must be provided for Newton's method."
+                "Scijo [root_scalar]: Derivative fprime must be provided for"
+                " Newton's method."
             )
         return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
     elif method == "bisect":
         if not bracket:
-            raise Error("Scijo [root_scalar]: Bracket must be provided for bisection method.")
+            raise Error(
+                "Scijo [root_scalar]: Bracket must be provided for bisection"
+                " method."
+            )
         return bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
     elif method == "secant":
         if not (x0 and x1):
             raise Error(
-                "Scijo [root_scalar]: Initial guesses x0 and x1 must be provided for secant method."
+                "Scijo [root_scalar]: Initial guesses x0 and x1 must be"
+                " provided for secant method."
             )
         return secant[dtype, f](
             args, x0.value(), x1.value(), xtol, rtol, maxiter
         )
     else:
-        raise Error("Scijo [root_scalar]: Unsupported method: " + String(method))
+        raise Error(
+            "Scijo [root_scalar]: Unsupported method: " + String(method)
+        )
 
 
 # ===----------------------------------------------------------------------=== #
 # Root scalar methods
 # ===----------------------------------------------------------------------=== #
+
 
 fn newton[
     dtype: DType,
@@ -136,7 +145,10 @@ fn newton[
     if x0:
         xn = x0.value()
     else:
-        raise Error("Scijo [newton]: Initial guess x0 must be provided for Newton's method.")
+        raise Error(
+            "Scijo [newton]: Initial guess x0 must be provided for Newton's"
+            " method."
+        )
 
     for _ in range(maxiter):
         var fx = f(xn, args)
@@ -144,7 +156,8 @@ fn newton[
 
         if fpx == 0:
             raise Error(
-                "Scijo [newton]: Derivative is zero. Newton-Raphson step would divide by zero."
+                "Scijo [newton]: Derivative is zero. Newton-Raphson step would"
+                " divide by zero."
             )
 
         var delta = fx / fpx
@@ -211,8 +224,8 @@ fn bisect[
 
     if fa * fb > 0:
         raise Error(
-            "Scijo [newton]: f(a) and f(b) must have opposite signs (bracket does not enclose a"
-            " root)."
+            "Scijo [newton]: f(a) and f(b) must have opposite signs (bracket"
+            " does not enclose a root)."
         )
 
     for _ in range(maxiter):
@@ -281,7 +294,10 @@ fn secant[
 
         var denom = f1 - f0
         if denom == 0:
-            raise Error("Scijo [newton]: Secant method encountered zero slope (f1 - f0 == 0).")
+            raise Error(
+                "Scijo [newton]: Secant method encountered zero slope (f1 - f0"
+                " == 0)."
+            )
 
         var xn = b - (f1 * (b - a)) / denom
 
