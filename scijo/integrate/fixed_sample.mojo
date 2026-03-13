@@ -61,10 +61,16 @@ fn trapezoid[
     """
 
     if y.ndim != 1:
-        raise Error(t"Scijo [trapezoid]: Expected y to be 1-D array, received ndim={y.ndim}.")
+        raise Error(
+            t"Scijo [trapezoid]: Expected y to be 1-D array, received"
+            t" ndim={{y.ndim}}."
+        )
 
     if y.size == 0:
-        raise Error(t"Scijo [trapezoid]: y.size = 0, Cannot interage over an empty array.")
+        raise Error(
+            t"Scijo [trapezoid]: y.size = 0, Cannot interage over an empty"
+            t" array."
+        )
 
     if y.size == 1:
         return Scalar[dtype](0.0)
@@ -186,7 +192,6 @@ fn trapezoid[
 # ===----------------------------------------------------------------------=== #
 # Simpson
 # ===----------------------------------------------------------------------=== #
-
 
 fn simpson[
     dtype: DType
@@ -353,7 +358,6 @@ fn simpson[
 # ===----------------------------------------------------------------------=== #
 # Romberg
 # ===----------------------------------------------------------------------=== #
-
 
 # TODO: fix the loop implementation.
 fn romb[

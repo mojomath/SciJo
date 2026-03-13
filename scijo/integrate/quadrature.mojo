@@ -52,7 +52,6 @@ from .utility import (
 # Quad
 # ===----------------------------------------------------------------------=== #
 
-
 fn quad[
     dtype: DType,
     func: fn[dtype: DType](

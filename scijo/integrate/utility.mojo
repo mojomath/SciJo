@@ -31,7 +31,6 @@ comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
 # Helpers
 # ===----------------------------------------------------------------------=== #
 
-
 fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
     """Returns the machine epsilon for the given floating-point dtype.
 
@@ -41,7 +40,6 @@ fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
     Returns:
         The machine epsilon as a Float64 value.
     """
-
     # TODO: Check if these values are correct lol
     @parameter
     if dtype == DType.float16:
@@ -55,7 +53,6 @@ fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
 # ===----------------------------------------------------------------------=== #
 # Adaptive intervals
 # ===----------------------------------------------------------------------=== #
-
 
 struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
     """Represents an integration subinterval with error estimate for adaptive subdivision.
@@ -245,7 +242,6 @@ fn get_quad_error_message(ier: Int) -> String:
 # ===----------------------------------------------------------------------=== #
 # Result types
 # ===----------------------------------------------------------------------=== #
-
 
 struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     """Result structure for numerical integration operations.
