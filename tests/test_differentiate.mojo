@@ -1,4 +1,4 @@
-from scijo.differentiate.derivative import derivative
+from scijo.differentiate import derivative
 
 from testing import assert_almost_equal, assert_equal, assert_true, assert_false
 from testing import TestSuite

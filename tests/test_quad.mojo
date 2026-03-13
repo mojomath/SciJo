@@ -11,7 +11,7 @@ from testing import assert_almost_equal, assert_equal, assert_true, assert_false
 from testing import TestSuite
 from math import sin, cos, exp, log, pi, sqrt
 
-from scijo.integrate.quad import quad
+from scijo.integrate import quad
 import scijo as sj
 
 
