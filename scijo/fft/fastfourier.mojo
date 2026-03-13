@@ -56,7 +56,7 @@ fn fft[
         from scijo.fft import fft
         from scijo.prelude import *
 
-        var arr = nm.linspace[cf32](CScalar[f32](0, 0), CScalar[f32](10, 10), CScalar[f32](1, 1))
+        var arr = nm.linspace[cf32](CScalar[cf32](0, 0), CScalar[cf32](10, 10), num=10)
         var fft_arr = fft(arr)
         ```
     """
@@ -201,6 +201,17 @@ fn ifft[
     Returns:
         ComplexNDArray containing the IFFT of the input array with the same
         shape and dtype.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.fft import fft, ifft
+        from scijo.prelude import *
+
+        var arr = nm.linspace[cf32](CScalar[cf32](0, 0), CScalar[cf32](10, 10), num=10)
+        var freq = fft(arr)
+        var time = ifft(freq)
+        ```
     """
     var n: Int = arr.shape[0]
     var result = _ifft_unnormalized[dtype](arr)
