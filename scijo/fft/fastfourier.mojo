@@ -11,6 +11,8 @@ Forward and inverse Fast Fourier Transform using the Cooley-Tukey radix-2
 decimation-in-time algorithm for 1-D complex arrays with power-of-2 lengths.
 """
 
+from math import sin, cos
+
 from numojo.core.complex import ComplexNDArray, ComplexSIMD
 from numojo.core.dtype import ComplexDType
 from numojo.core.ndarray import NDArray
@@ -18,7 +20,9 @@ from numojo.core.layout import NDArrayShape
 from numojo.routines.constants import Constants
 from numojo.core.indexing import Item
 
-from math import sin, cos
+# ===----------------------------------------------------------------------=== #
+# FFT
+# ===----------------------------------------------------------------------=== #
 
 
 fn fft[
@@ -38,16 +42,26 @@ fn fft[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
+    Raises:
+        Error: If the input array is not 1-dimensional.
+        Error: If the array length is not a power of 2.
+
     Returns:
         ComplexNDArray containing the FFT of the input array with the same
         shape and dtype.
 
-    Raises:
-        Error: If the input array is not 1-dimensional.
-        Error: If the array length is not a power of 2.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.fft import fft
+        from scijo.prelude import *
+
+        var arr = nm.linspace[cf32](CScalar[f32](0, 0), CScalar[f32](10, 10), CScalar[f32](1, 1))
+        var fft_arr = fft(arr)
+        ```
     """
     if arr.ndim != 1:
-        raise Error("FFT currently only supports 1D arrays")
+        raise Error("Scijo [fft]: FFT currently only supports 1D arrays")
 
     var n: Int = arr.shape[0]
     if n <= 1:
@@ -55,8 +69,8 @@ fn fft[
 
     if (n & (n - 1)) != 0:
         raise Error(
-            "FFT currently only supports arrays with length that is a power"
-            " of 2"
+            "Scijo [fft]: FFT currently only supports arrays with length that"
+            " is a power of 2"
         )
 
     var half_size = n // 2
@@ -109,15 +123,15 @@ fn _ifft_unnormalized[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
-    Returns:
-        ComplexNDArray containing the unnormalized inverse FFT of the input array.
-
     Raises:
         Error: If the input array is not 1-dimensional.
         Error: If the array length is not a power of 2.
+
+    Returns:
+        ComplexNDArray containing the unnormalized inverse FFT of the input array.
     """
     if arr.ndim != 1:
-        raise Error("FFT currently only supports 1D arrays")
+        raise Error("Scijo [fft]: FFT currently only supports 1D arrays")
 
     var n: Int = arr.shape[0]
     if n <= 1:
@@ -125,8 +139,8 @@ fn _ifft_unnormalized[
 
     if (n & (n - 1)) != 0:
         raise Error(
-            "FFT currently only supports arrays with length that is a power"
-            " of 2"
+            "Scijo [fft]: FFT currently only supports arrays with length that"
+            " is a power of 2"
         )
 
     var half_size = n // 2
@@ -158,6 +172,11 @@ fn _ifft_unnormalized[
     return result^
 
 
+# ===----------------------------------------------------------------------=== #
+# IFFT
+# ===----------------------------------------------------------------------=== #
+
+
 fn ifft[
     dtype: ComplexDType = ComplexDType.float64
 ](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
@@ -175,13 +194,13 @@ fn ifft[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
-    Returns:
-        ComplexNDArray containing the IFFT of the input array with the same
-        shape and dtype.
-
     Raises:
         Error: If the input array is not 1-dimensional.
         Error: If the array length is not a power of 2.
+
+    Returns:
+        ComplexNDArray containing the IFFT of the input array with the same
+        shape and dtype.
     """
     var n: Int = arr.shape[0]
     var result = _ifft_unnormalized[dtype](arr)
