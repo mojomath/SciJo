@@ -60,16 +60,10 @@ fn trapezoid[
     """
 
     if y.ndim != 1:
-        raise Error(
-            t"Scijo [trapezoid]: Expected y to be 1-D array, received"
-            t" ndim={{y.ndim}}."
-        )
+        raise Error(t"Scijo [trapezoid]: Expected y to be 1-D array, received ndim={y.ndim}.")
 
     if y.size == 0:
-        raise Error(
-            t"Scijo [trapezoid]: y.size = 0, Cannot interage over an empty"
-            t" array."
-        )
+        raise Error(t"Scijo [trapezoid]: y.size = 0, Cannot interage over an empty array.")
 
     if y.size == 1:
         return Scalar[dtype](0.0)
