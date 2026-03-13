@@ -66,6 +66,9 @@ fn root_scalar[
         The approximate root of the function.
     """
 
+    Returns:
+        The approximate root of the function.
+    """
     @parameter
     if method == "newton":
         if not fprime:
@@ -100,6 +103,10 @@ fn root_scalar[
 # Root scalar methods
 # ===----------------------------------------------------------------------=== #
 
+
+# ===----------------------------------------------------------------------=== #
+# Root scalar methods
+# ===----------------------------------------------------------------------=== #
 
 fn newton[
     dtype: DType,
