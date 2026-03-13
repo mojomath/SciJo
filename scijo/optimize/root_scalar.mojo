@@ -108,6 +108,7 @@ fn root_scalar[
 # Root scalar methods
 # ===----------------------------------------------------------------------=== #
 
+
 fn newton[
     dtype: DType,
     f: fn[dtype: DType](
