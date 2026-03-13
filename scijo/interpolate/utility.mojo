@@ -11,6 +11,9 @@ Internal utility functions for interpolation, including binary search and
 input validation.
 """
 
+# ===----------------------------------------------------------------------=== #
+# Binary search
+# ===----------------------------------------------------------------------=== #
 
 fn _binary_search[
     dtype: DType
@@ -39,6 +42,10 @@ fn _binary_search[
 
     return right
 
+
+# ===----------------------------------------------------------------------=== #
+# Input validation
+# ===----------------------------------------------------------------------=== #
 
 fn _validate_interpolation_input[
     dtype: DType

@@ -13,3 +13,4 @@ the secant method.
 """
 
 from .root_scalar import root_scalar, newton, bisect, secant
+from .min_scalar import minimize_scalar

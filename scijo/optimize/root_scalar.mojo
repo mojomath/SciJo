@@ -65,6 +65,7 @@ fn root_scalar[
     Returns:
         The approximate root of the function.
     """
+
     @parameter
     if method == "newton":
         if not fprime:

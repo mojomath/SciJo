@@ -7,14 +7,20 @@
 #  ===----------------------------------------------------------------------=== #
 """Interpolate Module - Interpolation Functions (scijo.interpolate.interpolate)
 
-Linear interpolation functions and callable interpolator objects for 1-D data.
-Provides both a reusable `LinearInterpolator` struct and a functional `interp1d`
-interface.
+Linear interpolation utilities for 1-D data. Provides a reusable
+`LinearInterpolator` and a functional `interp1d` interface.
+
+Example: interp = interp1d(x, y); yq = interp(Scalar[DType.float64](0.5))
 """
 
 from numojo import zeros
 
 from .utility import _binary_search, _validate_interpolation_input
+
+
+# ===----------------------------------------------------------------------=== #
+# Linear interpolator
+# ===----------------------------------------------------------------------=== #
 
 
 # TODO: Add extrapolation and fill_value handling to LinearInterpolator
@@ -27,6 +33,20 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
     Parameters:
         dtype: The floating-point data type. Defaults to DType.float64.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import interp1d
+        from scijo.prelude import *
+
+        var x = nm.arange[f64](0.0, 1.0, 0.5)  # [0.0, 0.5, 1.0]
+        var y = nm.array[f64]([0.0, 0.25, 1.0])  # y = x^2
+        var interp = interp1d(x, y, bounds_error=False, fill_value=0.0)
+        var yq1 = interp(Scalar[f64](0.25))
+        var yq2 = interp(nm.array[f64]([0.1, 0.5, 0.9]))
+        var yq3 = interp(Scalar[f64](1.5))
+        ```
     """
 
     var x: NDArray[Self.dtype]
@@ -47,6 +67,8 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
     ) raises:
         """Initializes the linear interpolator.
 
+        Example: LinearInterpolator(x, y, bounds_error=False, fill_value=0.0)
+
         Args:
             x: The x-coordinates of the data points, must be strictly increasing.
             y: The y-coordinates of the data points, same length as x.
@@ -61,13 +83,15 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         """
         _validate_interpolation_input(x, y)
 
-        self.x = x.copy()
-        self.y = y.copy()
+        self.x = x.deep_copy()
+        self.y = y.deep_copy()
         self.bounds_error = bounds_error
         self.fill_value = fill_value
 
     fn __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
         """Interpolates a single value.
+
+        Example: yq = interp(Scalar[dtype](0.25))
 
         Args:
             xi: The point at which to interpolate.
@@ -117,6 +141,8 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
     fn __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
         """Interpolates an array of values.
+
+        Example: yq = interp(xq_array)
 
         Args:
             xi: Array of points at which to interpolate.
@@ -175,6 +201,11 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         return result^
 
 
+# ===----------------------------------------------------------------------=== #
+# interp1d (constructor)
+# ===----------------------------------------------------------------------=== #
+
+
 # TODO: Add more interpolation methods like 'quadratic', 'cubic'.
 # TODO: Add both interpolate and extrapolate fill methods.
 fn interp1d[
@@ -187,6 +218,8 @@ fn interp1d[
 ) raises -> LinearInterpolator[dtype]:
     """Creates a callable LinearInterpolator from data points.
 
+    Example: interp = interp1d(x, y, bounds_error=False, fill_value=0.0)
+
     Parameters:
         dtype: The floating-point data type. Defaults to DType.float64.
 
@@ -198,14 +231,33 @@ fn interp1d[
         fill_value: Value to use for out-of-bounds points when bounds_error
             is False. If None, extrapolate linearly.
 
-    Returns:
-        A callable LinearInterpolator object.
-
     Raises:
         Error: If x and y have different lengths, have fewer than 2 points,
             or x is not strictly increasing.
+
+    Returns:
+        A callable LinearInterpolator object.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import interp1d
+        from scijo.prelude import *
+
+        var x = nm.arange[f64](0.0, 1.0, 0.5)  # [0.0, 0.5, 1.0]
+        var y = nm.array[f64]([0.0, 0.25, 1.0])  # y = x^2
+        var interp = interp1d(x, y, bounds_error=False, fill_value=0.0)
+        var yq1 = interp(Scalar[f64](0.25))
+        var yq2 = interp(nm.array[f64]([0.1, 0.5, 0.9]))
+        var yq3 = interp(Scalar[f64](1.5))
+        ```
     """
     return LinearInterpolator[dtype](x, y, bounds_error, fill_value)
+
+
+# ===----------------------------------------------------------------------=== #
+# interp1d (functional)
+# ===----------------------------------------------------------------------=== #
 
 
 fn interp1d[
@@ -221,6 +273,8 @@ fn interp1d[
 ]:
     """Interpolates the values of y at the points xi using the specified method.
 
+    Example: yq = interp1d(xq, x, y)
+
     Functional interface similar to numpy.interp that directly returns
     interpolated values without creating a reusable interpolator object.
 
@@ -235,11 +289,23 @@ fn interp1d[
         x: Array of x-coordinates of data points, must be strictly increasing.
         y: Array of y-coordinates of data points, same length as x.
 
+    Raises:
+        Error: If inputs are invalid or method/fill_method is unsupported.
+
     Returns:
         NDArray of interpolated values at the points xi.
 
-    Raises:
-        Error: If inputs are invalid or method/fill_method is unsupported.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import interp1d
+        from scijo.prelude import *
+
+        var x = nm.arange[f64](0.0, 1.0, 0.5)  # [0.0, 0.5, 1.0]
+        var y = x * x  # y = x^2
+        var xq = nm.array[f64]([0.1, 0.5, 0.9])
+        var yq = interp1d[f64, type="linear", fill_method="interpolate"](xq, x, y)
+        ```
     """
     _validate_interpolation_input(x, y)
 
@@ -258,12 +324,19 @@ fn interp1d[
         )
 
 
+# ===----------------------------------------------------------------------=== #
+# Internal linear helpers
+# ===----------------------------------------------------------------------=== #
+
+
 fn _interp1d_linear_interpolate[
     dtype: DType
 ](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
     dtype
 ]:
     """Linear interpolation with boundary clamping.
+
+    Example: yq = _interp1d_linear_interpolate(xq, x, y)
 
     For points outside the data range, returns the nearest boundary value.
 
@@ -308,6 +381,8 @@ fn _interp1d_linear_extrapolate[
     dtype
 ]:
     """Linear interpolation with linear extrapolation beyond boundaries.
+
+    Example: yq = _interp1d_linear_extrapolate(xq, x, y)
 
     For points outside the data range, extrapolates using the slope of the
     nearest boundary segment.
@@ -362,18 +437,19 @@ fn _interp1d_linear_extrapolate[
     return result^
 
 
-#  Higher-order interpolation methods
+# ===----------------------------------------------------------------------=== #
+# Higher-order interpolation methods
+# ===----------------------------------------------------------------------=== #
+
 
 # fn _interp1d_quadratic_interpolate[dtype: DType](
 #     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
 # ) raises -> NDArray[dtype]:
 #     """Quadratic interpolation with boundary clamping."""
-#     # Implementation would use 3-point Lagrange interpolation
 #     pass
 
 # fn _interp1d_cubic_interpolate[dtype: DType](
 #     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
 # ) raises -> NDArray[dtype]:
 #     """Cubic interpolation with boundary clamping."""
-#     # Implementation would use 4-point Lagrange interpolation or cubic splines
 #     pass
