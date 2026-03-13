@@ -8,7 +8,8 @@
 """Differentiate Module (scijo.differentiate)
 
 The `differentiate` module provides tools for numerical differentiation and gradient computation.
-It includes functions for calculating derivatives, Jacobians, and other related operations essential for scientific computing tasks such as optimization, sensitivity analysis, and solving differential equations.
+It includes functions for calculating derivatives, Jacobians, with much more to come in the future.
 """
-from .derivative import derivative
-from .jacobian import jacobian
+
+from .deriv import derivative
+from .jacob import jacobian

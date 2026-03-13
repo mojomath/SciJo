@@ -18,6 +18,10 @@ References:
       Arbitrarily Spaced Grids. Mathematics of Computation, 51(184), 699-706.
 """
 
+# ===----------------------------------------------------------------------=== #
+# Result types
+# ===----------------------------------------------------------------------=== #
+
 
 struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
     """Result structure for numerical differentiation operations.
@@ -86,6 +90,11 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
             )
         except e:
             writer.write("Error displaying Result: " + String(e) + "\n")
+
+
+# ===----------------------------------------------------------------------=== #
+# Finite difference tables
+# ===----------------------------------------------------------------------=== #
 
 
 @parameter
