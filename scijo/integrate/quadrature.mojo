@@ -1,15 +1,20 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Integrate - Quad
+# Scijo: Integrate - Quadrature
 # Distributed under the Apache 2.0 License with LLVM Exceptions.
 # See LICENSE and the LLVM License for more information.
 # https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
 # https://llvm.org/LICENSE.txt
 #  ===----------------------------------------------------------------------=== #
-"""Integrate Module - Adaptive Quadrature (scijo.integrate.quad)
+"""Integrate Module - Quadrature (scijo.integrate.quadrature)
 
 General-purpose numerical integration using adaptive quadrature methods based on
 the QUADPACK library. Currently implements the non-adaptive Gauss-Kronrod-Patterson
 (QNG) algorithm.
+
+Examples:
+    ```mojo
+    from scijo.integrate import quad
+    ```
 
 References:
     - SciPy quad documentation:
@@ -43,6 +48,10 @@ from .utility import (
 )
 
 
+# ===----------------------------------------------------------------------=== #
+# Quad
+# ===----------------------------------------------------------------------=== #
+
 fn quad[
     dtype: DType,
     func: fn[dtype: DType](
@@ -56,7 +65,7 @@ fn quad[
     args: Optional[List[Scalar[dtype]]],
     epsabs: Scalar[dtype] = 1.49e-8,
     epsrel: Scalar[dtype] = 1.49e-8,
-) raises -> IntegralResult[dtype]:
+) raises -> IntegralResult[dtype] where dtype.is_floating_point():
     """Computes the definite integral of a scalar function over [a, b].
 
     Dispatches to the appropriate quadrature algorithm based on the `method`
@@ -74,12 +83,27 @@ fn quad[
         epsabs: Absolute error tolerance.
         epsrel: Relative error tolerance.
 
+    Raises:
+        Error: If the specified method is not supported.
+
     Returns:
         IntegralResult[dtype] containing the integral value, absolute error
         estimate, function evaluation count, and status code.
 
-    Raises:
-        Error: If the specified method is not supported.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import quad
+        from scijo.prelude import *
+
+        fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+            return x * x  # Example: f(x) = x^2
+
+        fn main() raises:
+            var result = quad[f64, integrand](0.0, 1.0, None)
+            print("Integral:", result.integral)  # Should be close to 1/3
+            print("Estimated error:", result.abserr)
+        ```
     """
 
     @parameter
@@ -104,7 +128,7 @@ fn _qng[
     args: Optional[List[Scalar[dtype]]],
     epsabs: Scalar[dtype] = 1.49e-8,
     epsrel: Scalar[dtype] = 1.49e-8,
-) -> IntegralResult[dtype]:
+) -> IntegralResult[dtype] where dtype.is_floating_point():
     """Non-adaptive Gauss-Kronrod-Patterson integration (QUADPACK QNG).
 
     Attempts integration using progressively higher-order rules until the
@@ -130,10 +154,6 @@ fn _qng[
         IntegralResult[dtype] containing the integral value, error estimate,
         function evaluation count, and status code (ier).
     """
-    constrained[
-        dtype.is_floating_point(), "DType must be a floating point type."
-    ]()
-
     comptime epsilon_mach: Scalar[dtype] = Scalar[dtype](
         machine_epsilon[dtype]()
     )

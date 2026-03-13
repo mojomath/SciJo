@@ -10,7 +10,12 @@
 The `integrate` module provides tools for numerical integration and quadrature.
 It includes adaptive and non-adaptive methods for computing definite integrals,
 as well as fixed-sample integration rules for discrete data.
+
+Examples:
+    ```mojo
+    from scijo.integrate import quad, trapezoid
+    ```
 """
 
-from .quad import quad
+from .quadrature import quad
 from .fixed_sample import trapezoid, simpson, romb

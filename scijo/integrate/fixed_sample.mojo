@@ -15,6 +15,10 @@ from numojo.core.ndarray import NDArray, NDArrayShape
 import numojo as nm
 
 
+# ===----------------------------------------------------------------------=== #
+# Trapezoid
+# ===----------------------------------------------------------------------=== #
+
 fn trapezoid[
     dtype: DType
 ](
@@ -36,13 +40,23 @@ fn trapezoid[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Raises:
+        Error: If y is not 1-D.
+        Error: If y is empty.
+
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
 
-    Raises:
-        Error: If y is not 1-D.
-        Error: If y is empty.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import trapezoid
+        from scijo.prelude import *
+
+        var y = nm.linspace[f64](0.0, 10.0, 100) ** 2  # y = x^2 sampled at 100 points from 0 to 10
+        var area = trapezoid(y, dx=0.1)
+        ```
     """
 
     if y.ndim != 1:
@@ -90,13 +104,24 @@ fn trapezoid[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
+        Error: If y is empty.
+
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
-        Error: If y is empty.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import trapezoid
+        from scijo.prelude import *
+
+        var x = nm.linspace[f64](0.0, 10.0, 100)
+        var y = x * x
+        var area = trapezoid(y, x)
+        ```
     """
     if y.ndim != 1:
         raise Error(
@@ -163,6 +188,10 @@ fn trapezoid[
     return integral
 
 
+# ===----------------------------------------------------------------------=== #
+# Simpson
+# ===----------------------------------------------------------------------=== #
+
 fn simpson[
     dtype: DType
 ](
@@ -184,11 +213,21 @@ fn simpson[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Raises:
+        Error: If y is not 1-D.
+
     Returns:
         Definite integral approximated by Simpson's rule.
 
-    Raises:
-        Error: If y is not 1-D.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import simpson
+        from scijo.prelude import *
+
+        var y = nm.linspace[f64](0.0, 10.0, 100) ** 2  # y = x^2 sampled at 100 points from 0 to 10
+        var area = simpson(y, dx=0.1)
+        ```
     """
     if y.ndim != 1:
         raise Error(
@@ -238,11 +277,22 @@ fn simpson[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
+
     Returns:
         Definite integral approximated by Simpson's rule.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import simpson
+        from scijo.prelude import *
+
+        var y = nm.linspace[f64](0.0, 10.0, 100) ** 2  # y = x^2 sampled at 100 points from 0 to 10
+        var x = nm.linspace[f64](0.0, 10.0, 100)  # x values corresponding to y
+        var area = simpson(y, x)
+        ```
     """
     if y.ndim != 1:
         raise Error(
@@ -304,6 +354,10 @@ fn simpson[
     return integral
 
 
+# ===----------------------------------------------------------------------=== #
+# Romberg
+# ===----------------------------------------------------------------------=== #
+
 # TODO: fix the loop implementation.
 fn romb[
     dtype: DType
@@ -323,13 +377,23 @@ fn romb[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Raises:
+        Error: If y is not 1-D.
+
     Returns:
         Definite integral approximated by Romberg integration.
 
-    Raises:
-        Error: If y is not 1-D.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import romb
+        from scijo.prelude import *
+
+        var y = nm.linspace[f64](0.0, 10.0, 100) ** 2  # y = x^2 sampled at 100 points from 0 to 10
+        var area = romb(y, dx=0.1)
+        ```
     """
-    var maxiter: Int = 10
+    comptime maxiter: Int = 10
     if y.ndim != 1:
         raise Error(
             NumojoError(
