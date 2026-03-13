@@ -32,9 +32,7 @@ from .utility import (
 
 
 fn derivative[
-    func: fn(
-        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
-    ) -> Scalar[f64],
+    func: fn(x: Scalar[f64], args: Optional[List[Scalar[f64]]]) -> Scalar[f64],
     *,
     step_direction: Int = 0,
 ](
@@ -141,9 +139,7 @@ fn derivative[
 
 
 fn _derivative_central_difference[
-    func: fn(
-        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
-    ) -> Scalar[f64],
+    func: fn(x: Scalar[f64], args: Optional[List[Scalar[f64]]]) -> Scalar[f64],
 ](
     x0: Scalar[f64],
     args: Optional[List[Scalar[f64]]],
@@ -288,9 +284,7 @@ fn _derivative_central_difference[
 
 
 fn _derivative_forward_difference[
-    func: fn(
-        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
-    ) -> Scalar[f64],
+    func: fn(x: Scalar[f64], args: Optional[List[Scalar[f64]]]) -> Scalar[f64],
 ](
     x0: Scalar[f64],
     args: Optional[List[Scalar[f64]]],
@@ -433,9 +427,7 @@ fn _derivative_forward_difference[
 
 
 fn _derivative_backward_difference[
-    func: fn(
-        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
-    ) -> Scalar[f64],
+    func: fn(x: Scalar[f64], args: Optional[List[Scalar[f64]]]) -> Scalar[f64],
 ](
     x0: Scalar[f64],
     args: Optional[List[Scalar[f64]]],

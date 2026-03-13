@@ -18,9 +18,9 @@ from algorithm.functional import parallelize
 
 
 fn jacobian[
-    f: fn(
-        x: NDArray[f64], args: Optional[List[Scalar[f64]]]
-    ) raises -> NDArray[f64],
+    f: fn(x: NDArray[f64], args: Optional[List[Scalar[f64]]]) raises -> NDArray[
+        f64
+    ],
 ](
     x: NDArray[f64],
     args: Optional[List[Scalar[f64]]] = None,
