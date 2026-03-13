@@ -15,6 +15,7 @@ input validation.
 # Binary search
 # ===----------------------------------------------------------------------=== #
 
+
 fn _binary_search[
     dtype: DType
 ](x: NDArray[dtype], value: Scalar[dtype]) raises -> Int:
@@ -46,6 +47,7 @@ fn _binary_search[
 # ===----------------------------------------------------------------------=== #
 # Input validation
 # ===----------------------------------------------------------------------=== #
+
 
 fn _validate_interpolation_input[
     dtype: DType
