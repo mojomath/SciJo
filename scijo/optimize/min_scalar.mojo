@@ -103,7 +103,6 @@ fn _brent_minimize[
         var tmpx = a
         var tmpf = fa
         a = b
-        fa = fb
         b = tmpx
         fb = tmpf
 
@@ -113,7 +112,6 @@ fn _brent_minimize[
     var bracket_iter = 0
     while fb > fc and bracket_iter < 50:
         a = b
-        fa = fb
         b = c
         fb = fc
         c = b + (b - a) * Scalar[dtype](_phi)
@@ -151,13 +149,10 @@ fn _brent_minimize[
                 nfev=nfev,
             )
 
-        var p: Scalar[dtype] = 0
-        var q: Scalar[dtype] = 0
-        var r: Scalar[dtype] = 0
         if abs(e) > tol1:
-            r = (x - w) * (fx - fv)
-            q = (x - v) * (fx - fw)
-            p = (x - v) * q - (x - w) * r
+            var r = (x - w) * (fx - fv)
+            var q = (x - v) * (fx - fw)
+            var p = (x - v) * q - (x - w) * r
             q = (q - r) * 2
             if q > 0:
                 p = -p
@@ -167,7 +162,7 @@ fn _brent_minimize[
                 and p > q * (a - x)
                 and p < q * (c - x)
             ):
-                d = p / q
+                var d = p / q
                 var u1 = x + d
                 if (u1 - a) < tol2 or (c - u1) < tol2:
                     d = tol1 if x < m else -tol1
@@ -336,13 +331,10 @@ fn _bounded_minimize[
                 nfev=nfev,
             )
 
-        var p: Scalar[dtype] = 0
-        var q: Scalar[dtype] = 0
-        var r: Scalar[dtype] = 0
         if abs(e) > tol1:
-            r = (x - w) * (fx - fv)
-            q = (x - v) * (fx - fw)
-            p = (x - v) * q - (x - w) * r
+            var r = (x - w) * (fx - fv)
+            var q = (x - v) * (fx - fw)
+            var p = (x - v) * q - (x - w) * r
             q = (q - r) * 2
             if q > 0:
                 p = -p
