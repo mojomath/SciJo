@@ -42,12 +42,12 @@ backend = { name = "pixi-build-mojo", version = "0.*"}
 name = "scijo"
 
 [package.host-dependencies]
-modular = ">=26.2.0.dev2026022717,<27"
+modular = ">=26.2.0.dev2026030605,<27"
 
 [package.build-dependencies]
-modular = ">=26.2.0.dev2026022717,<27"
+modular = ">=26.2.0.dev2026030605,<27"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.9"}
 
 [package.run-dependencies]
-modular = ">=26.2.0.dev2026022717,<27"
+modular = ">=26.2.0.dev2026030605,<27"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "pre-0.9"}

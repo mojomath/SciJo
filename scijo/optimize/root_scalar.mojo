@@ -14,6 +14,9 @@ methods (secant).
 
 # TODO: check if we are using the right tolerance conditions in all methods.
 
+# ===----------------------------------------------------------------------=== #
+# Root scalar
+# ===----------------------------------------------------------------------=== #
 
 fn root_scalar[
     dtype: DType,
@@ -27,6 +30,7 @@ fn root_scalar[
             dtype
         ]
     ] = None,
+    *,
     method: String = "bisect",
 ](
     args: Optional[List[Scalar[dtype]]] = None,
@@ -36,7 +40,6 @@ fn root_scalar[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-    # options: SolverOptions
 ) raises -> Scalar[dtype]:
     """Finds a root of a scalar function using the specified method.
 
@@ -55,31 +58,38 @@ fn root_scalar[
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
-    Returns:
-        The approximate root as a Scalar[dtype].
-
     Raises:
         Error: If required inputs for the chosen method are missing or invalid.
-    """
 
+    Returns:
+        The approximate root of the function.
+    """
     @parameter
-    if method == "newton" and fprime:
+    if method == "newton":
+        if not fprime:
+            raise Error(
+                "Scijo [root_scalar]: Derivative fprime must be provided for Newton's method."
+            )
         return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
     elif method == "bisect":
         if not bracket:
-            raise Error("Bracket must be provided for bisection method.")
+            raise Error("Scijo [root_scalar]: Bracket must be provided for bisection method.")
         return bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
     elif method == "secant":
         if not (x0 and x1):
             raise Error(
-                "Initial guesses x0 and x1 must be provided for secant method."
+                "Scijo [root_scalar]: Initial guesses x0 and x1 must be provided for secant method."
             )
         return secant[dtype, f](
             args, x0.value(), x1.value(), xtol, rtol, maxiter
         )
     else:
-        raise Error("Unsupported method: " + String(method))
+        raise Error("Scijo [root_scalar]: Unsupported method: " + String(method))
 
+
+# ===----------------------------------------------------------------------=== #
+# Root scalar methods
+# ===----------------------------------------------------------------------=== #
 
 fn newton[
     dtype: DType,
@@ -115,17 +125,17 @@ fn newton[
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
-    Returns:
-        The approximate root as a Scalar[dtype].
-
     Raises:
         Error: If x0 is not provided or the derivative is zero at any step.
+
+    Returns:
+        The approximate root as a Scalar[dtype].
     """
     var xn: Scalar[dtype]
     if x0:
         xn = x0.value()
     else:
-        raise Error("Initial guess x0 must be provided for Newton's method.")
+        raise Error("Scijo [newton]: Initial guess x0 must be provided for Newton's method.")
 
     for _ in range(maxiter):
         var fx = f(xn, args)
@@ -133,7 +143,7 @@ fn newton[
 
         if fpx == 0:
             raise Error(
-                "Derivative is zero. Newton-Raphson step would divide by zero."
+                "Scijo [newton]: Derivative is zero. Newton-Raphson step would divide by zero."
             )
 
         var delta = fx / fpx
@@ -181,11 +191,11 @@ fn bisect[
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
-    Returns:
-        The approximate root as a Scalar[dtype].
-
     Raises:
         Error: If f(a) and f(b) do not have opposite signs.
+
+    Returns:
+        The approximate root as a Scalar[dtype].
     """
     var a: Scalar[dtype] = bracket[0]
     var b: Scalar[dtype] = bracket[1]
@@ -200,7 +210,7 @@ fn bisect[
 
     if fa * fb > 0:
         raise Error(
-            "f(a) and f(b) must have opposite signs (bracket does not enclose a"
+            "Scijo [newton]: f(a) and f(b) must have opposite signs (bracket does not enclose a"
             " root)."
         )
 
@@ -212,16 +222,15 @@ fn bisect[
             return c
 
         var tol_x = max(xtol, rtol * abs(c))
-        var half_width = (b - a) / 2
+        var half_width = abs(b - a) / 2
         if half_width <= tol_x:
             return c
 
         if fa * fc < 0:
-            # Root is in [a, c]
             b = c
         else:
-            # Root is in [c, b]
             a = c
+            fa = fc
 
     return (a + b) / 2
 
@@ -238,7 +247,7 @@ fn secant[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) -> Scalar[dtype]:
+) raises -> Scalar[dtype]:
     """Finds a root using the secant method.
 
     A derivative-free method that approximates the derivative using finite
@@ -256,6 +265,9 @@ fn secant[
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
+    Raises:
+        Error: If zero slope is encountered.
+
     Returns:
         The approximate root as a Scalar[dtype].
     """
@@ -263,12 +275,16 @@ fn secant[
     var b: Scalar[dtype] = x1
 
     for _ in range(maxiter):
-        var f0 = f[dtype](a, args)
-        var f1 = f[dtype](b, args)
+        var f0 = f(a, args)
+        var f1 = f(b, args)
 
-        var xn = b - (f1 * (b - a)) / (f1 - f0)
+        var denom = f1 - f0
+        if denom == 0:
+            raise Error("Scijo [newton]: Secant method encountered zero slope (f1 - f0 == 0).")
 
-        var fxn = f[dtype](xn, args)
+        var xn = b - (f1 * (b - a)) / denom
+
+        var fxn = f(xn, args)
         var tol_x = max(xtol, rtol * abs(xn))
         var tol_f = max(xtol, rtol * abs(fxn))
 
@@ -278,7 +294,7 @@ fn secant[
         if abs(xn - b) <= tol_x:
             return xn
 
+        a = b
         b = xn
-        a = x1
 
-    return x1
+    return b

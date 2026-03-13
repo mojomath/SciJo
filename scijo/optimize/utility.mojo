@@ -10,6 +10,9 @@
 Data structures for returning results from optimization and root-finding routines.
 """
 
+# ===----------------------------------------------------------------------=== #
+# RootResults
+# ===----------------------------------------------------------------------=== #
 
 struct RootResults[dtype: DType = DType.float64]():
     """Result structure for scalar root-finding operations.

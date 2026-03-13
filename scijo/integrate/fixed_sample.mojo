@@ -12,7 +12,6 @@ Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration
 """
 
 from numojo.core.ndarray import NDArray, NDArrayShape
-from numojo.core.error import NumojoError
 import numojo as nm
 
 
@@ -47,28 +46,10 @@ fn trapezoid[
     """
 
     if y.ndim != 1:
-        raise Error(
-            NumojoError(
-                category="shape",
-                message=String(
-                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
-                    " for y (e.g. shape (N,))."
-                ).format(y.ndim),
-                location="trapezoid(y, dx=1.0)",
-            )
-        )
+        raise Error(t"Scijo [trapezoid]: Expected y to be 1-D array, received ndim={y.ndim}.")
 
     if y.size == 0:
-        raise Error(
-            NumojoError(
-                category="value",
-                message=(
-                    "Cannot integrate over an empty array. Provide a non-empty"
-                    " array for y."
-                ),
-                location="trapezoid(y, dx=1.0)",
-            )
-        )
+        raise Error(t"Scijo [trapezoid]: y.size = 0, Cannot interage over an empty array.")
 
     if y.size == 1:
         return Scalar[dtype](0.0)
