@@ -47,8 +47,8 @@ fn trapezoid[
 
     if y.ndim != 1:
         raise Error(
-            "Scijo [trapezoid]: Expected y to be 1-D array, received"
-            t" ndim={y.ndim}."
+            t"Scijo [trapezoid]: Expected y to be 1-D array, received"
+            t" ndim={{y.ndim}}."
         )
 
     if y.size == 0:
