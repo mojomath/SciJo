@@ -32,21 +32,20 @@ from .utility import (
 
 
 fn derivative[
-    dtype: DType,
-    func: fn[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    func: fn(
+        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+    ) -> Scalar[f64],
     *,
     step_direction: Int = 0,
 ](
-    x0: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]] = None,
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    x0: Scalar[f64],
+    args: Optional[List[Scalar[f64]]] = None,
+    tolerances: Dict[String, Scalar[f64]] = {"atol": 1e-6, "rtol": 1e-6},
     max_iter: Int = 10,
     order: Int = 8,
-    initial_step: Scalar[dtype] = 0.5,
-    step_factor: Scalar[dtype] = 2.0,
-) raises -> DiffResult[dtype] where dtype.is_floating_point():
+    initial_step: Scalar[f64] = 0.5,
+    step_factor: Scalar[f64] = 2.0,
+) raises -> DiffResult[f64]:
     """Computes the first derivative of a scalar function using finite differences.
 
     Provides a unified interface for computing first-order derivatives using
@@ -54,8 +53,7 @@ fn derivative[
     size reduction for improved accuracy.
 
     Parameters:
-        dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature fn(x, args) -> Scalar[f64].
         step_direction: Direction of finite difference
             (central=0, forward=1, backward=-1). Keyword-only.
 
@@ -70,7 +68,7 @@ fn derivative[
         step_factor: Factor by which to reduce step size in each iteration (must be > 1).
 
     Returns:
-        DiffResult[dtype] containing the derivative, convergence status,
+        DiffResult[f64] containing the derivative, convergence status,
         estimated error, iteration count, and function evaluation count.
 
     Raises:
@@ -82,19 +80,17 @@ fn derivative[
         from scijo.differentiate import derivative
         from scijo.prelude import *
 
-        fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        fn f(x: Scalar[f64], args: Optional[List[Scalar[f64]]]) -> Scalar[f64]:
             return x * x
 
-        var res = derivative[f64, f](1.0)
+        var res = derivative[f](1.0)
         ```
     """
 
     @parameter
     if step_direction == 0:
-        comptime first_order_coefficients = generate_central_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_central_difference[dtype, func](
+        comptime first_order_coefficients = generate_central_finite_difference_table()
+        return _derivative_central_difference[func](
             x0,
             args,
             tolerances=tolerances,
@@ -104,10 +100,8 @@ fn derivative[
             max_iter=max_iter,
         )
     elif step_direction == 1:
-        comptime first_order_coefficients = generate_forward_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_forward_difference[dtype, func](
+        comptime first_order_coefficients = generate_forward_finite_difference_table()
+        return _derivative_forward_difference[func](
             x0,
             args,
             tolerances,
@@ -117,10 +111,8 @@ fn derivative[
             max_iter,
         )
     elif step_direction == -1:
-        comptime first_order_coefficients = generate_backward_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_backward_difference[dtype, func](
+        comptime first_order_coefficients = generate_backward_finite_difference_table()
+        return _derivative_backward_difference[func](
             x0,
             args,
             tolerances,
@@ -149,27 +141,25 @@ fn derivative[
 
 
 fn _derivative_central_difference[
-    dtype: DType,
-    func: fn[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    func: fn(
+        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+    ) -> Scalar[f64],
 ](
-    x0: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    x0: Scalar[f64],
+    args: Optional[List[Scalar[f64]]],
+    tolerances: Dict[String, Scalar[f64]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
-    initial_step: Scalar[dtype] = 0.5,
-    step_factor: Scalar[dtype] = 2.0,
+    initial_step: Scalar[f64] = 0.5,
+    step_factor: Scalar[f64] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[f64]:
     """Computes first derivative using central finite difference method.
 
     Uses symmetric stencils around the evaluation point with adaptive step size
     reduction until convergence within specified tolerances.
 
     Parameters:
-        dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature fn(x, args) -> Scalar[f64].
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -180,24 +170,24 @@ fn _derivative_central_difference[
         step_factor: Factor by which to reduce step size in each iteration.
         max_iter: Maximum number of iterations.
 
-    Returns:
-        DiffResult[dtype] containing the derivative and convergence information.
-
     Raises:
         Error: If the specified order is not in {2, 4, 6, 8}.
         Error: If tolerances, step size, step factor, or max_iter are invalid.
+
+    Returns:
+        DiffResult[f64] containing the derivative and convergence information.
     """
     comptime first_order_coefficients_compiletime: Dict[
-        Int, List[Scalar[dtype]]
-    ] = generate_central_finite_difference_table[dtype]()
+        Int, List[Scalar[f64]]
+    ] = generate_central_finite_difference_table()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var diff_estimate: Scalar[dtype] = 0.0
-    var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
+    var diff_estimate: Scalar[f64] = 0.0
+    var prev_diff: Scalar[f64] = 0.0
+    var atol: Scalar[f64] = tolerances["atol"]
+    var rtol: Scalar[f64] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
@@ -247,7 +237,7 @@ fn _derivative_central_difference[
             " computation."
         )
 
-    var coefficients: List[Scalar[dtype]]
+    var coefficients: List[Scalar[f64]]
     if order in (2, 4, 6, 8):
         coefficients = first_order_coefficients[order].copy()
     else:
@@ -260,14 +250,14 @@ fn _derivative_central_difference[
             " function evaluations.\n  Available orders map to truncation"
             " errors: 2→O(h²), 4→O(h⁴), 6→O(h⁶), 8→O(h⁸)"
         )
-    var step: Scalar[dtype] = initial_step
+    var step: Scalar[f64] = initial_step
 
     for i in range(max_iter):
         diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
             diff_estimate += coeff * func(
-                x0 + step * Scalar[dtype](j - len(coefficients) // 2), args
+                x0 + step * Scalar[f64](j - len(coefficients) // 2), args
             )
             j += 1
         diff_estimate /= step
@@ -275,7 +265,7 @@ fn _derivative_central_difference[
             var diff_change = abs(diff_estimate - prev_diff)
             var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
-                return DiffResult[dtype](
+                return DiffResult[f64](
                     success=True,
                     df=diff_estimate,
                     error=diff_change,
@@ -287,7 +277,7 @@ fn _derivative_central_difference[
         prev_diff = diff_estimate
         step /= step_factor
 
-    return DiffResult[dtype](
+    return DiffResult[f64](
         success=False,
         df=diff_estimate,
         error=0.0,
@@ -298,19 +288,18 @@ fn _derivative_central_difference[
 
 
 fn _derivative_forward_difference[
-    dtype: DType,
-    func: fn[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    func: fn(
+        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+    ) -> Scalar[f64],
 ](
-    x0: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    x0: Scalar[f64],
+    args: Optional[List[Scalar[f64]]],
+    tolerances: Dict[String, Scalar[f64]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
-    initial_step: Scalar[dtype] = 0.5,
-    step_factor: Scalar[dtype] = 2.0,
+    initial_step: Scalar[f64] = 0.5,
+    step_factor: Scalar[f64] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[f64]:
     """Computes first derivative using forward finite difference method.
 
     Uses one-sided stencils in the forward direction with adaptive step size
@@ -318,8 +307,7 @@ fn _derivative_forward_difference[
     are not available.
 
     Parameters:
-        dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature fn(x, args) -> Scalar[f64].
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -331,23 +319,23 @@ fn _derivative_forward_difference[
         max_iter: Maximum number of iterations.
 
     Returns:
-        DiffResult[dtype] containing the derivative and convergence information.
+        DiffResult[f64] containing the derivative and convergence information.
 
     Raises:
         Error: If the specified order is not in {1, 2, 3, 4, 5, 6}.
         Error: If tolerances, step size, step factor, or max_iter are invalid.
     """
     comptime first_order_coefficients_compiletime: Dict[
-        Int, List[Scalar[dtype]]
-    ] = generate_forward_finite_difference_table[dtype]()
+        Int, List[Scalar[f64]]
+    ] = generate_forward_finite_difference_table()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var diff_estimate: Scalar[dtype] = 0.0
-    var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
+    var diff_estimate: Scalar[f64] = 0.0
+    var prev_diff: Scalar[f64] = 0.0
+    var atol: Scalar[f64] = tolerances["atol"]
+    var rtol: Scalar[f64] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
@@ -409,20 +397,20 @@ fn _derivative_forward_difference[
             " numerical stability.\n  Available orders map to truncation"
             " errors: 1→O(h), 2→O(h²), ..., 6→O(h⁶)"
         )
-    var step: Scalar[dtype] = initial_step
+    var step: Scalar[f64] = initial_step
 
     for i in range(max_iter):
         diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            diff_estimate += coeff * func(x0 + step * Scalar[dtype](j), args)
+            diff_estimate += coeff * func(x0 + step * Scalar[f64](j), args)
             j += 1
         diff_estimate /= step
         if i > 0:
             var diff_change = abs(diff_estimate - prev_diff)
             var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
-                return DiffResult[dtype](
+                return DiffResult[f64](
                     success=True,
                     df=diff_estimate,
                     error=diff_change,
@@ -434,7 +422,7 @@ fn _derivative_forward_difference[
         prev_diff = diff_estimate
         step /= step_factor
 
-    return DiffResult[dtype](
+    return DiffResult[f64](
         success=False,
         df=diff_estimate,
         error=0.0,
@@ -445,19 +433,18 @@ fn _derivative_forward_difference[
 
 
 fn _derivative_backward_difference[
-    dtype: DType,
-    func: fn[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    func: fn(
+        x: Scalar[f64], args: Optional[List[Scalar[f64]]]
+    ) -> Scalar[f64],
 ](
-    x0: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    x0: Scalar[f64],
+    args: Optional[List[Scalar[f64]]],
+    tolerances: Dict[String, Scalar[f64]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
-    initial_step: Scalar[dtype] = 0.5,
-    step_factor: Scalar[dtype] = 2.0,
+    initial_step: Scalar[f64] = 0.5,
+    step_factor: Scalar[f64] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[f64]:
     """Computes first derivative using backward finite difference method.
 
     Uses one-sided stencils in the backward direction with adaptive step size
@@ -465,8 +452,7 @@ fn _derivative_backward_difference[
     are not available.
 
     Parameters:
-        dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature fn(x, args) -> Scalar[f64].
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -478,23 +464,23 @@ fn _derivative_backward_difference[
         max_iter: Maximum number of iterations.
 
     Returns:
-        DiffResult[dtype] containing the derivative and convergence information.
+        DiffResult[f64] containing the derivative and convergence information.
 
     Raises:
         Error: If the specified order is not in {1, 2, 3, 4, 5, 6}.
         Error: If tolerances, step size, step factor, or max_iter are invalid.
     """
     comptime first_order_coefficients_compiletime: Dict[
-        Int, List[Scalar[dtype]]
-    ] = generate_backward_finite_difference_table[dtype]()
+        Int, List[Scalar[f64]]
+    ] = generate_backward_finite_difference_table()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var diff_estimate: Scalar[dtype] = 0.0
-    var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
+    var diff_estimate: Scalar[f64] = 0.0
+    var prev_diff: Scalar[f64] = 0.0
+    var atol: Scalar[f64] = tolerances["atol"]
+    var rtol: Scalar[f64] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
@@ -556,11 +542,11 @@ fn _derivative_backward_difference[
             " numerical stability.\n  Available orders map to truncation"
             " errors: 1→O(h), 2→O(h²), ..., 6→O(h⁶)"
         )
-    var step: Scalar[dtype] = initial_step
+    var step: Scalar[f64] = initial_step
 
     for i in range(max_iter):
         diff_estimate = 0.0
-        var j: Scalar[dtype] = 0
+        var j: Scalar[f64] = 0
         for ref coeff in coefficients:
             diff_estimate += coeff * func(x0 + step * j, args)
             j += 1
@@ -569,7 +555,7 @@ fn _derivative_backward_difference[
             var diff_change = abs(diff_estimate - prev_diff)
             var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
-                return DiffResult[dtype](
+                return DiffResult[f64](
                     success=True,
                     df=diff_estimate,
                     error=diff_change,
@@ -581,7 +567,7 @@ fn _derivative_backward_difference[
         prev_diff = diff_estimate
         step /= step_factor
 
-    return DiffResult[dtype](
+    return DiffResult[f64](
         success=False,
         df=diff_estimate,
         error=0.0,

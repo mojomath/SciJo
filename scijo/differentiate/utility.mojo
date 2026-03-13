@@ -23,7 +23,7 @@ References:
 # ===----------------------------------------------------------------------=== #
 
 
-struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
+struct DiffResult[dtype: DType = DType.float64](ImplicitlyCopyable, Writable):
     """Result structure for numerical differentiation operations.
 
     Encapsulates the results of derivative computations, including the computed
@@ -98,28 +98,23 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
 
 
 @parameter
-fn generate_central_finite_difference_table[
-    dtype: DType
-]() -> Dict[Int, List[Scalar[dtype]]]:
+fn generate_central_finite_difference_table() -> Dict[Int, List[Scalar[f64]]]:
     """Generates central finite difference coefficients for first-order derivatives.
 
     Creates a lookup table of coefficients for central difference approximations
     using symmetric stencils: f'(x) ≈ Σ(c_i * f(x + i*h)) / h.
 
-    Parameters:
-        dtype: The floating-point data type for the coefficients.
-
     Returns:
         Coefficient arrays indexed by accuracy order.
         Available orders: 2, 4, 6, 8 with truncation errors O(h²), O(h⁴), O(h⁶), O(h⁸).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
+    var coefficients = Dict[Int, List[Scalar[f64]]]()
 
     # Order 2: points [-1, 0, 1]
-    coefficients[2]: List[Scalar[dtype]] = [-0.5, 0.0, 0.5]
+    coefficients[2]: List[Scalar[f64]] = [-0.5, 0.0, 0.5]
 
     # Order 4: points [-2, -1, 0, 1, 2]
-    coefficients[4]: List[Scalar[dtype]] = [
+    coefficients[4]: List[Scalar[f64]] = [
         1.0 / 12.0,
         -2.0 / 3.0,
         0.0,
@@ -128,7 +123,7 @@ fn generate_central_finite_difference_table[
     ]
 
     # Order 6: points [-3, -2, -1, 0, 1, 2, 3]
-    coefficients[6]: List[Scalar[dtype]] = [
+    coefficients[6]: List[Scalar[f64]] = [
         -1.0 / 60.0,
         3.0 / 20.0,
         -3.0 / 4.0,
@@ -139,7 +134,7 @@ fn generate_central_finite_difference_table[
     ]
 
     # Order 8: points [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-    coefficients[8]: List[Scalar[dtype]] = [
+    coefficients[8]: List[Scalar[f64]] = [
         1.0 / 280.0,
         -4.0 / 105.0,
         1.0 / 5.0,
@@ -155,9 +150,7 @@ fn generate_central_finite_difference_table[
 
 
 @parameter
-fn generate_forward_finite_difference_table[
-    dtype: DType
-]() -> Dict[Int, List[Scalar[dtype]]]:
+fn generate_forward_finite_difference_table() -> Dict[Int, List[Scalar[f64]]]:
     """Generates forward finite difference coefficients for first-order derivatives.
 
     Creates a lookup table of coefficients for forward difference approximations
@@ -166,23 +159,20 @@ fn generate_forward_finite_difference_table[
     Forward differences are necessary at left domain boundaries or when backward
     evaluations are not feasible.
 
-    Parameters:
-        dtype: The floating-point data type for the coefficients.
-
     Returns:
         Coefficient arrays indexed by accuracy order.
         Available orders: 1, 2, 3, 4, 5, 6 with truncation errors O(h) through O(h⁶).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
+    var coefficients = Dict[Int, List[Scalar[f64]]]()
 
     # Order 1: points [0, 1]
-    coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
+    coefficients[1]: List[Scalar[f64]] = [-1.0, 1.0]
 
     # Order 2: points [0, 1, 2]
-    coefficients[2]: List[Scalar[dtype]] = [-3.0 / 2.0, 2.0, -1.0 / 2.0]
+    coefficients[2]: List[Scalar[f64]] = [-3.0 / 2.0, 2.0, -1.0 / 2.0]
 
     # Order 3: points [0, 1, 2, 3]
-    coefficients[3]: List[Scalar[dtype]] = [
+    coefficients[3]: List[Scalar[f64]] = [
         -11.0 / 6.0,
         3.0,
         -3.0 / 2.0,
@@ -190,7 +180,7 @@ fn generate_forward_finite_difference_table[
     ]
 
     # Order 4: points [0, 1, 2, 3, 4]
-    coefficients[4]: List[Scalar[dtype]] = [
+    coefficients[4]: List[Scalar[f64]] = [
         -25.0 / 12.0,
         4.0,
         -3.0,
@@ -199,7 +189,7 @@ fn generate_forward_finite_difference_table[
     ]
 
     # Order 5: points [0, 1, 2, 3, 4, 5]
-    coefficients[5]: List[Scalar[dtype]] = [
+    coefficients[5]: List[Scalar[f64]] = [
         -137.0 / 60.0,
         5.0,
         -5.0,
@@ -209,7 +199,7 @@ fn generate_forward_finite_difference_table[
     ]
 
     # Order 6: points [0, 1, 2, 3, 4, 5, 6]
-    coefficients[6]: List[Scalar[dtype]] = [
+    coefficients[6]: List[Scalar[f64]] = [
         -49.0 / 20.0,
         6.0,
         -15.0 / 2.0,
@@ -223,9 +213,7 @@ fn generate_forward_finite_difference_table[
 
 
 @parameter
-fn generate_backward_finite_difference_table[
-    dtype: DType
-]() -> Dict[Int, List[Scalar[dtype]]]:
+fn generate_backward_finite_difference_table() -> Dict[Int, List[Scalar[f64]]]:
     """Generates backward finite difference coefficients for first-order derivatives.
 
     Creates a lookup table of coefficients for backward difference approximations
@@ -235,23 +223,20 @@ fn generate_backward_finite_difference_table[
     stencil and adjusting signs. They are necessary at right domain boundaries
     or when forward evaluations are not feasible.
 
-    Parameters:
-        dtype: The floating-point data type for the coefficients.
-
     Returns:
         Coefficient arrays indexed by accuracy order.
         Available orders: 1, 2, 3, 4, 5, 6 with truncation errors O(h) through O(h⁶).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
+    var coefficients = Dict[Int, List[Scalar[f64]]]()
 
     # Order 1: points [-1, 0]
-    coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
+    coefficients[1]: List[Scalar[f64]] = [-1.0, 1.0]
 
     # Order 2: points [-2, -1, 0]
-    coefficients[2]: List[Scalar[dtype]] = [1.0 / 2.0, -2.0, 3.0 / 2.0]
+    coefficients[2]: List[Scalar[f64]] = [1.0 / 2.0, -2.0, 3.0 / 2.0]
 
     # Order 3: points [-3, -2, -1, 0]
-    coefficients[3]: List[Scalar[dtype]] = [
+    coefficients[3]: List[Scalar[f64]] = [
         -1.0 / 3.0,
         3.0 / 2.0,
         -3.0,
@@ -259,7 +244,7 @@ fn generate_backward_finite_difference_table[
     ]
 
     # Order 4: points [-4, -3, -2, -1, 0]
-    coefficients[4]: List[Scalar[dtype]] = [
+    coefficients[4]: List[Scalar[f64]] = [
         1.0 / 4.0,
         -4.0 / 3.0,
         3.0,
@@ -268,7 +253,7 @@ fn generate_backward_finite_difference_table[
     ]
 
     # Order 5: points [-5, -4, -3, -2, -1, 0]
-    coefficients[5]: List[Scalar[dtype]] = [
+    coefficients[5]: List[Scalar[f64]] = [
         -1.0 / 5.0,
         5.0 / 4.0,
         -10.0 / 3.0,
@@ -278,7 +263,7 @@ fn generate_backward_finite_difference_table[
     ]
 
     # Order 6: points [-6, -5, -4, -3, -2, -1, 0]
-    coefficients[6]: List[Scalar[dtype]] = [
+    coefficients[6]: List[Scalar[f64]] = [
         1.0 / 6.0,
         -6.0 / 5.0,
         15.0 / 4.0,

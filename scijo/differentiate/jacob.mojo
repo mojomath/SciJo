@@ -18,16 +18,15 @@ from algorithm.functional import parallelize
 
 
 fn jacobian[
-    dtype: DType,
-    f: fn[dtype: DType](
-        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises -> NDArray[dtype],
+    f: fn(
+        x: NDArray[f64], args: Optional[List[Scalar[f64]]]
+    ) raises -> NDArray[f64],
 ](
-    x: NDArray[dtype],
-    args: Optional[List[Scalar[dtype]]] = None,
-    tolerances: Dict[String, Scalar[dtype]] = {"abs": 1e-5, "rel": 1e-3},
+    x: NDArray[f64],
+    args: Optional[List[Scalar[f64]]] = None,
+    tolerances: Dict[String, Scalar[f64]] = {"abs": 1e-5, "rel": 1e-3},
     maxiter: Int = 10,
-) raises -> NDArray[dtype]:
+) raises -> NDArray[f64]:
     """Computes the Jacobian matrix of a vector-valued function using central finite differences.
 
     Evaluates J[i, j] = ∂f_i/∂x_j using the central difference formula
@@ -35,8 +34,7 @@ fn jacobian[
     Each column of the Jacobian is computed in parallel.
 
     Parameters:
-        dtype: The floating-point data type.
-        f: Vector-valued function with signature fn(x, args) -> NDArray[dtype].
+        f: Vector-valued function with signature fn(x, args) -> NDArray[f64].
 
     Args:
         x: Input vector of shape (n,) at which to evaluate the Jacobian.
@@ -48,7 +46,7 @@ fn jacobian[
         Error: If function evaluation fails for any perturbation.
 
     Returns:
-        NDArray[dtype] of shape (m, n) representing the Jacobian matrix,
+        NDArray[f64] of shape (m, n) representing the Jacobian matrix,
         where m is the output dimension and n is the input dimension.
 
     Examples:
@@ -57,19 +55,19 @@ fn jacobian[
         from scijo.differentiate import jacobian
         from scijo.prelude import *
 
-        fn f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+        fn f(x: NDArray[f64], args: Optional[List[Scalar[f64]]]) raises -> NDArray[f64]:
             return x * x
 
         var x = nm.array[f64]([1.0, 2.0])
-        var J = jacobian[f64, f](x)
+        var J = jacobian[f](x)
         ```
     """
     var n: Int = len(x)
-    var f0: NDArray[dtype] = f(x, args)
+    var f0: NDArray[f64] = f(x, args)
     var m: Int = len(f0)
 
-    var jacob: NDArray[dtype] = zeros[dtype](Shape(m, n))
-    var step: NDArray[dtype] = full[dtype](Shape(n), fill_value=0.5)
+    var jacob: NDArray[f64] = zeros[f64](Shape(m, n))
+    var step: NDArray[f64] = full[f64](Shape(n), fill_value=0.5)
 
     @parameter
     fn closure(j: Int):
@@ -82,10 +80,10 @@ fn jacobian[
             var f_plus = f(x_plus, args)
             var f_minus = f(x_minus, args)
 
-            var col: NDArray[dtype] = (f_plus - f_minus) / (2.0 * hj)
+            var col: NDArray[f64] = (f_plus - f_minus) / (2.0 * hj)
 
             for i in range(m):
-                var val: Scalar[dtype] = col.load(i)
+                var val: Scalar[f64] = col.load(i)
                 var flat_idx: Int = i * n + j
                 jacob.store(flat_idx, val=val)
         except:
