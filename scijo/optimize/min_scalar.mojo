@@ -17,6 +17,7 @@ comptime _invphi: Float64 = 0.3819660112501051
 # Scalar minimization
 # ===----------------------------------------------------------------------=== #
 
+
 struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
     """Result structure for scalar minimization operations."""
 
@@ -47,7 +48,10 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.nfev = nfev
 
     fn __str__(self) raises -> String:
-        return t"Result(success={self.success}, x={self.x}, fun={self.fun}, status={self.status}, nit={self.nit}, nfev={self.nfev})"
+        return (
+            t"Result(success={self.success}, x={self.x}, fun={self.fun},"
+            t" status={self.status}, nit={self.nit}, nfev={self.nfev})"
+        )
 
     fn write_to[W: Writer](self, mut writer: W):
         """Writes the array to a writer.
@@ -55,12 +59,17 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         Args:
             writer: The writer to write the array to.
         """
-        writer.write(t"Result(success={self.success}, x={self.x}, fun={self.fun}, status={self.status}, nit={self.nit}, nfev={self.nfev})")
+        writer.write(
+            t"Result(success={self.success}, x={self.x}, fun={self.fun},"
+            t" status={self.status}, nit={self.nit}, nfev={self.nfev})"
+        )
+
 
 # ===----------------------------------------------------------------------=== #
 # Implementation of scalar minimization algorithms: .
 # Brent's method, Golden section search, and bounded minimization
 # ===----------------------------------------------------------------------=== #
+
 
 fn _brent_minimize[
     dtype: DType,
@@ -77,7 +86,9 @@ fn _brent_minimize[
     var b: Scalar[dtype] = bracket[1]
 
     if a == b:
-        raise Error("Scijo [_brent_minimize]: Bracket endpoints must be distinct.")
+        raise Error(
+            "Scijo [_brent_minimize]: Bracket endpoints must be distinct."
+        )
 
     if a > b:
         var tmp = a
@@ -151,7 +162,11 @@ fn _brent_minimize[
             if q > 0:
                 p = -p
             q = abs(q)
-            if abs(p) < abs(Scalar[dtype](0.5) * q * e) and p > q * (a - x) and p < q * (c - x):
+            if (
+                abs(p) < abs(Scalar[dtype](0.5) * q * e)
+                and p > q * (a - x)
+                and p < q * (c - x)
+            ):
                 d = p / q
                 var u1 = x + d
                 if (u1 - a) < tol2 or (c - u1) < tol2:
@@ -332,7 +347,11 @@ fn _bounded_minimize[
             if q > 0:
                 p = -p
             q = abs(q)
-            if abs(p) < abs(Scalar[dtype](0.5) * q * e) and p > q * (a - x) and p < q * (b - x):
+            if (
+                abs(p) < abs(Scalar[dtype](0.5) * q * e)
+                and p > q * (a - x)
+                and p < q * (b - x)
+            ):
                 d = p / q
                 var u1 = x + d
                 if (u1 - a) < tol2 or (b - u1) < tol2:
