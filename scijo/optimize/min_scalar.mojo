@@ -24,6 +24,9 @@ Examples
     ```
 """
 
+from msl import min_brent as msl_min_brent
+from msl import min_golden as msl_min_golden
+
 comptime _phi: Float64 = 1.618033988749895
 """Inverse of the golden ratio, used in optimization algorithms."""
 comptime _invphi: Float64 = 0.3819660112501051
@@ -103,6 +106,125 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
 # Implementation of scalar minimization algorithms: .
 # Brent's method, Golden section search, and bounded minimization
 # ===----------------------------------------------------------------------=== #
+
+
+def _min_message(success: Bool, errno: Int) -> String:
+    """Maps MSL minimizer status codes to SciJo status messages.
+
+    Args:
+        success: Whether backend minimization converged.
+        errno: MSL status/error code.
+
+    Returns:
+        Human-readable status message.
+    """
+    if success:
+        return "Optimization terminated successfully."
+    if errno == 11:
+        return "Maximum number of iterations exceeded."
+    if errno == 1:
+        return "Domain error (invalid interval or bracket)."
+    return "Optimization failed."
+
+
+def _brent_minimize_msl[
+    dtype: DType,
+    f: def[dtype: DType](
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing -> Scalar[dtype],
+](
+    args: Optional[List[Scalar[dtype]]],
+    interval: Tuple[Scalar[dtype], Scalar[dtype]],
+    tol: Scalar[dtype],
+    maxiter: Int,
+) raises -> OptimizeResult[dtype]:
+    """Runs Brent minimization through the MSL backend."""
+    var a: Scalar[dtype] = interval[0]
+    var b: Scalar[dtype] = interval[1]
+
+    if a == b:
+        raise Error(
+            "Scijo [_brent_minimize_msl]: Bracket endpoints must be distinct."
+        )
+
+    if a > b:
+        var tmp = a
+        a = b
+        b = tmp
+
+    var xmid = (a + b) / 2
+
+    @parameter
+    def wrapped_fn(x: Float64) -> Float64:
+        return Float64(f(Scalar[dtype](x), args))
+
+    var result = msl_min_brent[wrapped_fn](
+        Float64(a),
+        Float64(xmid),
+        Float64(b),
+        epsabs=Float64(tol),
+        epsrel=Float64(tol),
+        max_iter=maxiter,
+    )
+
+    return OptimizeResult[dtype](
+        x=Scalar[dtype](result.x),
+        fun=Scalar[dtype](result.fun),
+        success=result.success,
+        message=_min_message(result.success, result.errno),
+        nit=result.nit,
+        nfev=result.nfev,
+    )
+
+
+def _golden_minimize_msl[
+    dtype: DType,
+    f: def[dtype: DType](
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing -> Scalar[dtype],
+](
+    args: Optional[List[Scalar[dtype]]],
+    interval: Tuple[Scalar[dtype], Scalar[dtype]],
+    tol: Scalar[dtype],
+    maxiter: Int,
+) raises -> OptimizeResult[dtype]:
+    """Runs golden-section minimization through the MSL backend."""
+    var a: Scalar[dtype] = interval[0]
+    var b: Scalar[dtype] = interval[1]
+
+    if a == b:
+        raise Error(
+            "Scijo [_golden_minimize_msl]: Bracket endpoints must be distinct."
+        )
+
+    if a > b:
+        var tmp = a
+        a = b
+        b = tmp
+
+    var xmid = (a + b) / 2
+
+    @parameter
+    def wrapped_fn(x: Float64) -> Float64:
+        return Float64(f(Scalar[dtype](x), args))
+
+    var result = msl_min_golden[wrapped_fn](
+        Float64(a),
+        Float64(xmid),
+        Float64(b),
+        epsabs=Float64(tol),
+        epsrel=Float64(tol),
+        max_iter=maxiter,
+    )
+
+    return OptimizeResult[dtype](
+        x=Scalar[dtype](result.x),
+        fun=Scalar[dtype](result.fun),
+        success=result.success,
+        message=_min_message(result.success, result.errno),
+        nit=result.nit,
+        nfev=result.nfev,
+    )
 
 
 def _brent_minimize[
@@ -475,30 +597,30 @@ def minimize_scalar[
         print(result)
         ```
     """
-
-    if method == "Brent" or method == "brent":
+    var methodd = method.lower()
+    if methodd == "Brent" or methodd == "brent":
         if bracket:
-            return _brent_minimize[dtype, f](
+            return _brent_minimize_msl[dtype, f](
                 args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _brent_minimize[dtype, f](
+            return _brent_minimize_msl[dtype, f](
                 args, bounds.value(), atol, maxiter
             )
         raise Error("bracket or bounds must be provided for Brent method.")
 
-    if method == "Golden" or method == "golden":
+    if methodd == "Golden" or methodd == "golden":
         if bracket:
-            return _golden_minimize[dtype, f](
+            return _golden_minimize_msl[dtype, f](
                 args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _golden_minimize[dtype, f](
+            return _golden_minimize_msl[dtype, f](
                 args, bounds.value(), atol, maxiter
             )
         raise Error("bracket or bounds must be provided for Golden method.")
 
-    if method == "Bounded" or method == "bounded":
+    if methodd == "Bounded" or methodd == "bounded":
         if not bounds:
             raise Error("bounds must be provided for bounded method.")
         return _bounded_minimize[dtype, f](args, bounds.value(), atol, maxiter)
