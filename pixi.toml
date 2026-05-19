@@ -9,31 +9,16 @@ channels = [
 platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
-[dependencies]
-mojo = ">=1.0.0b1,<2"
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
-msl = {git = "https://github.com/shivasankarka/MojoScientificLibrary.git", branch = "main"}
-
-[feature.test.dependencies]
-python = ">=3.13,<3.14"
-scipy = ">=1.14"
-numpy = ">=2.4.3,<3"
-
-[feature.test.tasks]
-# Package then run all tests inside the test environment (has Python/SciPy)
-package = "mojo package scijo && cp scijo.mojopkg tests/"
-tests = { depends-on = ["package"], cmd = "bash ./tests/test_all.sh" }
-t = { depends-on = ["package"], cmd = "clear && bash ./tests/test_all.sh" }
-
-[environments]
-test = ["test"]
-
 [tasks]
 format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
 package = "mojo package scijo && cp scijo.mojopkg tests/"
 tests = { depends-on = ["package"], cmd = "bash tests/test_all.sh" }
 final = { depends-on = ["package"], cmd = "mojo format ./scijo && mojo format ./tests && bash tests/test_all.sh" }
-build = "mojo build"
+
+[dependencies]
+mojo = ">=1.0.0b1,<2"
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
 [package]
 name = "scijo"
@@ -47,15 +32,28 @@ name = "scijo"
 
 [package.host-dependencies]
 mojo = "==1.0.0b1"
-# numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
-numojo = { path = "../NuMojo"}
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
 [package.build-dependencies]
 mojo = "==1.0.0b1"
-# numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
-numojo = { path = "../NuMojo"}
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
 [package.run-dependencies]
 mojo = "==1.0.0b1"
-# numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
-numojo = { path = "../NuMojo"}
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+
+[feature.test.dependencies]
+python = ">=3.13,<3.14"
+scipy = ">=1.14"
+numpy = ">=2.4.3,<3"
+
+[feature.test.tasks]
+package = "mojo package scijo && cp scijo.mojopkg tests/"
+tests = { depends-on = ["package"], cmd = "bash ./tests/test_all.sh" }
+t = { depends-on = ["package"], cmd = "clear && bash ./tests/test_all.sh" }
+
+[environments]
+test = ["test"]
