@@ -163,7 +163,7 @@ def _brent_minimize[
     var fx = fb
     var fw = fb
     var fv = fb
-    var d: Scalar[dtype] = 0.0
+    var d: Scalar[dtype]
     var e: Scalar[dtype] = 0.0
 
     for i in range(maxiter):
@@ -194,7 +194,7 @@ def _brent_minimize[
                 and p > q * (a - x)
                 and p < q * (c - x)
             ):
-                var d = p / q
+                d = p / q
                 var u1 = x + d
                 if (u1 - a) < tol2 or (c - u1) < tol2:
                     d = tol1 if x < m else -tol1
@@ -341,7 +341,7 @@ def _bounded_minimize[
     var fw = fx
     var fv = fx
     var nfev = 1
-    var d: Scalar[dtype] = 0
+    var d: Scalar[dtype]
     var e: Scalar[dtype] = 0
 
     for i in range(maxiter):
@@ -463,10 +463,10 @@ def minimize_scalar[
         from scijo.prelude import *
         from scijo.optimize import minimize_scalar
 
-        def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
             return (x - 2) * (x - 2) + 1
 
-        var result = minimize_scalar[Float64, objective, method="Brent"](
+        var result = minimize_scalar[f64, objective, method="Brent"](
             bracket=(0.0, 4.0),
             atol=1e-8,
             maxiter=100
