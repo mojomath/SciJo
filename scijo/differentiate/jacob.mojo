@@ -10,9 +10,10 @@ differences with parallelized column evaluation.
 Examples
 --------
     ```mojo
+    from scijo.prelude import *
     from scijo.differentiate import jacobian
 
-    def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+    def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> NDArray[dtype]:
         return x * x
 
     var x = nm.array[f64]([1.0, 2.0])
@@ -64,7 +65,7 @@ def jacobian[
         from scijo.differentiate import jacobian
         from scijo.prelude import *
 
-        def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+        def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> NDArray[dtype]:
             return x * x
 
         var x = nm.array[f64]([1.0, 2.0])
