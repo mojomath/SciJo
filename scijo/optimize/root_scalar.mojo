@@ -54,7 +54,7 @@ def root_scalar[
     Parameters:
         dtype: The floating-point data type.
         f: Scalar objective function.
-        method: Root-finding method (compile-time). Supported: `"bisect"`,
+        method: Root-finding method. Supported: `"bisect"`,
             `"secant"`.
 
     Args:
@@ -127,7 +127,7 @@ def root_scalar[
         dtype: The floating-point data type.
         f: Scalar objective function.
         fprime: Derivative of `f`.
-        method: Root-finding method (compile-time). Supported: `"newton"`,
+        method: Root-finding method. Supported: `"newton"`,
             `"bisect"`, `"secant"`.
 
     Args:

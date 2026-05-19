@@ -138,7 +138,25 @@ def _brent_minimize_msl[
     tol: Scalar[dtype],
     maxiter: Int,
 ) raises -> OptimizeResult[dtype]:
-    """Runs Brent minimization through the MSL backend."""
+    """Minimizes a scalar function using Brent's method.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Objective function with signature `def(x, args) -> Scalar[dtype]`.
+
+    Args:
+        args: Optional arguments forwarded to `f`.
+        interval: Search interval `(a, b)`.
+        tol: Convergence tolerance used for absolute and relative thresholds.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        OptimizeResult[dtype] containing minimizer location, objective value,
+        convergence status, and diagnostics.
+
+    Raises:
+        Error: If interval endpoints are not distinct.
+    """
     var a: Scalar[dtype] = interval[0]
     var b: Scalar[dtype] = interval[1]
 
@@ -188,7 +206,25 @@ def _golden_minimize_msl[
     tol: Scalar[dtype],
     maxiter: Int,
 ) raises -> OptimizeResult[dtype]:
-    """Runs golden-section minimization through the MSL backend."""
+    """Minimizes a scalar function using golden-section search.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Objective function with signature `def(x, args) -> Scalar[dtype]`.
+
+    Args:
+        args: Optional arguments forwarded to `f`.
+        interval: Search interval `(a, b)`.
+        tol: Convergence tolerance used for absolute and relative thresholds.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        OptimizeResult[dtype] containing minimizer location, objective value,
+        convergence status, and diagnostics.
+
+    Raises:
+        Error: If interval endpoints are not distinct.
+    """
     var a: Scalar[dtype] = interval[0]
     var b: Scalar[dtype] = interval[1]
 
@@ -569,7 +605,8 @@ def minimize_scalar[
     Parameters:
         dtype: The floating-point data type.
         f: Function f(x, args) -> Scalar[dtype] to minimize.
-        method: Optimization algorithm: "Brent", "Golden", or "Bounded".
+        method: Optimization algorithm: "Brent", "Golden", or
+            "Bounded".
 
     Args:
         bracket: (a, b) tuple specifying an initial interval for Brent and Golden methods.
@@ -597,8 +634,7 @@ def minimize_scalar[
         print(result)
         ```
     """
-    var methodd = method.lower()
-    if methodd == "Brent" or methodd == "brent":
+    comptime if method == "Brent" or method == "brent":
         if bracket:
             return _brent_minimize_msl[dtype, f](
                 args, bracket.value(), atol, maxiter
@@ -609,7 +645,7 @@ def minimize_scalar[
             )
         raise Error("bracket or bounds must be provided for Brent method.")
 
-    if methodd == "Golden" or methodd == "golden":
+    elif method == "Golden" or method == "golden":
         if bracket:
             return _golden_minimize_msl[dtype, f](
                 args, bracket.value(), atol, maxiter
@@ -620,13 +656,14 @@ def minimize_scalar[
             )
         raise Error("bracket or bounds must be provided for Golden method.")
 
-    if methodd == "Bounded" or methodd == "bounded":
+    elif method == "Bounded" or method == "bounded":
         if not bounds:
             raise Error("bounds must be provided for bounded method.")
         return _bounded_minimize[dtype, f](args, bounds.value(), atol, maxiter)
 
-    raise Error(
-        "Unsupported method: "
-        + String(method)
-        + ". Supported methods: 'Brent', 'Golden', 'Bounded'."
-    )
+    else:
+        raise Error(
+            "Unsupported method: "
+            + String(method)
+            + ". Supported methods: 'Brent', 'Golden', 'Bounded'."
+        )

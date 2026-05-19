@@ -39,7 +39,7 @@ def quad[
         dtype: The floating-point data type.
         integrand_func: Integrand function with signature
             `def(x, args) -> Scalar[dtype]`.
-        method: Quadrature method name (compile-time). Currently supports
+        method: Quadrature method name. Currently supports
             `"qng"`.
 
     Args:
