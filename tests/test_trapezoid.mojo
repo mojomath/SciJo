@@ -7,6 +7,7 @@ from scijo.integrate.fixed_sample import trapezoid, romb
 import scijo as sj
 import numojo as nm
 
+
 def test_basic_trapezoid() raises:
     """Test basic trapezoid integration matching SciPy examples."""
     var y1 = nm.fromstring[sj.f64]("[1, 2, 3]")

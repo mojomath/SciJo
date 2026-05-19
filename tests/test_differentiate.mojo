@@ -1,4 +1,9 @@
-from std.testing import assert_almost_equal, assert_equal, assert_true, assert_false
+from std.testing import (
+    assert_almost_equal,
+    assert_equal,
+    assert_true,
+    assert_false,
+)
 from std.testing import TestSuite
 from std.math import sin, cos, exp
 
@@ -7,7 +12,9 @@ from scijo.differentiate import derivative
 
 def constant_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
     F(x) = 5, f'(x) = 0.
     """
@@ -16,7 +23,9 @@ def constant_function[
 
 def linear_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
     F(x) = 3x + 2, f'(x) = 3.
     """
@@ -25,7 +34,9 @@ def linear_function[
 
 def quadratic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
     F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3.
     """
@@ -34,7 +45,9 @@ def quadratic_function[
 
 def cubic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
     F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1.
     """
@@ -76,7 +89,9 @@ def exp_function[
 
 def parameterized_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
     F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b.
     """

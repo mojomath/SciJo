@@ -68,6 +68,7 @@ def quad[
             + ". Supported methods: 'qng'."
         )
     else:
+
         @parameter
         def wrapped_fn(x: Float64) -> Float64:
             return Float64(integrand_func(Scalar[dtype](x), args))

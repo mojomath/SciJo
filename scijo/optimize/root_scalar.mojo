@@ -99,7 +99,9 @@ def root_scalar[
         )
 
     else:
-        raise Error("Scijo [root_scalar]: Unsupported method: " + String(method))
+        raise Error(
+            "Scijo [root_scalar]: Unsupported method: " + String(method)
+        )
 
 
 def root_scalar[
@@ -168,7 +170,9 @@ def root_scalar[
         )
 
     else:
-        raise Error("Scijo [root_scalar]: Unsupported method: " + String(method))
+        raise Error(
+            "Scijo [root_scalar]: Unsupported method: " + String(method)
+        )
 
 
 def newton[
@@ -265,6 +269,7 @@ def bisect[
     Returns:
         RootResult[dtype] containing convergence and diagnostic fields.
     """
+
     @parameter
     def wrapped_fn(x: Float64) -> Float64:
         return Float64(f(Scalar[dtype](x), args))
@@ -317,6 +322,7 @@ def secant[
     Returns:
         RootResult[dtype] containing convergence and diagnostic fields.
     """
+
     @parameter
     def wrapped_fn(x: Float64) -> Float64:
         return Float64(f(Scalar[dtype](x), args))

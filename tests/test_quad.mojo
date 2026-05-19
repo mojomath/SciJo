@@ -7,7 +7,12 @@ solutions and edge cases, similar to SciPy's quad function tests.
 To run: `mojo test tests/test_quad.mojo -I .` from the project root directory.
 """
 
-from std.testing import assert_almost_equal, assert_equal, assert_true, assert_false
+from std.testing import (
+    assert_almost_equal,
+    assert_equal,
+    assert_true,
+    assert_false,
+)
 from std.testing import TestSuite
 from std.math import sin, cos, exp, log, pi, sqrt
 
