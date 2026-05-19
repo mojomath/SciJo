@@ -10,14 +10,15 @@ section search, and bounded minimization.
 Examples
 --------
     ```mojo
+    from scijo.prelude import *
     from scijo.optimize import minimize_scalar
 
-    def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return (x - 2) * (x - 2) + 1
 
-    var result = minimize_scalar[Float64, objective, method="Brent"](
-        Bracket=(0.0, 4.0),
-        tol=1e-8,
+    var result = minimize_scalar[f64, objective, method="Brent"](
+        bracket=(0.0, 4.0),
+        atol=1e-8,
         maxiter=100
     )
     ```
