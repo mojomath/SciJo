@@ -16,6 +16,10 @@ References
 """
 
 
+from msl import deriv_central as msl_deriv_central
+from msl import deriv_forward as msl_deriv_forward
+from msl import deriv_backward as msl_deriv_backward
+
 from scijo.differentiate.utility import (
     DiffResult,
     generate_central_finite_difference_table,
@@ -46,17 +50,12 @@ def derivative[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
 ) raises -> DiffResult[dtype] where dtype.is_floating_point():
-    """Computes the first derivative of a scalar function using finite differences.
-
-    Provides a unified interface for computing first-order derivatives using
-    central, forward, or backward finite difference methods with adaptive step
-    size reduction for improved accuracy.
+    """Computes the first derivative of a scalar function.
 
     Parameters:
         dtype: The floating-point data type.
         deriv_func: Function to differentiate with signature def(x, args) -> Scalar[dtype].
-        step_direction: Direction of finite difference
-            (central=0, forward=1, backward=-1). Keyword-only.
+        step_direction: Direction of finite difference: central=0, forward=1, backward=-1.
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -77,59 +76,65 @@ def derivative[
         Error: If step_direction is not in {-1, 0, 1}.
         Error: If the specified order is not supported for the chosen method.
 
+    NOTES:
+        `initial_step` controls the backend step size. Other tuning arguments
+        (`atol`, `rtol`, `max_iter`, `order`, `step_factor`) are currently
+        accepted for API compatibility.
+
     Examples:
         ```mojo
         from scijo.differentiate import derivative
         from scijo.prelude import *
 
-        def f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        def f[dtype: DType](
+            x: Scalar[dtype],
+            args: Optional[List[Scalar[dtype]]]
+        ) capturing -> Scalar[dtype]:
             return x * x
 
         var res = derivative[f64, f](1.0)
         ```
     """
 
+    @parameter
+    def wrapped_fn(x: Float64) -> Float64:
+        return Float64(deriv_func(Scalar[dtype](x), args))
+
     comptime if step_direction == 0:
-        comptime first_order_coefficients = generate_central_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_central_difference[dtype, deriv_func](
-            x0,
-            args,
-            atol=atol,
-            rtol=rtol,
-            order=order,
-            initial_step=initial_step,
-            step_factor=step_factor,
-            max_iter=max_iter,
+        var result = msl_deriv_central[wrapped_fn](
+            Float64(x0), h=Float64(initial_step)
+        )
+        return DiffResult[dtype](
+            success=True,
+            df=Scalar[dtype](result.val),
+            error=Scalar[dtype](result.err),
+            nit=1,
+            nfev=4,
+            x=x0,
         )
     elif step_direction == 1:
-        comptime first_order_coefficients = generate_forward_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_forward_difference[dtype, deriv_func](
-            x0,
-            args,
-            atol,
-            rtol,
-            order,
-            initial_step,
-            step_factor,
-            max_iter,
+        var result = msl_deriv_forward[wrapped_fn](
+            Float64(x0), h=Float64(initial_step)
+        )
+        return DiffResult[dtype](
+            success=True,
+            df=Scalar[dtype](result.val),
+            error=Scalar[dtype](result.err),
+            nit=1,
+            nfev=4,
+            x=x0,
         )
     elif step_direction == -1:
-        comptime first_order_coefficients = generate_backward_finite_difference_table[
-            dtype
-        ]()
-        return _derivative_backward_difference[dtype, deriv_func](
-            x0,
-            args,
-            atol,
-            rtol,
-            order,
-            initial_step,
-            step_factor,
-            max_iter,
+        var result = msl_deriv_backward[wrapped_fn](
+            Float64(x0), h=Float64(initial_step)
+        )
+        return DiffResult[dtype](
+            success=True,
+            df=Scalar[dtype](result.val),
+            error=Scalar[dtype](result.err),
+            nit=1,
+            nfev=4,
+            x=x0,
         )
     else:
         raise Error(
