@@ -3,7 +3,7 @@ from std.testing import TestSuite
 from std.math import sqrt
 
 import scijo as sj
-from scijo.optimize.root_scalar import root_scalar, newton, bisect, secant
+from scijo.optimize.root_scalar import root_scalar, newton, bisect, brent, secant
 
 
 def test_bisect_root_scalar_basic() raises:
@@ -53,6 +53,24 @@ def test_secant_basic() raises:
     assert_almost_equal(result.root, sqrt(2.0), atol=1e-8)
     assert_equal(result.success, True)
     assert_equal(result.method, "secant")
+
+
+def test_brent_basic() raises:
+    @parameter
+    def f[
+        dtype: DType
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x - 2.0
+
+    var result = brent[sj.f64, f](None, (0.0, 2.0))
+    assert_almost_equal(result.root, sqrt(2.0), atol=1e-8)
+    assert_equal(result.success, True)
+    assert_equal(result.method, "brent")
+
+    var result2 = root_scalar[sj.f64, f, method="brent"](bracket=(0.0, 2.0))
+    assert_almost_equal(result2.root, sqrt(2.0), atol=1e-8)
+    assert_equal(result2.success, True)
+    assert_equal(result2.method, "brent")
 
 
 def test_bisect_invalid_bracket_raises() raises:

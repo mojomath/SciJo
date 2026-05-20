@@ -184,6 +184,24 @@ def test_quad_with_parameters() raises:
     assert_true(result.ier == 0)
 
 
+def test_quad_method_dispatch() raises:
+    """Test compile-time method dispatch for qng/qag/qags."""
+
+    @parameter
+    def cubic[
+        dtype: DType
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x * x
+
+    var qng_res = quad[sj.f64, cubic, method="qng"](0.0, 1.0)
+    var qag_res = quad[sj.f64, cubic, method="qag"](0.0, 1.0, limit=100)
+    var qags_res = quad[sj.f64, cubic, method="qags"](0.0, 1.0, limit=100)
+
+    assert_almost_equal(qng_res.integral, 0.25, atol=1e-10)
+    assert_almost_equal(qag_res.integral, 0.25, atol=1e-10)
+    assert_almost_equal(qags_res.integral, 0.25, atol=1e-10)
+
+
 def test_quad_difficult_integrands() raises:
     """Test quad with more challenging integrands."""
 
