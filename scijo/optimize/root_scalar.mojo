@@ -8,6 +8,7 @@ Scalar root-finding routines with SciPy-like frontend signatures.
 """
 
 from msl import root_bisect as msl_root_bisect
+from msl import root_brent as msl_root_brent
 from msl import root_newton as msl_root_newton
 from msl import root_secant as msl_root_secant
 
@@ -55,7 +56,7 @@ def root_scalar[
         dtype: The floating-point data type.
         f: Scalar objective function.
         method: Root-finding method. Supported: `"bisect"`,
-            `"secant"`.
+            `"brent"`, `"secant"`.
 
     Args:
         args: Optional arguments forwarded to `f`.
@@ -81,6 +82,14 @@ def root_scalar[
                 " method."
             )
         return bisect[dtype, f](args, bracket.value(), atol, rtol, maxiter)
+
+    elif method == "brent":
+        if not bracket:
+            raise Error(
+                "Scijo [root_scalar]: Bracket must be provided for brent"
+                " method."
+            )
+        return brent[dtype, f](args, bracket.value(), atol, rtol, maxiter)
 
     elif method == "secant":
         if not (x0 and x1):
@@ -130,7 +139,7 @@ def root_scalar[
         f: Scalar objective function.
         fprime: Derivative of `f`.
         method: Root-finding method. Supported: `"newton"`,
-            `"bisect"`, `"secant"`.
+            `"bisect"`, `"brent"`, `"secant"`.
 
     Args:
         args: Optional arguments forwarded to `f` and `fprime`.
@@ -158,6 +167,14 @@ def root_scalar[
                 " method."
             )
         return bisect[dtype, f](args, bracket.value(), atol, rtol, maxiter)
+
+    elif method == "brent":
+        if not bracket:
+            raise Error(
+                "Scijo [root_scalar]: Bracket must be provided for brent"
+                " method."
+            )
+        return brent[dtype, f](args, bracket.value(), atol, rtol, maxiter)
 
     elif method == "secant":
         if not (x0 and x1):
@@ -289,6 +306,56 @@ def bisect[
         success=result.success,
         message=_root_message(result.success, result.errno),
         method="bisect",
+    )
+
+
+def brent[
+    dtype: DType,
+    f: def[dtype: DType](
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing -> Scalar[dtype],
+](
+    args: Optional[List[Scalar[dtype]]],
+    bracket: Tuple[Scalar[dtype], Scalar[dtype]],
+    atol: Scalar[dtype] = 1e-8,
+    rtol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 100,
+) raises -> RootResult[dtype]:
+    """Finds a root using Brent's method.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Scalar objective function.
+
+    Args:
+        args: Optional arguments forwarded to `f`.
+        bracket: Bracketing interval `(a, b)`.
+        atol: Absolute convergence tolerance.
+        rtol: Relative convergence tolerance.
+        maxiter: Maximum solver iterations.
+
+    Returns:
+        RootResult[dtype] containing convergence and diagnostic fields.
+    """
+    @parameter
+    def wrapped_fn(x: Float64) -> Float64:
+        return Float64(f(Scalar[dtype](x), args))
+
+    var result = msl_root_brent[wrapped_fn](
+        Float64(bracket[0]),
+        Float64(bracket[1]),
+        epsabs=Float64(atol),
+        epsrel=Float64(rtol),
+        max_iter=maxiter,
+    )
+
+    return RootResult[dtype](
+        root=Scalar[dtype](result.root),
+        nit=result.nit,
+        nfev=result.nfev,
+        success=result.success,
+        message=_root_message(result.success, result.errno),
+        method="brent",
     )
 
 

@@ -15,6 +15,7 @@ Available Functions
 - `newton`            — Newton-Raphson root-finding method.
 - `bisect`            — Bisection root-finding method.
 - `secant`            — Secant root-finding method.
+- `brent`             — Brent root-finding method.
 - `minimize_scalar`   — Minimize a scalar function.
 
 Examples
@@ -29,6 +30,6 @@ Examples
     ```
 """
 
-from .root_scalar import root_scalar, newton, bisect, secant
+from .root_scalar import root_scalar, newton, bisect, brent, secant
 from .min_scalar import minimize_scalar, OptimizeResult
 from .utility import RootResult
