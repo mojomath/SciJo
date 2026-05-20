@@ -16,10 +16,6 @@ References
 """
 
 
-from msl import deriv_central as msl_deriv_central
-from msl import deriv_forward as msl_deriv_forward
-from msl import deriv_backward as msl_deriv_backward
-
 from scijo.differentiate.utility import (
     DiffResult,
     generate_central_finite_difference_table,
@@ -32,7 +28,8 @@ from scijo.differentiate.utility import (
 # Derivative
 # ===----------------------------------------------------------------------=== #
 
-
+# TODO: move if condition checks and stuff to main API function and keep private
+# function focused on numerics.
 def derivative[
     dtype: DType,
     deriv_func: def[dtype: DType](
@@ -77,9 +74,8 @@ def derivative[
         Error: If the specified order is not supported for the chosen method.
 
     NOTES:
-        `initial_step` controls the backend step size. Other tuning arguments
-        (`atol`, `rtol`, `max_iter`, `order`, `step_factor`) are currently
-        accepted for API compatibility.
+        This implementation uses SciJo's internal order-aware finite
+        difference routines.
 
     Examples:
         ```mojo
@@ -96,45 +92,38 @@ def derivative[
         ```
     """
 
-    @parameter
-    def wrapped_fn(x: Float64) -> Float64:
-        return Float64(deriv_func(Scalar[dtype](x), args))
-
     comptime if step_direction == 0:
-        var result = msl_deriv_central[wrapped_fn](
-            Float64(x0), h=Float64(initial_step)
-        )
-        return DiffResult[dtype](
-            success=True,
-            df=Scalar[dtype](result.val),
-            error=Scalar[dtype](result.err),
-            nit=1,
-            nfev=4,
-            x=x0,
+        return _derivative_central_difference[dtype, deriv_func](
+            x0=x0,
+            args=args,
+            atol=atol,
+            rtol=rtol,
+            order=order,
+            initial_step=initial_step,
+            step_factor=step_factor,
+            max_iter=max_iter,
         )
     elif step_direction == 1:
-        var result = msl_deriv_forward[wrapped_fn](
-            Float64(x0), h=Float64(initial_step)
-        )
-        return DiffResult[dtype](
-            success=True,
-            df=Scalar[dtype](result.val),
-            error=Scalar[dtype](result.err),
-            nit=1,
-            nfev=4,
-            x=x0,
+        return _derivative_forward_difference[dtype, deriv_func](
+            x0=x0,
+            args=args,
+            atol=atol,
+            rtol=rtol,
+            order=order,
+            initial_step=initial_step,
+            step_factor=step_factor,
+            max_iter=max_iter,
         )
     elif step_direction == -1:
-        var result = msl_deriv_backward[wrapped_fn](
-            Float64(x0), h=Float64(initial_step)
-        )
-        return DiffResult[dtype](
-            success=True,
-            df=Scalar[dtype](result.val),
-            error=Scalar[dtype](result.err),
-            nit=1,
-            nfev=4,
-            x=x0,
+        return _derivative_backward_difference[dtype, deriv_func](
+            x0=x0,
+            args=args,
+            atol=atol,
+            rtol=rtol,
+            order=order,
+            initial_step=initial_step,
+            step_factor=step_factor,
+            max_iter=max_iter,
         )
     else:
         raise Error(
@@ -404,6 +393,7 @@ def _derivative_forward_difference[
             " computation."
         )
 
+    var coefficients: List[Scalar[dtype]]
     if order in (1, 2, 3, 4, 5, 6):
         coefficients = first_order_coefficients[order].copy()
     else:
@@ -553,6 +543,7 @@ def _derivative_backward_difference[
             " computation."
         )
 
+    var coefficients: List[Scalar[dtype]]
     if order in (1, 2, 3, 4, 5, 6):
         coefficients = first_order_coefficients[order].copy()
     else:
@@ -572,7 +563,7 @@ def _derivative_backward_difference[
         var j: Int = 0
         for ref coeff in coefficients:
             diff_estimate += coeff * deriv_func(
-                x0 + step * Scalar[dtype](j), args
+                x0 + step * Scalar[dtype](j - len(coefficients) + 1), args
             )
             j += 1
         diff_estimate /= step
