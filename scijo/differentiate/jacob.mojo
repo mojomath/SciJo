@@ -102,3 +102,100 @@ def jacobian[
         raise Error("SciJo [jacobian]: " + errors[0])
 
     return jacob^
+
+
+# ===----------------------------------------------------------------------=== #
+# Hessian
+# ===----------------------------------------------------------------------=== #
+
+
+def hessian[
+    dtype: DType,
+    hess_func: def[dtype: DType](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype],
+](
+    x: NDArray[dtype],
+    args: Optional[List[Scalar[dtype]]] = None,
+    step: Scalar[dtype] = 1e-5,
+) raises -> NDArray[dtype]:
+    """Computes the Hessian matrix of a scalar-valued function.
+
+    Uses the central finite difference formula for second-order mixed partial
+    derivatives, matching `scipy.differentiate.hessian` (numerical approximation):
+
+    H[i, j] = (f(x + h*ei + h*ej) - f(x + h*ei - h*ej)
+                - f(x - h*ei + h*ej) + f(x - h*ei - h*ej)) / (4 * h²)
+
+    The diagonal entries use the standard second-derivative formula:
+
+    H[i, i] = (f(x + h*ei) - 2*f(x) + f(x - h*ei)) / h²
+
+    Parameters:
+        dtype: The floating-point data type.
+        hess_func: Scalar-valued function with signature
+            ``def(x: NDArray[dtype], args) -> Scalar[dtype]``.
+
+    Args:
+        x: Input vector of shape (n,) at which to evaluate the Hessian.
+        args: Optional arguments to pass to the function.
+        step: Finite difference step size. Defaults to 1e-5.
+
+    Returns:
+        Symmetric NDArray of shape (n, n) containing the Hessian matrix.
+
+    Raises:
+        Error: If function evaluation fails.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import hessian
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> Scalar[dtype]:
+            return x.item(0) * x.item(0) + x.item(1) * x.item(1)
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var H = hessian[f64, f](x)
+        # H ≈ [[2, 0], [0, 2]]
+        ```
+    """
+    var n: Int = x.size
+    var H = zeros[dtype](Shape(n, n))
+    var f0 = hess_func(x, args)
+    var h2 = step * step
+
+    for i in range(n):
+        # diagonal: (f(x+h*ei) - 2*f0 + f(x-h*ei)) / h²
+        var xi_pp = x.copy()
+        var xi_mm = x.copy()
+        xi_pp.store(i, val=x.load(i) + step)
+        xi_mm.store(i, val=x.load(i) - step)
+        var diag = (hess_func(xi_pp, args) - 2.0 * f0 + hess_func(xi_mm, args)) / h2
+        H.store(i * n + i, val=diag)
+
+        for j in range(i + 1, n):
+            # off-diagonal: 4-point cross-difference
+            var x_pp = x.copy()
+            var x_pm = x.copy()
+            var x_mp = x.copy()
+            var x_mm = x.copy()
+            x_pp.store(i, val=x.load(i) + step)
+            x_pp.store(j, val=x.load(j) + step)
+            x_pm.store(i, val=x.load(i) + step)
+            x_pm.store(j, val=x.load(j) - step)
+            x_mp.store(i, val=x.load(i) - step)
+            x_mp.store(j, val=x.load(j) + step)
+            x_mm.store(i, val=x.load(i) - step)
+            x_mm.store(j, val=x.load(j) - step)
+            var val = (
+                hess_func(x_pp, args)
+                - hess_func(x_pm, args)
+                - hess_func(x_mp, args)
+                + hess_func(x_mm, args)
+            ) / (4.0 * h2)
+            H.store(i * n + j, val=val)
+            H.store(j * n + i, val=val)
+
+    return H^
