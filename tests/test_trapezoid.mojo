@@ -3,7 +3,12 @@ from std.testing import assert_almost_equal, assert_equal
 from std.testing import TestSuite
 from std.math import sin as _sin
 
-from scijo.integrate.fixed_sample import trapezoid, romb
+from scijo.integrate.fixed_sample import (
+    trapezoid,
+    romb,
+    cumulative_trapezoid,
+    cumulative_simpson,
+)
 import scijo as sj
 import numojo as nm
 
@@ -269,6 +274,119 @@ def test_romb_matches_scipy() raises:
         )
     except:
         pass  # SciPy not available
+
+
+def test_cumulative_trapezoid_dx() raises:
+    """Cumulative trapezoid with dx matches scipy.integrate.cumulative_trapezoid."""
+    try:
+        var scipy_integrate = Python.import_module("scipy.integrate")
+
+        # uniform spacing, no initial
+        var y = nm.fromstring[sj.f64]("[1.0, 2.0, 3.0, 4.0]")
+        var cum = cumulative_trapezoid[sj.f64](y, dx=1.0)
+        var py_y = y.to_numpy()
+        var py_cum = scipy_integrate.cumulative_trapezoid(py_y, dx=1.0)
+        assert_equal(cum.size, 3)
+        for i in range(cum.size):
+            assert_almost_equal(
+                cum.item(i), Float64(py=py_cum[i]), atol=1e-14,
+                msg="cumulative_trapezoid dx index " + String(i),
+            )
+
+        # with initial=0
+        var cum_init = cumulative_trapezoid[sj.f64](y, dx=1.0, initial=0.0)
+        var py_cum_init = scipy_integrate.cumulative_trapezoid(py_y, dx=1.0, initial=0)
+        assert_equal(cum_init.size, 4)
+        for i in range(cum_init.size):
+            assert_almost_equal(
+                cum_init.item(i), Float64(py=py_cum_init[i]), atol=1e-14,
+                msg="cumulative_trapezoid dx initial=0 index " + String(i),
+            )
+
+        # sin over [0, pi]
+        var x = nm.linspace[sj.f64](0.0, 3.141592653589793, 11)
+        var y_sin = nm.zeros[sj.f64](x.shape)
+        for i in range(x.size):
+            y_sin.itemset(i, _sin(x.item(i)))
+        var dx_sin = x.item(1) - x.item(0)
+        var cum_sin = cumulative_trapezoid[sj.f64](y_sin, dx=dx_sin, initial=0.0)
+        var py_cum_sin = scipy_integrate.cumulative_trapezoid(
+            y_sin.to_numpy(), dx=Float64(dx_sin), initial=0
+        )
+        for i in range(cum_sin.size):
+            assert_almost_equal(
+                cum_sin.item(i), Float64(py=py_cum_sin[i]), atol=1e-4,
+                msg="cumulative_trapezoid sin index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping cumulative_trapezoid test")
+
+
+def test_cumulative_trapezoid_x() raises:
+    """Cumulative trapezoid with non-uniform x matches scipy."""
+    try:
+        var scipy_integrate = Python.import_module("scipy.integrate")
+
+        var x = nm.fromstring[sj.f64]("[0.0, 1.0, 3.0, 6.0]")
+        var y = nm.fromstring[sj.f64]("[0.0, 1.0, 9.0, 36.0]")  # y = x^2
+        var cum = cumulative_trapezoid[sj.f64](y, x, initial=0.0)
+        var py_cum = scipy_integrate.cumulative_trapezoid(
+            y.to_numpy(), x.to_numpy(), initial=0
+        )
+        assert_equal(cum.size, 4)
+        for i in range(cum.size):
+            assert_almost_equal(
+                cum.item(i), Float64(py=py_cum[i]), atol=1e-12,
+                msg="cumulative_trapezoid x index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping cumulative_trapezoid x test")
+
+
+def test_cumulative_simpson_dx() raises:
+    """Cumulative Simpson with dx matches scipy.integrate.cumulative_simpson."""
+    try:
+        var scipy_integrate = Python.import_module("scipy.integrate")
+
+        # odd n=5
+        var y = nm.fromstring[sj.f64]("[1.0, 4.0, 1.0, 4.0, 1.0]")
+        var cum = cumulative_simpson[sj.f64](y, dx=1.0, initial=0.0)
+        var py_cum = scipy_integrate.cumulative_simpson(
+            y.to_numpy(), dx=1.0, initial=0
+        )
+        assert_equal(cum.size, 5)
+        for i in range(cum.size):
+            assert_almost_equal(
+                cum.item(i), Float64(py=py_cum[i]), atol=1e-12,
+                msg="cumulative_simpson n=5 index " + String(i),
+            )
+
+        # even n=4 (last panel falls back to trapezoid)
+        var y4 = nm.fromstring[sj.f64]("[1.0, 4.0, 1.0, 4.0]")
+        var cum4 = cumulative_simpson[sj.f64](y4, dx=1.0, initial=0.0)
+        var py_cum4 = scipy_integrate.cumulative_simpson(
+            y4.to_numpy(), dx=1.0, initial=0
+        )
+        assert_equal(cum4.size, 4)
+        for i in range(cum4.size):
+            assert_almost_equal(
+                cum4.item(i), Float64(py=py_cum4[i]), atol=1e-12,
+                msg="cumulative_simpson n=4 index " + String(i),
+            )
+
+        # linear data: result should be exact
+        var y_lin = nm.fromstring[sj.f64]("[0.0, 1.0, 2.0, 3.0, 4.0]")
+        var cum_lin = cumulative_simpson[sj.f64](y_lin, dx=1.0, initial=0.0)
+        var py_cum_lin = scipy_integrate.cumulative_simpson(
+            y_lin.to_numpy(), dx=1.0, initial=0
+        )
+        for i in range(cum_lin.size):
+            assert_almost_equal(
+                cum_lin.item(i), Float64(py=py_cum_lin[i]), atol=1e-12,
+                msg="cumulative_simpson linear index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping cumulative_simpson test")
 
 
 def main() raises:

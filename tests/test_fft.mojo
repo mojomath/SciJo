@@ -5,6 +5,7 @@ from std.testing import TestSuite
 import scijo as sj
 import numojo as nm
 from scijo.fft.fastfourier import fft, ifft, rfft, irfft
+from scijo.fft import fftfreq, rfftfreq, fftshift, ifftshift, next_fast_len
 from numojo.core.complex import ComplexNDArray, ComplexSIMD
 from numojo.core import CScalar
 from numojo.core.ndarray import NDArray
@@ -320,6 +321,156 @@ def test_irfft_roundtrip() raises:
     var np_x_rec = np.fft.irfft(np.fft.rfft(np_x), n)
 
     compare_real_arrays[nm.f64](x_rec, np_x_rec, "irfft roundtrip", atol=1e-10)
+
+
+def test_fftfreq() raises:
+    """fftfreq matches scipy.fft.fftfreq for even and odd n."""
+    try:
+        var scipy_fft = Python.import_module("scipy.fft")
+
+        # even n=8, d=1
+        var freqs = fftfreq[nm.f64](8)
+        var py_freqs = scipy_fft.fftfreq(8)
+        for i in range(freqs.size):
+            assert_almost_equal(
+                freqs.item(i), Float64(py=py_freqs[i]), atol=1e-14,
+                msg="fftfreq n=8 index " + String(i),
+            )
+
+        # even n=8, d=0.5
+        var freqs_d = fftfreq[nm.f64](8, d=Scalar[nm.f64](0.5))
+        var py_freqs_d = scipy_fft.fftfreq(8, d=0.5)
+        for i in range(freqs_d.size):
+            assert_almost_equal(
+                freqs_d.item(i), Float64(py=py_freqs_d[i]), atol=1e-14,
+                msg="fftfreq n=8 d=0.5 index " + String(i),
+            )
+
+        # odd n=7
+        var freqs_odd = fftfreq[nm.f64](7)
+        var py_freqs_odd = scipy_fft.fftfreq(7)
+        for i in range(freqs_odd.size):
+            assert_almost_equal(
+                freqs_odd.item(i), Float64(py=py_freqs_odd[i]), atol=1e-14,
+                msg="fftfreq n=7 index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping fftfreq test")
+
+
+def test_rfftfreq() raises:
+    """rfftfreq matches scipy.fft.rfftfreq for even and odd n."""
+    try:
+        var scipy_fft = Python.import_module("scipy.fft")
+
+        # even n=8
+        var freqs = rfftfreq[nm.f64](8)
+        var py_freqs = scipy_fft.rfftfreq(8)
+        assert_equal(freqs.size, 5)
+        for i in range(freqs.size):
+            assert_almost_equal(
+                freqs.item(i), Float64(py=py_freqs[i]), atol=1e-14,
+                msg="rfftfreq n=8 index " + String(i),
+            )
+
+        # odd n=7
+        var freqs_odd = rfftfreq[nm.f64](7)
+        var py_freqs_odd = scipy_fft.rfftfreq(7)
+        assert_equal(freqs_odd.size, 4)
+        for i in range(freqs_odd.size):
+            assert_almost_equal(
+                freqs_odd.item(i), Float64(py=py_freqs_odd[i]), atol=1e-14,
+                msg="rfftfreq n=7 index " + String(i),
+            )
+
+        # with d=0.1
+        var freqs_d = rfftfreq[nm.f64](8, d=Scalar[nm.f64](0.1))
+        var py_freqs_d = scipy_fft.rfftfreq(8, d=0.1)
+        for i in range(freqs_d.size):
+            assert_almost_equal(
+                freqs_d.item(i), Float64(py=py_freqs_d[i]), atol=1e-14,
+                msg="rfftfreq n=8 d=0.1 index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping rfftfreq test")
+
+
+def test_fftshift() raises:
+    """fftshift matches scipy.fft.fftshift."""
+    try:
+        var scipy_fft = Python.import_module("scipy.fft")
+        var np = Python.import_module("numpy")
+
+        # even n=8
+        var freqs = fftfreq[nm.f64](8)
+        var shifted = fftshift[nm.f64](freqs)
+        var py_shifted = scipy_fft.fftshift(scipy_fft.fftfreq(8))
+        for i in range(shifted.size):
+            assert_almost_equal(
+                shifted.item(i), Float64(py=py_shifted[i]), atol=1e-14,
+                msg="fftshift n=8 index " + String(i),
+            )
+
+        # odd n=7
+        var freqs_odd = fftfreq[nm.f64](7)
+        var shifted_odd = fftshift[nm.f64](freqs_odd)
+        var py_shifted_odd = scipy_fft.fftshift(scipy_fft.fftfreq(7))
+        for i in range(shifted_odd.size):
+            assert_almost_equal(
+                shifted_odd.item(i), Float64(py=py_shifted_odd[i]), atol=1e-14,
+                msg="fftshift n=7 index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping fftshift test")
+
+
+def test_ifftshift() raises:
+    """ifftshift is the inverse of fftshift."""
+    try:
+        var scipy_fft = Python.import_module("scipy.fft")
+
+        # even n=8: ifftshift(fftshift(x)) == x
+        var freqs = fftfreq[nm.f64](8)
+        var roundtrip = ifftshift[nm.f64](fftshift[nm.f64](freqs))
+        for i in range(freqs.size):
+            assert_almost_equal(
+                roundtrip.item(i), freqs.item(i), atol=1e-14,
+                msg="ifftshift roundtrip n=8 index " + String(i),
+            )
+
+        # odd n=7
+        var freqs_odd = fftfreq[nm.f64](7)
+        var roundtrip_odd = ifftshift[nm.f64](fftshift[nm.f64](freqs_odd))
+        for i in range(freqs_odd.size):
+            assert_almost_equal(
+                roundtrip_odd.item(i), freqs_odd.item(i), atol=1e-14,
+                msg="ifftshift roundtrip n=7 index " + String(i),
+            )
+
+        # match scipy directly
+        var py_result = scipy_fft.ifftshift(scipy_fft.fftshift(scipy_fft.fftfreq(8)))
+        for i in range(freqs.size):
+            assert_almost_equal(
+                freqs.item(i), Float64(py=py_result[i]), atol=1e-14,
+                msg="ifftshift scipy match index " + String(i),
+            )
+    except:
+        print("SciPy not available, skipping ifftshift test")
+
+
+def test_next_fast_len() raises:
+    """next_fast_len returns the correct next power of 2."""
+    assert_equal(next_fast_len(1), 1)
+    assert_equal(next_fast_len(2), 2)
+    assert_equal(next_fast_len(3), 4)
+    assert_equal(next_fast_len(4), 4)
+    assert_equal(next_fast_len(5), 8)
+    assert_equal(next_fast_len(8), 8)
+    assert_equal(next_fast_len(9), 16)
+    assert_equal(next_fast_len(100), 128)
+    assert_equal(next_fast_len(128), 128)
+    assert_equal(next_fast_len(129), 256)
+    assert_equal(next_fast_len(1000), 1024)
 
 
 def main() raises:

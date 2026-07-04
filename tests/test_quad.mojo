@@ -16,7 +16,15 @@ from std.testing import (
 from std.testing import TestSuite
 from std.math import sin, cos, exp, log, pi, sqrt
 
-from scijo.integrate import quad
+from scijo.integrate import (
+    quad,
+    QAG_GK15,
+    QAG_GK21,
+    QAG_GK31,
+    QAG_GK41,
+    QAG_GK51,
+    QAG_GK61,
+)
 import scijo as sj
 
 
@@ -293,6 +301,46 @@ def test_quad_difficult_integrands() raises:
 #     var result2 = quad[sj.f64, oscillatory](0.0, 2 * pi, None, limit=100)
 #     # This should integrate to near zero due to oscillation
 #     assert_almost_equal(result2.integral, 0.0, atol=1e-6)
+
+
+def test_qag_rule_constants() raises:
+    """All six QAG_GK* constants produce correct results on ∫x² dx from 0 to 1 = 1/3."""
+
+    @parameter
+    def quadratic[
+        dtype: DType
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x
+
+    var expected = 1.0 / 3.0
+
+    var r15 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK15](0.0, 1.0)
+    assert_almost_equal(r15.integral, expected, atol=1e-10, msg="QAG_GK15")
+
+    var r21 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK21](0.0, 1.0)
+    assert_almost_equal(r21.integral, expected, atol=1e-10, msg="QAG_GK21")
+
+    var r31 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK31](0.0, 1.0)
+    assert_almost_equal(r31.integral, expected, atol=1e-10, msg="QAG_GK31")
+
+    var r41 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK41](0.0, 1.0)
+    assert_almost_equal(r41.integral, expected, atol=1e-10, msg="QAG_GK41")
+
+    var r51 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK51](0.0, 1.0)
+    assert_almost_equal(r51.integral, expected, atol=1e-10, msg="QAG_GK51")
+
+    var r61 = quad[sj.f64, quadratic, method="qag", qag_rule=QAG_GK61](0.0, 1.0)
+    assert_almost_equal(r61.integral, expected, atol=1e-10, msg="QAG_GK61")
+
+
+def test_qag_rule_values() raises:
+    """QAG_GK* constants have the correct integer values matching MSL_INTEG_GAUSS*."""
+    assert_equal(QAG_GK15, 1)
+    assert_equal(QAG_GK21, 2)
+    assert_equal(QAG_GK31, 3)
+    assert_equal(QAG_GK41, 4)
+    assert_equal(QAG_GK51, 5)
+    assert_equal(QAG_GK61, 6)
 
 
 def main() raises:
