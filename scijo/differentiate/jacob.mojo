@@ -167,7 +167,6 @@ def hessian[
     var h2 = step * step
 
     for i in range(n):
-        # diagonal: (f(x+h*ei) - 2*f0 + f(x-h*ei)) / h²
         var xi_pp = x.copy()
         var xi_mm = x.copy()
         xi_pp.store(i, val=x.load(i) + step)
@@ -176,7 +175,6 @@ def hessian[
         H.store(i * n + i, val=diag)
 
         for j in range(i + 1, n):
-            # off-diagonal: 4-point cross-difference
             var x_pp = x.copy()
             var x_pm = x.copy()
             var x_mp = x.copy()

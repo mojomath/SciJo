@@ -12,6 +12,7 @@ Available Functions
 -------------------
 - `derivative` — Compute first-order derivatives using finite differences.
 - `jacobian`   — Compute the Jacobian matrix of a vector-valued function.
+- `hessian`    — Compute the Hessian matrix of a scalar-valued function.
 
 Examples
 --------
@@ -26,4 +27,4 @@ Examples
 """
 
 from .deriv import derivative
-from .jacob import jacobian
+from .jacob import jacobian, hessian
