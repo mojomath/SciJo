@@ -1,7 +1,16 @@
 version: 7
 platforms:
 - name: linux-64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=x86_64
 - name: osx-arm64
+  virtual-packages:
+  - __unix=0=0
+  - __osx=13.0
+  - __archspec=0=m1
 environments:
   default:
     channels:
@@ -61,9 +70,9 @@ environments:
       - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-      - conda_source: mojoblas[a00924ce] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-      - conda_source: msl[ffd6f887] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
-      - conda_source: numojo[2c198320] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+      - conda_source: mojoblas[907ff357] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+      - conda_source: msl[2a2e5015] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+      - conda_source: numojo[9484b5ad] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
@@ -109,9 +118,9 @@ environments:
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-      - conda_source: mojoblas[4fc33539] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-      - conda_source: msl[837fc178] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
-      - conda_source: numojo[6505a37c] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+      - conda_source: mojoblas[a09c109c] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+      - conda_source: msl[0b75fc62] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+      - conda_source: numojo[b2ec6211] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
   test:
     channels:
     - url: https://conda.modular.com/max/
@@ -178,9 +187,9 @@ environments:
       - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-      - conda_source: mojoblas[a00924ce] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-      - conda_source: msl[ffd6f887] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
-      - conda_source: numojo[2c198320] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+      - conda_source: mojoblas[907ff357] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+      - conda_source: msl[2a2e5015] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+      - conda_source: numojo[9484b5ad] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
@@ -236,9 +245,9 @@ environments:
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-      - conda_source: mojoblas[4fc33539] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-      - conda_source: msl[837fc178] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
-      - conda_source: numojo[6505a37c] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+      - conda_source: mojoblas[a09c109c] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+      - conda_source: msl[0b75fc62] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+      - conda_source: numojo[b2ec6211] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -1770,103 +1779,7 @@ packages:
   run_exports: {}
   size: 67503416
   timestamp: 1777596016502
-- conda_source: mojoblas[4fc33539] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-  version: 0.1.0
-  build: h60d57d3_0
-  subdir: osx-arm64
-  variants:
-    target_platform: osx-arm64
-  depends:
-  - mojo ==1.0.0b1
-  build_packages:
-  - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.4.0-pyhc90fa1f_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.4-py314hd8ed1ab_100.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/importlib-metadata-8.8.0-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.6.3-pyhd8ed1ab_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/pathspec-1.1.1-pyhd8ed1ab_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.9.6-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python-gil-3.14.4-h4df99d1_100.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-8_cp314.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.1-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.15.0-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-hd037594_9.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.22.2-h385eeb1_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-22.1.5-h55c6f16_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libedit-3.1.20250104-pl5321hafb1f1b_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.8.0-hf6b4638_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.5.2-hcf2aa1b_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsodium-1.0.22-h1a92334_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.53.1-h1b79a29_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-h1d4f5a5_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.4-h4c637c5_100_cp314.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyzmq-27.1.0-py312h022ad19_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tornado-6.5.5-py314h6c2aa35_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zeromq-4.3.5-h10816f8_11.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-  - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
-  - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-  - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
-  - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-  host_packages:
-  - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.4.0-pyhc90fa1f_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.4-py314hd8ed1ab_100.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/importlib-metadata-8.8.0-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.6.3-pyhd8ed1ab_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/pathspec-1.1.1-pyhd8ed1ab_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.9.6-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python-gil-3.14.4-h4df99d1_100.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-8_cp314.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.1-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.15.0-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-hd037594_9.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.22.2-h385eeb1_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-22.1.5-h55c6f16_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libedit-3.1.20250104-pl5321hafb1f1b_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.8.0-hf6b4638_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.5.2-hcf2aa1b_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsodium-1.0.22-h1a92334_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.53.1-h1b79a29_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-h1d4f5a5_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.4-h4c637c5_100_cp314.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyzmq-27.1.0-py312h022ad19_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tornado-6.5.5-py314h6c2aa35_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zeromq-4.3.5-h10816f8_11.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-  - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
-  - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-  - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
-  - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-- conda_source: mojoblas[a00924ce] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+- conda_source: mojoblas[907ff357] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
   version: 0.1.0
   build: hb0f4dca_0
   subdir: linux-64
@@ -1974,7 +1887,103 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-- conda_source: msl[837fc178] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+- conda_source: mojoblas[a09c109c] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+  version: 0.1.0
+  build: h60d57d3_0
+  subdir: osx-arm64
+  variants:
+    target_platform: osx-arm64
+  depends:
+  - mojo ==1.0.0b1
+  build_packages:
+  - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.4.0-pyhc90fa1f_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.4-py314hd8ed1ab_100.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/importlib-metadata-8.8.0-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.6.3-pyhd8ed1ab_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/pathspec-1.1.1-pyhd8ed1ab_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.9.6-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python-gil-3.14.4-h4df99d1_100.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-8_cp314.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.1-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.15.0-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-hd037594_9.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.22.2-h385eeb1_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-22.1.5-h55c6f16_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libedit-3.1.20250104-pl5321hafb1f1b_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.8.0-hf6b4638_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.5.2-hcf2aa1b_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsodium-1.0.22-h1a92334_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.53.1-h1b79a29_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-h1d4f5a5_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.4-h4c637c5_100_cp314.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyzmq-27.1.0-py312h022ad19_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tornado-6.5.5-py314h6c2aa35_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zeromq-4.3.5-h10816f8_11.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
+  - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
+  - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
+  - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
+  - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
+  host_packages:
+  - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.4.0-pyhc90fa1f_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.14.4-py314hd8ed1ab_100.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/importlib-metadata-8.8.0-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.6.3-pyhd8ed1ab_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_core-5.9.1-pyhc90fa1f_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/packaging-26.2-pyhc364b38_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/pathspec-1.1.1-pyhd8ed1ab_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.9.6-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python-gil-3.14.4-h4df99d1_100.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-8_cp314.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.1-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.15.0-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-hd037594_9.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.22.2-h385eeb1_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-22.1.5-h55c6f16_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libedit-3.1.20250104-pl5321hafb1f1b_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.8.0-hf6b4638_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.5.2-hcf2aa1b_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsodium-1.0.22-h1a92334_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.53.1-h1b79a29_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-h1d4f5a5_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.2-hd24854e_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.4-h4c637c5_100_cp314.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pyzmq-27.1.0-py312h022ad19_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tornado-6.5.5-py314h6c2aa35_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zeromq-4.3.5-h10816f8_11.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
+  - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
+  - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
+  - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
+  - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
+- conda_source: msl[0b75fc62] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
   version: 0.1.0
   build: h60d57d3_0
   subdir: osx-arm64
@@ -2031,7 +2040,7 @@ packages:
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-  - conda_source: mojoblas[4fc33539] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+  - conda_source: mojoblas[a09c109c] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
   host_packages:
   - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
@@ -2076,8 +2085,8 @@ packages:
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b1-release.conda
-  - conda_source: mojoblas[4fc33539] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-- conda_source: msl[ffd6f887] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
+  - conda_source: mojoblas[a09c109c] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+- conda_source: msl[2a2e5015] @ git+https://github.com/mojomath/msl?branch=main#7d60ed7b204262002d534529076f2cfec38b904b
   version: 0.1.0
   build: hb0f4dca_0
   subdir: linux-64
@@ -2140,7 +2149,7 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-  - conda_source: mojoblas[a00924ce] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+  - conda_source: mojoblas[907ff357] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
   host_packages:
   - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_9.conda
@@ -2191,8 +2200,8 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-  - conda_source: mojoblas[a00924ce] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
-- conda_source: numojo[2c198320] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+  - conda_source: mojoblas[907ff357] @ git+https://github.com/shivasankarka/mojoblas?branch=main#eb05c3f72bae0b62c9d2b16c10d84652df49598d
+- conda_source: numojo[9484b5ad] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
   version: 0.9.0
   build: hb0f4dca_0
   subdir: linux-64
@@ -2300,7 +2309,7 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b1-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.3.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b1-release.conda
-- conda_source: numojo[6505a37c] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
+- conda_source: numojo[b2ec6211] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#152657d61a214737f2838babf495270469706a56
   version: 0.9.0
   build: h60d57d3_0
   subdir: osx-arm64
