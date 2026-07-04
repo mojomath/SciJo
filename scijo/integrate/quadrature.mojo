@@ -21,6 +21,24 @@ from msl import qags as msl_qags
 from .utility import IntegralResult
 
 
+# ===----------------------------------------------------------------------=== #
+# QAG rule aliases
+# ===----------------------------------------------------------------------=== #
+
+comptime QAG_GK15: Int = 1
+"""7-point Gauss / 15-point Kronrod rule for `quad[..., method="qag"]`."""
+comptime QAG_GK21: Int = 2
+"""10-point Gauss / 21-point Kronrod rule (default) for `quad[..., method="qag"]`."""
+comptime QAG_GK31: Int = 3
+"""15-point Gauss / 31-point Kronrod rule for `quad[..., method="qag"]`."""
+comptime QAG_GK41: Int = 4
+"""20-point Gauss / 41-point Kronrod rule for `quad[..., method="qag"]`."""
+comptime QAG_GK51: Int = 5
+"""25-point Gauss / 51-point Kronrod rule for `quad[..., method="qag"]`."""
+comptime QAG_GK61: Int = 6
+"""30-point Gauss / 61-point Kronrod rule for `quad[..., method="qag"]`."""
+
+
 def quad[
     dtype: DType,
     integrand_func: def[dtype: DType](

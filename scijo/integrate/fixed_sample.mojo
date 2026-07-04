@@ -10,7 +10,9 @@ Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration
 Examples
 --------
     ```mojo
+    import numojo as nm
     from scijo.integrate import trapezoid, simpson, romb
+    from scijo.prelude import *
 
     var y = nm.linspace[f64](0.0, 10.0, 100) ** 2
     var area_trap = trapezoid(y, dx=0.1)
@@ -440,15 +442,12 @@ def romb[
             )
         )
 
-    # k = log2(n - 1): number of refinement levels
     var k: Int = 0
     var tmp = n_minus_1
     while tmp > 1:
         tmp >>= 1
         k += 1
 
-    # R[j] holds the current and previous row of the Romberg tableau.
-    # R_prev[j] = T_{i-1, j},  R_curr[j] = T_{i, j}
     var R_prev = nm.zeros[dtype](nm.Shape(k + 1))
     var R_curr = nm.zeros[dtype](nm.Shape(k + 1))
 
@@ -464,7 +463,6 @@ def romb[
         var stride: Int = n_minus_1 >> i  # = 2^(k-i)
         var num_new: Int = 1 << (i - 1)  # = 2^(i-1) new interior points
 
-        # T_{i,0} = T_{i-1,0}/2 + h_i * sum of new interior points
         var h_i: Scalar[dtype] = dx * Scalar[dtype](stride)
         var s: Scalar[dtype] = 0.0
         for j in range(1, 2 * num_new, 2):
@@ -482,3 +480,253 @@ def romb[
             R_prev.itemset(m, R_curr.item(m))
 
     return R_prev.item(k)
+
+
+# ===----------------------------------------------------------------------=== #
+# Cumulative trapezoid
+# ===----------------------------------------------------------------------=== #
+
+
+def cumulative_trapezoid[
+    dtype: DType
+](
+    y: NDArray[dtype],
+    dx: Scalar[dtype] = 1.0,
+    axis: Int = -1,
+    initial: Optional[Scalar[dtype]] = None,
+) raises -> NDArray[dtype] where dtype.is_floating_point():
+    """Cumulatively integrates y using the composite trapezoidal rule.
+
+    Returns an array of the running integral, matching
+    `scipy.integrate.cumulative_trapezoid`. The output has length ``n-1``
+    when `initial` is None, or length ``n`` when an `initial` value is given
+    (prepended as the first element).
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        y: Input 1-D array of sample values.
+        dx: Spacing between sample points. Defaults to 1.0.
+        axis: Axis along which to integrate. Currently only 1-D is supported.
+        initial: If provided, prepend this value to the output so the result
+                 has the same length as y. Typically 0.0.
+
+    Returns:
+        NDArray of cumulative integral values. Shape is ``(n-1,)`` if
+        `initial` is None, or ``(n,)`` if `initial` is provided.
+
+    Raises:
+        Error: If y is not 1-D or has fewer than 2 elements.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import cumulative_trapezoid
+        from scijo.prelude import *
+
+        var y = nm.array[f64]([1.0, 2.0, 3.0, 4.0])
+        var cum = cumulative_trapezoid(y, dx=1.0, initial=0.0)
+        # [0.0, 1.5, 4.0, 7.5]
+        ```
+    """
+    if y.ndim != 1:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: Expected 1-D array, got ndim="
+            + String(y.ndim)
+        )
+    if y.size < 2:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: Need at least 2 elements, got "
+            + String(y.size)
+        )
+
+    var n = y.size
+    var out_len = n - 1 if not initial else n
+    var result = NDArray[dtype](NDArrayShape(out_len))
+    var offset = 1 if initial else 0
+
+    if initial:
+        result._buf.ptr[0] = initial.value()
+
+    var running: Scalar[dtype] = 0.0
+    for i in range(n - 1):
+        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
+        result._buf.ptr[i + offset] = running
+
+    return result^
+
+
+def cumulative_trapezoid[
+    dtype: DType
+](
+    y: NDArray[dtype],
+    x: NDArray[dtype],
+    axis: Int = -1,
+    initial: Optional[Scalar[dtype]] = None,
+) raises -> NDArray[dtype] where dtype.is_floating_point():
+    """Cumulatively integrates y(x) using the composite trapezoidal rule.
+
+    Non-uniform spacing version — spacing is taken from successive differences
+    in `x`. Matches `scipy.integrate.cumulative_trapezoid`.
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        y: Input 1-D array of sample values.
+        x: 1-D array of sample points corresponding to y. Must have the same
+           length as y and be strictly increasing.
+        axis: Axis along which to integrate. Currently only 1-D is supported.
+        initial: If provided, prepend this value so the result has the same
+                 length as y.
+
+    Returns:
+        NDArray of cumulative integral values. Shape ``(n-1,)`` or ``(n,)``.
+
+    Raises:
+        Error: If y or x are not 1-D, sizes differ, or fewer than 2 elements.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import cumulative_trapezoid
+        from scijo.prelude import *
+
+        var x = nm.array[f64]([0.0, 1.0, 2.0, 3.0])
+        var y = x * x
+        var cum = cumulative_trapezoid(y, x, initial=0.0)
+        # [0.0, 0.5, 3.0, 8.5]
+        ```
+    """
+    if y.ndim != 1:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: Expected 1-D y, got ndim="
+            + String(y.ndim)
+        )
+    if x.ndim != 1:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: Expected 1-D x, got ndim="
+            + String(x.ndim)
+        )
+    if y.size != x.size:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: y.size ("
+            + String(y.size)
+            + ") != x.size ("
+            + String(x.size)
+            + ")"
+        )
+    if y.size < 2:
+        raise Error(
+            "Scijo [cumulative_trapezoid]: Need at least 2 elements, got "
+            + String(y.size)
+        )
+
+    var n = y.size
+    var out_len = n - 1 if not initial else n
+    var result = NDArray[dtype](NDArrayShape(out_len))
+    var offset = 1 if initial else 0
+
+    if initial:
+        result._buf.ptr[0] = initial.value()
+
+    var running: Scalar[dtype] = 0.0
+    for i in range(n - 1):
+        var dx_seg = x._buf.ptr[i + 1] - x._buf.ptr[i]
+        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx_seg * 0.5
+        result._buf.ptr[i + offset] = running
+
+    return result^
+
+
+# ===----------------------------------------------------------------------=== #
+# Cumulative Simpson
+# ===----------------------------------------------------------------------=== #
+
+
+def cumulative_simpson[
+    dtype: DType
+](
+    y: NDArray[dtype],
+    dx: Scalar[dtype] = 1.0,
+    axis: Int = -1,
+    initial: Optional[Scalar[dtype]] = None,
+) raises -> NDArray[dtype] where dtype.is_floating_point():
+    """Cumulatively integrates y using Simpson's rule on successive pairs of intervals.
+
+    Each output element i (0-based, before prepending `initial`) is the
+    integral over ``y[0..2i+2]`` using composite Simpson's rule applied to
+    each consecutive triple ``(y[2i], y[2i+1], y[2i+2])``. Matches
+    `scipy.integrate.cumulative_simpson` for even-length inputs.
+
+    Requires an odd number of samples (even number of intervals). For even
+    number of samples the last panel falls back to the trapezoidal rule,
+    consistent with `simpson`.
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        y: Input 1-D array of sample values. Should have odd length (≥ 3)
+           for pure Simpson; even length falls back for the last interval.
+        dx: Spacing between sample points. Defaults to 1.0.
+        axis: Axis along which to integrate. Currently only 1-D is supported.
+        initial: If provided, prepend this value so the result has the same
+                 length as y.
+
+    Returns:
+        NDArray of cumulative integral values. Shape ``(n-1,)`` or ``(n,)``.
+
+    Raises:
+        Error: If y is not 1-D or has fewer than 3 elements.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.integrate import cumulative_simpson
+        from scijo.prelude import *
+
+        var y = nm.array[f64]([1.0, 4.0, 1.0, 4.0, 1.0])
+        var cum = cumulative_simpson(y, dx=1.0, initial=0.0)
+        # matches scipy.integrate.cumulative_simpson
+        ```
+    """
+    if y.ndim != 1:
+        raise Error(
+            "Scijo [cumulative_simpson]: Expected 1-D array, got ndim="
+            + String(y.ndim)
+        )
+    if y.size < 3:
+        raise Error(
+            "Scijo [cumulative_simpson]: Need at least 3 elements, got "
+            + String(y.size)
+        )
+
+    var n = y.size
+    var out_len = n - 1 if not initial else n
+    var result = NDArray[dtype](NDArrayShape(out_len))
+    var offset = 1 if initial else 0
+
+    if initial:
+        result._buf.ptr[0] = initial.value()
+
+    var running: Scalar[dtype] = 0.0
+    var i = 0
+    while i < n - 2:
+        var panel = (
+            (y._buf.ptr[i] + 4.0 * y._buf.ptr[i + 1] + y._buf.ptr[i + 2])
+            * dx
+            / 3.0
+        )
+        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
+        result._buf.ptr[i + offset] = running + half
+        running += panel
+        result._buf.ptr[i + 1 + offset] = running
+        i += 2
+
+    if i == n - 2:
+        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
+        result._buf.ptr[i + offset] = running + half
+
+    return result^
