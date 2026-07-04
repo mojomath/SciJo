@@ -32,17 +32,22 @@ Accurate derivatives using finite difference methods:
 
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
-- **`quad`**: (QUADPACK QNG algorithm)
-  - Successively increasing precision levels (10, 21, 43, 87 point rules)
+- **`quad`**: Adaptive quadrature via MSL/QUADPACK
+  - `method="qng"` — non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
+  - `method="qag"` — adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
+  - `method="qags"` — adaptive + Wynn epsilon extrapolation
+  - Rule constants: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`
 - **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
 - **`simpson`**: Simpson's rule for discrete data
 - **`romb`**: Romberg integration with Richardson extrapolation
 
 ### Interpolation (`scijo.interpolate`)
 1D data interpolation:
-- **`interp1d`**: Linear interpolation (functional and callable interfaces)
-- **`LinearInterpolator`**: Reusable callable interpolation object
-- Handles both extrapolation and boundary fill methods
+- **`LinearInterpolator`** / **`interp1d`**: Linear interpolation, callable object and functional interface
+- **`CubicSpline`**: Natural cubic spline interpolator (`scipy.interpolate.CubicSpline`-compatible)
+- **`Akima1DInterpolator`**: Akima piecewise cubic interpolator (`scipy.interpolate.Akima1DInterpolator`-compatible)
+- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`
+- Out-of-bounds control via `bounds_error` / `fill_value`
 - Compatible with NuMojo arrays
 
 ### FFT (`scijo.fft`)
@@ -67,6 +72,7 @@ Scalar root-finding and minimization:
   - **`newton`**: Newton-Raphson method
   - **`bisect`**: Bisection method
   - **`secant`**: Secant method (derivative-free)
+  - **`brent`**: Brent's bracketed method (MSL backend)
 - **`minimize_scalar`**: Scalar function minimization
   - Brent's method, golden section search, bounded minimization
 
@@ -147,16 +153,24 @@ fn main():
 
 ### Interpolation
 ```mojo
-from scijo.interpolate.interp1d import interp1d
+from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
 import numojo as nm
 
 fn main() raises:
-    var x = nm.arange[nm.f64](0, 5, 1)
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
     var y = x * x
-    var xi = nm.linspace[nm.f64](0.5, 3.5, 4)
 
-    var yi = interp1d[nm.f64, type="linear", fill_method="interpolate"](xi, x, y)
-    print("Interpolated values:", yi)
+    # Linear (callable object)
+    var li = interp1d(x, y, bounds_error=False)
+    print(li(Scalar[nm.f64](3.7)))
+
+    # Natural cubic spline
+    var cs = CubicSpline(x, y)
+    print(cs(nm.linspace[nm.f64](0.5, 9.5, 5)))
+
+    # Akima
+    var ak = Akima1DInterpolator(x, y)
+    print(ak(Scalar[nm.f64](3.7)))
 ```
 
 ### FFT
@@ -214,10 +228,9 @@ fn main() raises:
 ## Roadmap
 
 ### Near Term
-- More integration algorithms (QAGSE etc)
-- Real FFT (`rfft`, `irfft`) and 2D FFT support
-- Additional interpolation methods (cubic, spline)
-- Expand differentiation module
+- 2D FFT support
+- Multi-dimensional root finding and optimization
+- Expand differentiation module (higher-order Jacobian, Hessian)
 
 ### Future
 - **Optimization**: Multi-dimensional minimization, curve fitting

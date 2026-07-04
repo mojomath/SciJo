@@ -14,6 +14,17 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `minimize_scalar` — Scalar function minimization (Brent's method, golden section, bounded).
   - `OptimizeResult` struct for minimization results.
   - `RootResults` struct for root-finding results.
+- **Interpolation** (`scijo.interpolate`):
+  - `CubicSpline` — callable natural cubic spline interpolator struct, matching `scipy.interpolate.CubicSpline` API (compile-time `bc_type` param, scalar and array `__call__`).
+  - `Akima1DInterpolator` — callable Akima piecewise cubic interpolator struct, matching `scipy.interpolate.Akima1DInterpolator` API (scalar and array `__call__`).
+  - `interp[..., type="cubic"]` and `interp[..., type="akima"]` — functional interface for cubic spline and Akima interpolation.
+  - Both callable structs exported from `scijo.interpolate` alongside `LinearInterpolator`.
+- **Integration** (`scijo.integrate`):
+  - `quad[..., method="qag"]` and `quad[..., method="qags"]` — adaptive Gauss-Kronrod integration via MSL backend.
+  - `QAG_GK15`, `QAG_GK21`, `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61` — compile-time rule constants for the `qag_rule` parameter, mirroring MSL's `MSL_INTEG_GAUSS*` values. All exported from `scijo.integrate`.
+- **Optimization** (`scijo.optimize`):
+  - `brent` — direct Brent bracketed root-finding wrapper (MSL backend).
+  - `root_scalar[..., method="brent"]` — Brent method via unified `root_scalar` interface.
 - **Differentiation**:
   - `jacobian` — Jacobian matrix computation for vector-valued functions with parallelized column evaluation.
 - **Integration**:
