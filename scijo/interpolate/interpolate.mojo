@@ -21,6 +21,7 @@ Examples
 """
 
 from numojo import zeros
+from numojo.core import Shape
 from scijo.interpolate.utility import (
     _binary_search,
     _validate_interpolation_input,
@@ -128,7 +129,6 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
                 )
             if self.fill_value:
                 return self.fill_value.value()
-            # bounds_error=False, fill_value=None: clamp to boundary
             if xi < x_min:
                 return self.y._buf.ptr[0]
             return self.y._buf.ptr[self.y.size - 1]
@@ -197,11 +197,346 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
 
 # ===----------------------------------------------------------------------=== #
+# CubicSpline interpolator
+# ===----------------------------------------------------------------------=== #
+
+
+struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
+    Copyable, Movable
+):
+    """A callable natural cubic spline interpolator, matching scipy.interpolate.CubicSpline.
+
+    Constructs a piecewise cubic polynomial that passes through all data points
+    with continuous first and second derivatives. Only `bc_type="natural"` is
+    currently supported (second derivatives at endpoints are zero).
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+        bc_type: Boundary condition type. Only "natural" is supported.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import CubicSpline
+
+        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+        var y = x * x
+        var cs = CubicSpline(x, y)
+        var yi = cs(nm.linspace[nm.f64](0.5, 9.5, 10))
+        ```
+    """
+
+    var x: NDArray[Self.dtype]
+    var y: NDArray[Self.dtype]
+    var _b: NDArray[Self.dtype]
+    var _c: NDArray[Self.dtype]
+    var _d: NDArray[Self.dtype]
+
+    def __init__(
+        out self, x: NDArray[Self.dtype], y: NDArray[Self.dtype]
+    ) raises:
+        """Constructs the cubic spline from data points.
+
+        Args:
+            x: Strictly increasing x-coordinates of the data points.
+            y: Y-coordinates of the data points, same length as x.
+
+        Raises:
+            Error: If inputs are invalid or bc_type is unsupported.
+        """
+        comptime if Self.bc_type != "natural":
+            raise Error(
+                "CubicSpline only supports bc_type='natural' currently."
+            )
+
+        _validate_interpolation_input(x, y)
+        var n = x.size
+        self.x = x.copy()
+        self.y = y.copy()
+
+        var h = NDArray[Self.dtype](Shape(n - 1))
+        for i in range(n - 1):
+            h._buf.ptr[i] = x._buf.ptr[i + 1] - x._buf.ptr[i]
+
+        var alpha = NDArray[Self.dtype](Shape(n))
+        alpha._buf.ptr[0] = 0.0
+        alpha._buf.ptr[n - 1] = 0.0
+        for i in range(1, n - 1):
+            alpha._buf.ptr[i] = (
+                3.0 * (y._buf.ptr[i + 1] - y._buf.ptr[i]) / h._buf.ptr[i]
+                - 3.0 * (y._buf.ptr[i] - y._buf.ptr[i - 1]) / h._buf.ptr[i - 1]
+            )
+
+        var l = NDArray[Self.dtype](Shape(n))
+        var mu = NDArray[Self.dtype](Shape(n))
+        var z = NDArray[Self.dtype](Shape(n))
+        l._buf.ptr[0] = 1.0
+        mu._buf.ptr[0] = 0.0
+        z._buf.ptr[0] = 0.0
+
+        for i in range(1, n - 1):
+            l._buf.ptr[i] = (
+                2.0 * (x._buf.ptr[i + 1] - x._buf.ptr[i - 1])
+                - h._buf.ptr[i - 1] * mu._buf.ptr[i - 1]
+            )
+            mu._buf.ptr[i] = h._buf.ptr[i] / l._buf.ptr[i]
+            z._buf.ptr[i] = (
+                alpha._buf.ptr[i] - h._buf.ptr[i - 1] * z._buf.ptr[i - 1]
+            ) / l._buf.ptr[i]
+
+        l._buf.ptr[n - 1] = 1.0
+        z._buf.ptr[n - 1] = 0.0
+
+        var c = NDArray[Self.dtype](Shape(n))
+        var b = NDArray[Self.dtype](Shape(n - 1))
+        var d = NDArray[Self.dtype](Shape(n - 1))
+        c._buf.ptr[n - 1] = 0.0
+
+        for j in range(n - 2, -1, -1):
+            c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
+            b._buf.ptr[j] = (
+                (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[j]
+                - h._buf.ptr[j]
+                * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j])
+                / 3.0
+            )
+            d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
+                3.0 * h._buf.ptr[j]
+            )
+
+        self._b = b^
+        self._c = c^
+        self._d = d^
+
+    def __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
+        """Evaluates the spline at a single point.
+
+        Args:
+            xi: The query point.
+
+        Returns:
+            Interpolated value at xi. Clamped to boundary values if out of range.
+        """
+        var n = self.x.size
+        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
+        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        if xi <= x_min:
+            return self.y._buf.ptr[0]
+        if xi >= x_max:
+            return self.y._buf.ptr[n - 1]
+        var j: Int = _binary_search(self.x, xi) - 1
+        if j < 0:
+            j = 0
+        if j > n - 2:
+            j = n - 2
+        var dx = xi - self.x._buf.ptr[j]
+        return (
+            self.y._buf.ptr[j]
+            + self._b._buf.ptr[j] * dx
+            + self._c._buf.ptr[j] * dx * dx
+            + self._d._buf.ptr[j] * dx * dx * dx
+        )
+
+    def __call__(
+        self, xi: NDArray[Self.dtype]
+    ) raises -> NDArray[Self.dtype]:
+        """Evaluates the spline at an array of points.
+
+        Args:
+            xi: Array of query points.
+
+        Returns:
+            Array of interpolated values with the same shape as xi.
+        """
+        var n = self.x.size
+        var result: NDArray[Self.dtype] = NDArray[Self.dtype](xi.shape)
+        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
+        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+
+        for i in range(xi.size):
+            var xi_val: Scalar[Self.dtype] = xi._buf.ptr[i]
+            if xi_val <= x_min:
+                result._buf.ptr[i] = self.y._buf.ptr[0]
+                continue
+            if xi_val >= x_max:
+                result._buf.ptr[i] = self.y._buf.ptr[n - 1]
+                continue
+            var j: Int = _binary_search(self.x, xi_val) - 1
+            if j < 0:
+                j = 0
+            if j > n - 2:
+                j = n - 2
+            var dx = xi_val - self.x._buf.ptr[j]
+            result._buf.ptr[i] = (
+                self.y._buf.ptr[j]
+                + self._b._buf.ptr[j] * dx
+                + self._c._buf.ptr[j] * dx * dx
+                + self._d._buf.ptr[j] * dx * dx * dx
+            )
+
+        return result^
+
+
+# ===----------------------------------------------------------------------=== #
+# Akima1DInterpolator
+# ===----------------------------------------------------------------------=== #
+
+
+struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
+    """A callable Akima piecewise cubic interpolator, matching scipy.interpolate.Akima1DInterpolator.
+
+    Uses locally-weighted slopes to build a piecewise cubic Hermite polynomial
+    that avoids spurious oscillations near outliers.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import Akima1DInterpolator
+
+        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+        var y = x * x
+        var ak = Akima1DInterpolator(x, y)
+        var yi = ak(nm.linspace[nm.f64](0.5, 9.5, 10))
+        ```
+    """
+
+    var x: NDArray[Self.dtype]
+    var y: NDArray[Self.dtype]
+    var _t: NDArray[Self.dtype]
+
+    def __init__(
+        out self, x: NDArray[Self.dtype], y: NDArray[Self.dtype]
+    ) raises:
+        """Constructs the Akima interpolator from data points.
+
+        Falls back to cubic spline for fewer than 5 points.
+
+        Args:
+            x: Strictly increasing x-coordinates of the data points.
+            y: Y-coordinates of the data points, same length as x.
+
+        Raises:
+            Error: If inputs are invalid.
+        """
+        _validate_interpolation_input(x, y)
+        var n = x.size
+        self.x = x.copy()
+        self.y = y.copy()
+
+        var slopes = NDArray[Self.dtype](Shape(n - 1))
+        for i in range(n - 1):
+            slopes._buf.ptr[i] = (y._buf.ptr[i + 1] - y._buf.ptr[i]) / (
+                x._buf.ptr[i + 1] - x._buf.ptr[i]
+            )
+
+        var t = NDArray[Self.dtype](Shape(n))
+        t._buf.ptr[0] = slopes._buf.ptr[0]
+        if n > 1:
+            t._buf.ptr[n - 1] = slopes._buf.ptr[n - 2]
+        if n > 2:
+            t._buf.ptr[1] = (slopes._buf.ptr[0] + slopes._buf.ptr[1]) * 0.5
+            t._buf.ptr[n - 2] = (
+                slopes._buf.ptr[n - 3] + slopes._buf.ptr[n - 2]
+            ) * 0.5
+
+        for i in range(2, n - 2):
+            var w1 = abs(slopes._buf.ptr[i + 1] - slopes._buf.ptr[i])
+            var w2 = abs(slopes._buf.ptr[i - 1] - slopes._buf.ptr[i - 2])
+            if w1 + w2 > 0:
+                t._buf.ptr[i] = (
+                    w1 * slopes._buf.ptr[i - 1] + w2 * slopes._buf.ptr[i]
+                ) / (w1 + w2)
+            else:
+                t._buf.ptr[i] = (
+                    slopes._buf.ptr[i - 1] + slopes._buf.ptr[i]
+                ) * 0.5
+
+        self._t = t^
+
+    def __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
+        """Evaluates the Akima interpolant at a single point.
+
+        Args:
+            xi: The query point.
+
+        Returns:
+            Interpolated value at xi. Clamped to boundary values if out of range.
+        """
+        var n = self.x.size
+        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
+        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        if xi <= x_min:
+            return self.y._buf.ptr[0]
+        if xi >= x_max:
+            return self.y._buf.ptr[n - 1]
+        var j: Int = _binary_search(self.x, xi) - 1
+        if j < 0:
+            j = 0
+        if j > n - 2:
+            j = n - 2
+        var h = self.x._buf.ptr[j + 1] - self.x._buf.ptr[j]
+        var s = (xi - self.x._buf.ptr[j]) / h
+        var s2 = s * s
+        var s3 = s2 * s
+        return (
+            (2.0 * s3 - 3.0 * s2 + 1.0) * self.y._buf.ptr[j]
+            + (s3 - 2.0 * s2 + s) * h * self._t._buf.ptr[j]
+            + (-2.0 * s3 + 3.0 * s2) * self.y._buf.ptr[j + 1]
+            + (s3 - s2) * h * self._t._buf.ptr[j + 1]
+        )
+
+    def __call__(
+        self, xi: NDArray[Self.dtype]
+    ) raises -> NDArray[Self.dtype]:
+        """Evaluates the Akima interpolant at an array of points.
+
+        Args:
+            xi: Array of query points.
+
+        Returns:
+            Array of interpolated values with the same shape as xi.
+        """
+        var n = self.x.size
+        var result: NDArray[Self.dtype] = NDArray[Self.dtype](xi.shape)
+        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
+        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+
+        for i in range(xi.size):
+            var xi_val: Scalar[Self.dtype] = xi._buf.ptr[i]
+            if xi_val <= x_min:
+                result._buf.ptr[i] = self.y._buf.ptr[0]
+                continue
+            if xi_val >= x_max:
+                result._buf.ptr[i] = self.y._buf.ptr[n - 1]
+                continue
+            var j: Int = _binary_search(self.x, xi_val) - 1
+            if j < 0:
+                j = 0
+            if j > n - 2:
+                j = n - 2
+            var h = self.x._buf.ptr[j + 1] - self.x._buf.ptr[j]
+            var s = (xi_val - self.x._buf.ptr[j]) / h
+            var s2 = s * s
+            var s3 = s2 * s
+            result._buf.ptr[i] = (
+                (2.0 * s3 - 3.0 * s2 + 1.0) * self.y._buf.ptr[j]
+                + (s3 - 2.0 * s2 + s) * h * self._t._buf.ptr[j]
+                + (-2.0 * s3 + 3.0 * s2) * self.y._buf.ptr[j + 1]
+                + (s3 - s2) * h * self._t._buf.ptr[j + 1]
+            )
+
+        return result^
+
+
+# ===----------------------------------------------------------------------=== #
 # interp1d (constructor)
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: Add more interpolation methods like 'quadratic', 'cubic'.
+# TODO: Add more interpolation methods like 'quadratic'.
 # TODO: Add both interpolate and extrapolate fill methods.
 def interp1d[
     dtype: DType = DType.float64
@@ -251,7 +586,7 @@ def interp1d[
 
 
 # ===----------------------------------------------------------------------=== #
-# interp (functional, like numpy.interp)
+# interp (functional)
 # ===----------------------------------------------------------------------=== #
 
 
@@ -274,7 +609,7 @@ def interp[
 
     Parameters:
         dtype: The floating-point data type. Defaults to DType.float64.
-        type: The interpolation method. Currently supported: "linear".
+        type: The interpolation method. Currently supported: "linear", "cubic", "akima".
         fill_method: Out-of-bounds handling: "interpolate" (clamp to boundary
             values) or "extrapolate" (linear extrapolation).
 
@@ -307,12 +642,17 @@ def interp[
         return _interp1d_linear_extrapolate(xi, x, y)
     elif type == "linear" and fill_method == "interpolate":
         return _interp1d_linear_interpolate(xi, x, y)
+    elif type == "cubic" and fill_method == "interpolate":
+        return _interp1d_cubic_interpolate(xi, x, y)
+    elif type == "akima" and fill_method == "interpolate":
+        return _interp1d_akima_interpolate(xi, x, y)
     else:
         raise Error(
             String(
                 "Invalid interpolation method: {} with fill_method: {}."
                 " Supported: type='linear' with fill_method='interpolate' or"
-                " 'extrapolate'"
+                " 'extrapolate', and type='cubic'/'akima' with"
+                " fill_method='interpolate'"
             ).format(type, fill_method)
         )
 
@@ -435,14 +775,167 @@ def _interp1d_linear_extrapolate[
 # ===----------------------------------------------------------------------=== #
 
 
-# def _interp1d_quadratic_interpolate[dtype: DType](
-#     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
-# ) raises -> NDArray[dtype]:
-#     """Quadratic interpolation with boundary clamping."""
-#     pass
+def _interp1d_cubic_interpolate[
+    dtype: DType
+](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
+    dtype
+]:
+    """Natural cubic spline interpolation with boundary clamping.
 
-# def _interp1d_cubic_interpolate[dtype: DType](
-#     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
-# ) raises -> NDArray[dtype]:
-#     """Cubic interpolation with boundary clamping."""
-#     pass
+    Constructs a natural cubic spline (second derivatives at endpoints are 0),
+    then evaluates it at query points. Points outside `[x[0], x[-1]]` are
+    clamped to boundary values for parity with linear interpolate mode.
+    """
+    var n = x.size
+    var result: NDArray[dtype] = NDArray[dtype](xi.shape)
+    var x_min: Scalar[dtype] = x._buf.ptr[0]
+    var x_max: Scalar[dtype] = x._buf.ptr[n - 1]
+
+    if n < 3:
+        return _interp1d_linear_interpolate(xi, x, y)
+
+    var h = NDArray[dtype](Shape(n - 1))
+    for i in range(n - 1):
+        h._buf.ptr[i] = x._buf.ptr[i + 1] - x._buf.ptr[i]
+
+    var alpha = NDArray[dtype](Shape(n))
+    alpha._buf.ptr[0] = 0.0
+    alpha._buf.ptr[n - 1] = 0.0
+    for i in range(1, n - 1):
+        alpha._buf.ptr[i] = (
+            3.0 * (y._buf.ptr[i + 1] - y._buf.ptr[i]) / h._buf.ptr[i]
+            - 3.0 * (y._buf.ptr[i] - y._buf.ptr[i - 1]) / h._buf.ptr[i - 1]
+        )
+
+    var l = NDArray[dtype](Shape(n))
+    var mu = NDArray[dtype](Shape(n))
+    var z = NDArray[dtype](Shape(n))
+    l._buf.ptr[0] = 1.0
+    mu._buf.ptr[0] = 0.0
+    z._buf.ptr[0] = 0.0
+
+    for i in range(1, n - 1):
+        l._buf.ptr[i] = (
+            2.0 * (x._buf.ptr[i + 1] - x._buf.ptr[i - 1])
+            - h._buf.ptr[i - 1] * mu._buf.ptr[i - 1]
+        )
+        mu._buf.ptr[i] = h._buf.ptr[i] / l._buf.ptr[i]
+        z._buf.ptr[i] = (
+            alpha._buf.ptr[i] - h._buf.ptr[i - 1] * z._buf.ptr[i - 1]
+        ) / l._buf.ptr[i]
+
+    l._buf.ptr[n - 1] = 1.0
+    z._buf.ptr[n - 1] = 0.0
+
+    var c = NDArray[dtype](Shape(n))
+    var b = NDArray[dtype](Shape(n - 1))
+    var d = NDArray[dtype](Shape(n - 1))
+    c._buf.ptr[n - 1] = 0.0
+
+    for j in range(n - 2, -1, -1):
+        c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
+        b._buf.ptr[j] = (
+            (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[j]
+            - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
+        )
+        d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
+            3.0 * h._buf.ptr[j]
+        )
+
+    for i in range(xi.size):
+        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        if xi_val <= x_min:
+            result._buf.ptr[i] = y._buf.ptr[0]
+            continue
+        if xi_val >= x_max:
+            result._buf.ptr[i] = y._buf.ptr[n - 1]
+            continue
+
+        var j: Int = _binary_search(x, xi_val) - 1
+        if j < 0:
+            j = 0
+        if j > n - 2:
+            j = n - 2
+
+        var dx = xi_val - x._buf.ptr[j]
+        result._buf.ptr[i] = (
+            y._buf.ptr[j]
+            + b._buf.ptr[j] * dx
+            + c._buf.ptr[j] * dx * dx
+            + d._buf.ptr[j] * dx * dx * dx
+        )
+
+    return result^
+
+
+def _interp1d_akima_interpolate[
+    dtype: DType
+](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
+    dtype
+]:
+    """Akima 1D interpolation with boundary clamping."""
+    var n = x.size
+    var result: NDArray[dtype] = NDArray[dtype](xi.shape)
+    var x_min: Scalar[dtype] = x._buf.ptr[0]
+    var x_max: Scalar[dtype] = x._buf.ptr[n - 1]
+
+    if n < 5:
+        return _interp1d_cubic_interpolate(xi, x, y)
+
+    var slopes = NDArray[dtype](Shape(n - 1))
+    for i in range(n - 1):
+        slopes._buf.ptr[i] = (y._buf.ptr[i + 1] - y._buf.ptr[i]) / (
+            x._buf.ptr[i + 1] - x._buf.ptr[i]
+        )
+
+    var t = NDArray[dtype](Shape(n))
+    t._buf.ptr[0] = slopes._buf.ptr[0]
+    t._buf.ptr[1] = (slopes._buf.ptr[0] + slopes._buf.ptr[1]) * 0.5
+    t._buf.ptr[n - 2] = (slopes._buf.ptr[n - 3] + slopes._buf.ptr[n - 2]) * 0.5
+    t._buf.ptr[n - 1] = slopes._buf.ptr[n - 2]
+
+    for i in range(2, n - 2):
+        var w1 = abs(slopes._buf.ptr[i + 1] - slopes._buf.ptr[i])
+        var w2 = abs(slopes._buf.ptr[i - 1] - slopes._buf.ptr[i - 2])
+        if w1 + w2 > 0:
+            t._buf.ptr[i] = (
+                w1 * slopes._buf.ptr[i - 1] + w2 * slopes._buf.ptr[i]
+            ) / (w1 + w2)
+        else:
+            t._buf.ptr[i] = (slopes._buf.ptr[i - 1] + slopes._buf.ptr[i]) * 0.5
+
+    for i in range(xi.size):
+        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        if xi_val <= x_min:
+            result._buf.ptr[i] = y._buf.ptr[0]
+            continue
+        if xi_val >= x_max:
+            result._buf.ptr[i] = y._buf.ptr[n - 1]
+            continue
+
+        var j: Int = _binary_search(x, xi_val) - 1
+        if j < 0:
+            j = 0
+        if j > n - 2:
+            j = n - 2
+
+        var h = x._buf.ptr[j + 1] - x._buf.ptr[j]
+        var s = (xi_val - x._buf.ptr[j]) / h
+        var s2 = s * s
+        var s3 = s2 * s
+
+        var h00 = 2.0 * s3 - 3.0 * s2 + 1.0
+        var h10 = s3 - 2.0 * s2 + s
+        var h01 = -2.0 * s3 + 3.0 * s2
+        var h11 = s3 - s2
+
+        result._buf.ptr[i] = (
+            h00 * y._buf.ptr[j]
+            + h10 * h * t._buf.ptr[j]
+            + h01 * y._buf.ptr[j + 1]
+            + h11 * h * t._buf.ptr[j + 1]
+        )
+
+    return result^
+
+
