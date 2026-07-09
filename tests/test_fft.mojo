@@ -324,7 +324,7 @@ def test_irfft_roundtrip() raises:
 
 
 def test_fftfreq() raises:
-    """fftfreq matches scipy.fft.fftfreq for even and odd n."""
+    """Test: fftfreq matches scipy.fft.fftfreq for even and odd n."""
     try:
         var scipy_fft = Python.import_module("scipy.fft")
 
@@ -365,7 +365,7 @@ def test_fftfreq() raises:
 
 
 def test_rfftfreq() raises:
-    """rfftfreq matches scipy.fft.rfftfreq for even and odd n."""
+    """Test: rfftfreq matches scipy.fft.rfftfreq for even and odd n."""
     try:
         var scipy_fft = Python.import_module("scipy.fft")
 
@@ -408,7 +408,7 @@ def test_rfftfreq() raises:
 
 
 def test_fftshift() raises:
-    """fftshift matches scipy.fft.fftshift."""
+    """Test: fftshift matches scipy.fft.fftshift."""
     try:
         var scipy_fft = Python.import_module("scipy.fft")
         var np = Python.import_module("numpy")
@@ -441,7 +441,7 @@ def test_fftshift() raises:
 
 
 def test_ifftshift() raises:
-    """ifftshift is the inverse of fftshift."""
+    """Test: ifftshift is the inverse of fftshift."""
     try:
         var scipy_fft = Python.import_module("scipy.fft")
 
@@ -483,7 +483,7 @@ def test_ifftshift() raises:
 
 
 def test_next_fast_len() raises:
-    """next_fast_len returns the correct next power of 2."""
+    """Test: next_fast_len returns the correct next power of 2."""
     assert_equal(next_fast_len(1), 1)
     assert_equal(next_fast_len(2), 2)
     assert_equal(next_fast_len(3), 4)

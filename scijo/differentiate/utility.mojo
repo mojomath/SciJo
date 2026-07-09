@@ -111,23 +111,16 @@ def generate_central_finite_difference_table[
         Coefficient arrays indexed by accuracy order.
         Available orders: 2, 4, 6, 8 with truncation errors O(h²), O(h⁴), O(h⁶), O(h⁸).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
-
-    try:
-        # Order 2: points [-1, 0, 1]
-        coefficients[2]: List[Scalar[dtype]] = [-0.5, 0.0, 0.5]
-
-        # Order 4: points [-2, -1, 0, 1, 2]
-        coefficients[4]: List[Scalar[dtype]] = [
+    var coefficients: Dict[Int, List[Scalar[dtype]]] = {
+        2: [-0.5, 0.0, 0.5],
+        4: [
             1.0 / 12.0,
             -2.0 / 3.0,
             0.0,
             2.0 / 3.0,
             -1.0 / 12.0,
-        ]
-
-        # Order 6: points [-3, -2, -1, 0, 1, 2, 3]
-        coefficients[6]: List[Scalar[dtype]] = [
+        ],
+        6: [
             -1.0 / 60.0,
             3.0 / 20.0,
             -3.0 / 4.0,
@@ -135,10 +128,8 @@ def generate_central_finite_difference_table[
             3.0 / 4.0,
             -3.0 / 20.0,
             1.0 / 60.0,
-        ]
-
-        # Order 8: points [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-        coefficients[8]: List[Scalar[dtype]] = [
+        ],
+        8: [
             1.0 / 280.0,
             -4.0 / 105.0,
             1.0 / 5.0,
@@ -149,8 +140,45 @@ def generate_central_finite_difference_table[
             4.0 / 105.0,
             -1.0 / 280.0,
         ]
-    except e:
-        print("Error generating central finite difference table: " + String(e))
+    }
+    # try:
+    #     # Order 2: points [-1, 0, 1]
+    #     coefficients[2]: List[Scalar[dtype]] = [-0.5, 0.0, 0.5]
+
+    #     # Order 4: points [-2, -1, 0, 1, 2]
+    #     coefficients[4]: List[Scalar[dtype]] = [
+    #         1.0 / 12.0,
+    #         -2.0 / 3.0,
+    #         0.0,
+    #         2.0 / 3.0,
+    #         -1.0 / 12.0,
+    #     ]
+
+    #     # Order 6: points [-3, -2, -1, 0, 1, 2, 3]
+    #     coefficients[6]: List[Scalar[dtype]] = [
+    #         -1.0 / 60.0,
+    #         3.0 / 20.0,
+    #         -3.0 / 4.0,
+    #         0.0,
+    #         3.0 / 4.0,
+    #         -3.0 / 20.0,
+    #         1.0 / 60.0,
+    #     ]
+
+    #     # Order 8: points [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+    #     coefficients[8]: List[Scalar[dtype]] = [
+    #         1.0 / 280.0,
+    #         -4.0 / 105.0,
+    #         1.0 / 5.0,
+    #         -4.0 / 5.0,
+    #         0.0,
+    #         4.0 / 5.0,
+    #         -1.0 / 5.0,
+    #         4.0 / 105.0,
+    #         -1.0 / 280.0,
+    #     ]
+    # except e:
+    #     print("Error generating central finite difference table: " + String(e))
 
     return coefficients^
 
@@ -174,44 +202,31 @@ def generate_forward_finite_difference_table[
         Coefficient arrays indexed by accuracy order.
         Available orders: 1, 2, 3, 4, 5, 6 with truncation errors O(h) through O(h⁶).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
-
-    try: 
-        # Order 1: points [0, 1]
-        coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
-
-        # Order 2: points [0, 1, 2]
-        coefficients[2]: List[Scalar[dtype]] = [-3.0 / 2.0, 2.0, -1.0 / 2.0]
-
-        # Order 3: points [0, 1, 2, 3]
-        coefficients[3]: List[Scalar[dtype]] = [
+    var coefficients: Dict[Int, List[Scalar[dtype]]] = {
+        1: [-1.0, 1.0],
+        2: [-3.0 / 2.0, 2.0, -1.0 / 2.0],
+        3: [
             -11.0 / 6.0,
             3.0,
             -3.0 / 2.0,
             1.0 / 3.0,
-        ]
-
-        # Order 4: points [0, 1, 2, 3, 4]
-        coefficients[4]: List[Scalar[dtype]] = [
+        ],
+        4: [
             -25.0 / 12.0,
             4.0,
             -3.0,
             4.0 / 3.0,
             -1.0 / 4.0,
-        ]
-
-        # Order 5: points [0, 1, 2, 3, 4, 5]
-        coefficients[5]: List[Scalar[dtype]] = [
+        ], 
+        5: [
             -137.0 / 60.0,
             5.0,
             -5.0,
             10.0 / 3.0,
             -5.0 / 4.0,
             1.0 / 5.0,
-        ]
-
-        # Order 6: points [0, 1, 2, 3, 4, 5, 6]
-        coefficients[6]: List[Scalar[dtype]] = [
+        ], 
+        6: [
             -49.0 / 20.0,
             6.0,
             -15.0 / 2.0,
@@ -220,8 +235,54 @@ def generate_forward_finite_difference_table[
             6.0 / 5.0,
             -1.0 / 6.0,
         ]
-    except e:
-        print("Error generating forward finite difference table: " + String(e))
+    }
+
+    # try: 
+    #     # Order 1: points [0, 1]
+    #     coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
+
+    #     # Order 2: points [0, 1, 2]
+    #     coefficients[2]: List[Scalar[dtype]] = [-3.0 / 2.0, 2.0, -1.0 / 2.0]
+
+    #     # Order 3: points [0, 1, 2, 3]
+    #     coefficients[3]: List[Scalar[dtype]] = [
+    #         -11.0 / 6.0,
+    #         3.0,
+    #         -3.0 / 2.0,
+    #         1.0 / 3.0,
+    #     ]
+
+    #     # Order 4: points [0, 1, 2, 3, 4]
+    #     coefficients[4]: List[Scalar[dtype]] = [
+    #         -25.0 / 12.0,
+    #         4.0,
+    #         -3.0,
+    #         4.0 / 3.0,
+    #         -1.0 / 4.0,
+    #     ]
+
+    #     # Order 5: points [0, 1, 2, 3, 4, 5]
+    #     coefficients[5]: List[Scalar[dtype]] = [
+    #         -137.0 / 60.0,
+    #         5.0,
+    #         -5.0,
+    #         10.0 / 3.0,
+    #         -5.0 / 4.0,
+    #         1.0 / 5.0,
+    #     ]
+
+    #     # Order 6: points [0, 1, 2, 3, 4, 5, 6]
+    #     coefficients[6]: List[Scalar[dtype]] = [
+    #         -49.0 / 20.0,
+    #         6.0,
+    #         -15.0 / 2.0,
+    #         20.0 / 3.0,
+    #         -15.0 / 4.0,
+    #         6.0 / 5.0,
+    #         -1.0 / 6.0,
+    #     ]
+    # except e:
+    #     print("Error generating forward finite difference table: " + String(e))
 
     return coefficients^
 
@@ -246,44 +307,31 @@ def generate_backward_finite_difference_table[
         Coefficient arrays indexed by accuracy order.
         Available orders: 1, 2, 3, 4, 5, 6 with truncation errors O(h) through O(h⁶).
     """
-    var coefficients = Dict[Int, List[Scalar[dtype]]]()
-
-    try: 
-        # Order 1: points [-1, 0]
-        coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
-
-        # Order 2: points [-2, -1, 0]
-        coefficients[2]: List[Scalar[dtype]] = [1.0 / 2.0, -2.0, 3.0 / 2.0]
-
-        # Order 3: points [-3, -2, -1, 0]
-        coefficients[3]: List[Scalar[dtype]] = [
+    var coefficients: Dict[Int, List[Scalar[dtype]]]  = {
+        1: [1.0, -1.0],
+        2: [1.0 / 2.0, -2.0, 3.0 / 2.0],
+        3: [
             -1.0 / 3.0,
             3.0 / 2.0,
             -3.0,
             11.0 / 6.0,
-        ]
-
-        # Order 4: points [-4, -3, -2, -1, 0]
-        coefficients[4]: List[Scalar[dtype]] = [
+        ], 
+        4: [
             1.0 / 4.0,
             -4.0 / 3.0,
             3.0,
             -4.0,
             25.0 / 12.0,
-        ]
-
-        # Order 5: points [-5, -4, -3, -2, -1, 0]
-        coefficients[5]: List[Scalar[dtype]] = [
+        ], 
+        5: [
             -1.0 / 5.0,
             5.0 / 4.0,
             -10.0 / 3.0,
             5.0,
             -5.0,
             137.0 / 60.0,
-        ]
-
-        # Order 6: points [-6, -5, -4, -3, -2, -1, 0]
-        coefficients[6]: List[Scalar[dtype]] = [
+        ], 
+        6: [
             1.0 / 6.0,
             -6.0 / 5.0,
             15.0 / 4.0,
@@ -292,7 +340,53 @@ def generate_backward_finite_difference_table[
             -6.0,
             49.0 / 20.0,
         ]
-    except e:
-        print("Error generating backward finite difference table: " + String(e))
+    }
+
+    # try: 
+    #     # Order 1: points [-1, 0]
+    #     coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
+
+    #     # Order 2: points [-2, -1, 0]
+    #     coefficients[2]: List[Scalar[dtype]] = [1.0 / 2.0, -2.0, 3.0 / 2.0]
+
+    #     # Order 3: points [-3, -2, -1, 0]
+    #     coefficients[3]: List[Scalar[dtype]] = [
+    #         -1.0 / 3.0,
+    #         3.0 / 2.0,
+    #         -3.0,
+    #         11.0 / 6.0,
+    #     ]
+
+    #     # Order 4: points [-4, -3, -2, -1, 0]
+    #     coefficients[4]: List[Scalar[dtype]] = [
+    #         1.0 / 4.0,
+    #         -4.0 / 3.0,
+    #         3.0,
+    #         -4.0,
+    #         25.0 / 12.0,
+    #     ]
+
+    #     # Order 5: points [-5, -4, -3, -2, -1, 0]
+    #     coefficients[5]: List[Scalar[dtype]] = [
+    #         -1.0 / 5.0,
+    #         5.0 / 4.0,
+    #         -10.0 / 3.0,
+    #         5.0,
+    #         -5.0,
+    #         137.0 / 60.0,
+    #     ]
+
+    #     # Order 6: points [-6, -5, -4, -3, -2, -1, 0]
+    #     coefficients[6]: List[Scalar[dtype]] = [
+    #         1.0 / 6.0,
+    #         -6.0 / 5.0,
+    #         15.0 / 4.0,
+    #         -20.0 / 3.0,
+    #         15.0 / 2.0,
+    #         -6.0,
+    #         49.0 / 20.0,
+    #     ]
+    # except e:
+    #     print("Error generating backward finite difference table: " + String(e))
 
     return coefficients^
