@@ -42,4 +42,4 @@ jobs:
 
       - name: Run tests
         run: |
-          pixi run tests
+          pixi run -e test tests
