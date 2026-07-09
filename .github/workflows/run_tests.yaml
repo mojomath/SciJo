@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-22.04"]
+        os: ["macos-latest"]
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -22,8 +22,6 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - name: Checkout repo
@@ -40,7 +38,7 @@ jobs:
 
       - name: Pixi install
         run: |
-          pixi install --locked
+          pixi install
 
       - name: Run tests
         run: |
