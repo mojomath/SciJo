@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
-## [v0.2.0] - 2026-04-01
+## [v0.2.0] - 2026-07-09
 ### Added
 - **Optimization module** (`scijo.optimize`):
   - `root_scalar` — Unified scalar root-finding interface with method dispatch.
@@ -57,6 +57,10 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 - Fixed backward difference loop counter in `deriv.mojo` from `Scalar[dtype]` to `Int`.
 - Fixed `Scalar[Self.dtype]` typo in `generate_backward_finite_difference_table` return docstring.
 - Removed duplicate `value` import in `constants/__init__.mojo`.
+- Fixed coefficient table creation in `generate_central_finite_difference_table` and related functions for Dict literal syntax.
+- Fixed README installation examples: corrected GitHub URLs to `mojomath/SciJo`, updated Mojo version constraint to `>=1.0.0b2,<2`.
+- Fixed docstring format in `convert_temperature()`: removed `Parameters:` section, added `Examples:` with concrete conversions.
+- Fixed README code examples: removed undefined `sj` alias, standardized dtype notation from `Float64` to `f64`.
 
 ### Removed
 - No removals in this release.
