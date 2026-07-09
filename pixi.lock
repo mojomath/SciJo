@@ -71,7 +71,7 @@ environments:
       - conda: https://conda.modular.com/max/noarch/mblack-26.4.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b2-release.conda
       - conda_source: mojoblas[bfd72d8a] @ git+https://github.com/shivasankarka/mojoblas?branch=main#8687f5e5e0488f7a3d01ca8e9a63b0705168b714
-      - conda_source: msl[be9cb74f] @ ../msl
+      - conda_source: msl[aa56422b] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
       - conda_source: numojo[5ba7ed99] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#d4ef02cca4ab5ef5aa463da73590e576dc0f36f6
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -119,7 +119,7 @@ environments:
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b2-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b2-release.conda
       - conda_source: mojoblas[afbd4764] @ git+https://github.com/shivasankarka/mojoblas?branch=main#8687f5e5e0488f7a3d01ca8e9a63b0705168b714
-      - conda_source: msl[b2b5a4f3] @ ../msl
+      - conda_source: msl[71aec702] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
       - conda_source: numojo[6d6e3752] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#d4ef02cca4ab5ef5aa463da73590e576dc0f36f6
   test:
     channels:
@@ -187,7 +187,7 @@ environments:
       - conda: https://conda.modular.com/max/noarch/mblack-26.4.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b2-release.conda
       - conda_source: mojoblas[bfd72d8a] @ git+https://github.com/shivasankarka/mojoblas?branch=main#8687f5e5e0488f7a3d01ca8e9a63b0705168b714
-      - conda_source: msl[be9cb74f] @ ../msl
+      - conda_source: msl[aa56422b] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
       - conda_source: numojo[5ba7ed99] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#d4ef02cca4ab5ef5aa463da73590e576dc0f36f6
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
@@ -245,7 +245,7 @@ environments:
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b2-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b2-release.conda
       - conda_source: mojoblas[afbd4764] @ git+https://github.com/shivasankarka/mojoblas?branch=main#8687f5e5e0488f7a3d01ca8e9a63b0705168b714
-      - conda_source: msl[b2b5a4f3] @ ../msl
+      - conda_source: msl[71aec702] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
       - conda_source: numojo[6d6e3752] @ git+https://github.com/mojo-numerics-and-algorithms-group/numojo?branch=pre-0.10#d4ef02cca4ab5ef5aa463da73590e576dc0f36f6
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -2110,7 +2110,10 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.0.0b2-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.4.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.0.0b2-release.conda
-- conda_source: msl[b2b5a4f3] @ ../msl
+- conda_source: msl[71aec702] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
+  version: 0.1.0
+  build: h60d57d3_0
+  subdir: osx-arm64
   variants:
     target_platform: osx-arm64
   depends:
@@ -2210,7 +2213,10 @@ packages:
   - conda: https://conda.modular.com/max/osx-arm64/mojo-1.0.0b2-release.conda
   - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.0.0b2-release.conda
   - conda_source: mojoblas[afbd4764] @ git+https://github.com/shivasankarka/mojoblas?branch=main#8687f5e5e0488f7a3d01ca8e9a63b0705168b714
-- conda_source: msl[be9cb74f] @ ../msl
+- conda_source: msl[aa56422b] @ git+https://github.com/mojomath/msl?branch=main#4e99889abde9bbd363fb5cf07e5c911010565405
+  version: 0.1.0
+  build: hb0f4dca_0
+  subdir: linux-64
   variants:
     target_platform: linux-64
   depends:
