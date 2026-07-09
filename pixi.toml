@@ -49,7 +49,7 @@ scipy = ">=1.18.0,<2"
 numpy = ">=2.5.1,<3"
 
 [feature.test.tasks]
-package = "mojo package scijo && cp scijo.mojopkg tests/"
+package = "mojo precompile scijo && cp scijo.mojoc tests/"
 tests = { depends-on = ["package"], cmd = "bash ./tests/test_all.sh" }
 final = { depends-on = ["package"], cmd = "mojo format ./scijo && mojo format ./tests && bash tests/test_all.sh" }
 
