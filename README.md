@@ -110,7 +110,6 @@ mv build/scijo.mojopkg /path/to/your/project
 
 ### Numerical Differentiation
 ```mojo
-import scijo as sj
 from scijo.differentiate import derivative
 
 fn simple_function[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]] = None) -> Scalar[dtype]:
@@ -118,9 +117,9 @@ fn simple_function[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dt
     return a * x * x + 2.0 * x + 1.0
 
 fn main() raises:
-    var result = derivative[sj.f64, simple_function, step_direction=0](
+    var result = derivative[f64, simple_function, step_direction=0](
         x0=1.0,
-        args=List[Scalar[sj.f64]](2.0),
+        args=List[Scalar[f64]](2.0),
         tolerance={"atol": 1e-8, "rtol": 1e-8},
         order=6
     )
@@ -141,10 +140,10 @@ fn simple_function[
     return a * x * x + 2.0 * x + 1.0
 
 fn main():
-    var result = quad[sj.f64, simple_function](
+    var result = quad[f64, simple_function](
         a=0.0,
         b=1.0,
-        args=List[Scalar[sj.f64]](2.0),
+        args=List[Scalar[f64]](2.0),
         epsabs=1e-6,
         epsrel=1e-6,
     )
@@ -216,7 +215,7 @@ fn main() raises:
     print("Root:", root)
 
     # Minimization
-    var result = minimize_scalar[Float64, objective, method="Brent"](
+    var result = minimize_scalar[f64, objective, method="Brent"](
         Bracket=(0.0, 4.0),
         tol=1e-8,
         maxiter=100

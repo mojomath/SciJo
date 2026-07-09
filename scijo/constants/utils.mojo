@@ -139,17 +139,27 @@ def list_all_constants() raises -> List[String]:
 def convert_temperature[
     old_scalar: String, new_scalar: String
 ](value: Scalar[f64]) raises -> Scalar[f64]:
-    """Converts a temperature value from one scalar to another.
+    """Converts a temperature value between Celsius, Fahrenheit, and Kelvin.
 
-    Parameters:
-        old_scalar: The original temperature scale (e.g., "Celsius", "Fahrenheit", "Kelvin").
-        new_scalar: The target temperature scale (e.g., "Celsius", "Fahrenheit", "Kelvin").
+    Compile-time parameters `old_scalar` and `new_scalar` specify the source and
+    target temperature scales. Supported scales: "Celsius", "Fahrenheit", "Kelvin".
 
     Args:
         value: The temperature value to be converted.
 
     Returns:
-        The converted temperature value in the new scalar.
+        The converted temperature value in the target scale.
+
+    Examples:
+        ```mojo
+        from scijo.constants import convert_temperature
+
+        # Convert 0 Celsius to Kelvin
+        var temp_k = convert_temperature["Celsius", "Kelvin"](0.0)  # 273.15
+
+        # Convert 32 Fahrenheit to Celsius
+        var temp_c = convert_temperature["Fahrenheit", "Celsius"](32.0)  # 0.0
+        ```
     """
 
     comptime if old_scalar == "Celsius" and new_scalar == "Fahrenheit":
