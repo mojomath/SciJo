@@ -7,7 +7,7 @@
   </p>
 </div>
 
-**[Changelog»](https://github.com/shivasankarka/SciJo/tree/main/docs/changelog.md)**
+**[Changelog»](https://github.com/mojomath/SciJo/tree/main/docs/changelog.md)**
 
 ## Overview
 
@@ -78,17 +78,16 @@ Scalar root-finding and minimization:
 
 ## Installation
 
-### Method 1:
+### Method 1: Via pixi
 1) Add to pixi.toml
 ```toml
 [workspace]
 preview = ["pixi-build"]
 
 [dependencies]
-modular = ">=25.6.1,<26"
-scijo = { git = "https://github.com/shivasankarka/SciJo.git", branch = "main"}
+mojo = ">=1.0.0b2,<2"
+scijo = { git = "https://github.com/mojomath/SciJo.git", branch = "main"}
 ```
-Note that SciJo and NuMojo require the `modular` package. We will move to `mojo` only package in future if possible.
 
 2) Install in pixi
 ```bash
@@ -98,7 +97,7 @@ pixi install
 ### Method 2: Build from Source
 ```bash
 # Clone and build
-git clone https://github.com/shivasankarka/SciJo.git
+git clone https://github.com/mojomath/SciJo.git
 cd SciJo
 mojo build scijo
 
@@ -257,7 +256,7 @@ Feel free to cite SciJo in your work, helps with visibility :)
 @software{scijo,
   author = {Shivasankar K.A. and SciJo Contributors},
   title = {SciJo: High-Performance Scientific Computing in Mojo},
-  url = {https://github.com/shivasankarka/SciJo},
+  url = {https://github.com/mojomath/SciJo},
   year = {2026}
 }
 ```
