@@ -337,6 +337,7 @@ def brent[
     Returns:
         RootResult[dtype] containing convergence and diagnostic fields.
     """
+
     @parameter
     def wrapped_fn(x: Float64) -> Float64:
         return Float64(f(Scalar[dtype](x), args))

@@ -275,7 +275,8 @@ def test_functional_interface() raises:
 
 
 def test_cubic_functional_interface() raises:
-    """Test cubic functional interpolation against SciPy natural cubic spline."""
+    """Test cubic functional interpolation against SciPy natural cubic spline.
+    """
     try:
         var np = Python.import_module("numpy")
         var scipy_interpolate = Python.import_module("scipy.interpolate")
@@ -286,9 +287,9 @@ def test_cubic_functional_interface() raises:
             y.itemset(i, sin(x.item(i)))
         var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
 
-        var yi_cubic = interp[
-            nm.f64, type="cubic", fill_method="interpolate"
-        ](xi, x, y)
+        var yi_cubic = interp[nm.f64, type="cubic", fill_method="interpolate"](
+            xi, x, y
+        )
 
         var py_x = np.linspace(0.0, 10.0, 11)
         var py_y = np.sin(py_x)
@@ -301,7 +302,10 @@ def test_cubic_functional_interface() raises:
                 yi_cubic.item(i),
                 Float64(py=py_yi[i]),
                 atol=1e-6,
-                msg="Cubic interpolation should match SciPy natural cubic spline",
+                msg=(
+                    "Cubic interpolation should match SciPy natural cubic"
+                    " spline"
+                ),
             )
 
     except:
@@ -320,9 +324,9 @@ def test_akima_functional_interface() raises:
             y.itemset(i, sin(x.item(i)))
         var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
 
-        var yi_akima = interp[
-            nm.f64, type="akima", fill_method="interpolate"
-        ](xi, x, y)
+        var yi_akima = interp[nm.f64, type="akima", fill_method="interpolate"](
+            xi, x, y
+        )
 
         var py_x = np.linspace(0.0, 10.0, 11)
         var py_y = np.sin(py_x)
@@ -626,7 +630,8 @@ def test_performance_comparison() raises:
 
 
 def test_cubic_spline_struct() raises:
-    """Test CubicSpline callable struct against scipy.interpolate.CubicSpline."""
+    """Test CubicSpline callable struct against scipy.interpolate.CubicSpline.
+    """
     try:
         var np = Python.import_module("numpy")
         var scipy_interpolate = Python.import_module("scipy.interpolate")
@@ -686,7 +691,8 @@ def test_cubic_spline_struct() raises:
 
 
 def test_akima1d_interpolator_struct() raises:
-    """Test Akima1DInterpolator callable struct against scipy.interpolate.Akima1DInterpolator."""
+    """Test Akima1DInterpolator callable struct against scipy.interpolate.Akima1DInterpolator.
+    """
     try:
         var np = Python.import_module("numpy")
         var scipy_interpolate = Python.import_module("scipy.interpolate")
@@ -890,7 +896,8 @@ def test_akima_n4_fallback() raises:
 
 
 def test_akima_sparse_knots() raises:
-    """Akima with sparse knots: values should be reasonable (not wildly wrong)."""
+    """Akima with sparse knots: values should be reasonable (not wildly wrong).
+    """
     try:
         var np = Python.import_module("numpy")
         var scipy_interpolate = Python.import_module("scipy.interpolate")

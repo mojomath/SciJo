@@ -38,7 +38,15 @@ Examples
     ```
 """
 
-from .quadrature import quad, QAG_GK15, QAG_GK21, QAG_GK31, QAG_GK41, QAG_GK51, QAG_GK61
+from .quadrature import (
+    quad,
+    QAG_GK15,
+    QAG_GK21,
+    QAG_GK31,
+    QAG_GK41,
+    QAG_GK51,
+    QAG_GK61,
+)
 from .fixed_sample import (
     trapezoid,
     simpson,

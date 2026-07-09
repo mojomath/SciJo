@@ -3,7 +3,13 @@ from std.testing import TestSuite
 from std.math import sqrt
 
 import scijo as sj
-from scijo.optimize.root_scalar import root_scalar, newton, bisect, brent, secant
+from scijo.optimize.root_scalar import (
+    root_scalar,
+    newton,
+    bisect,
+    brent,
+    secant,
+)
 
 
 def test_bisect_root_scalar_basic() raises:

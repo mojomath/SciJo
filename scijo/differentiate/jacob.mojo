@@ -171,7 +171,9 @@ def hessian[
         var xi_mm = x.copy()
         xi_pp.store(i, val=x.load(i) + step)
         xi_mm.store(i, val=x.load(i) - step)
-        var diag = (hess_func(xi_pp, args) - 2.0 * f0 + hess_func(xi_mm, args)) / h2
+        var diag = (
+            hess_func(xi_pp, args) - 2.0 * f0 + hess_func(xi_mm, args)
+        ) / h2
         H.store(i * n + i, val=diag)
 
         for j in range(i + 1, n):

@@ -333,7 +333,9 @@ def test_fftfreq() raises:
         var py_freqs = scipy_fft.fftfreq(8)
         for i in range(freqs.size):
             assert_almost_equal(
-                freqs.item(i), Float64(py=py_freqs[i]), atol=1e-14,
+                freqs.item(i),
+                Float64(py=py_freqs[i]),
+                atol=1e-14,
                 msg="fftfreq n=8 index " + String(i),
             )
 
@@ -342,7 +344,9 @@ def test_fftfreq() raises:
         var py_freqs_d = scipy_fft.fftfreq(8, d=0.5)
         for i in range(freqs_d.size):
             assert_almost_equal(
-                freqs_d.item(i), Float64(py=py_freqs_d[i]), atol=1e-14,
+                freqs_d.item(i),
+                Float64(py=py_freqs_d[i]),
+                atol=1e-14,
                 msg="fftfreq n=8 d=0.5 index " + String(i),
             )
 
@@ -351,7 +355,9 @@ def test_fftfreq() raises:
         var py_freqs_odd = scipy_fft.fftfreq(7)
         for i in range(freqs_odd.size):
             assert_almost_equal(
-                freqs_odd.item(i), Float64(py=py_freqs_odd[i]), atol=1e-14,
+                freqs_odd.item(i),
+                Float64(py=py_freqs_odd[i]),
+                atol=1e-14,
                 msg="fftfreq n=7 index " + String(i),
             )
     except:
@@ -369,7 +375,9 @@ def test_rfftfreq() raises:
         assert_equal(freqs.size, 5)
         for i in range(freqs.size):
             assert_almost_equal(
-                freqs.item(i), Float64(py=py_freqs[i]), atol=1e-14,
+                freqs.item(i),
+                Float64(py=py_freqs[i]),
+                atol=1e-14,
                 msg="rfftfreq n=8 index " + String(i),
             )
 
@@ -379,7 +387,9 @@ def test_rfftfreq() raises:
         assert_equal(freqs_odd.size, 4)
         for i in range(freqs_odd.size):
             assert_almost_equal(
-                freqs_odd.item(i), Float64(py=py_freqs_odd[i]), atol=1e-14,
+                freqs_odd.item(i),
+                Float64(py=py_freqs_odd[i]),
+                atol=1e-14,
                 msg="rfftfreq n=7 index " + String(i),
             )
 
@@ -388,7 +398,9 @@ def test_rfftfreq() raises:
         var py_freqs_d = scipy_fft.rfftfreq(8, d=0.1)
         for i in range(freqs_d.size):
             assert_almost_equal(
-                freqs_d.item(i), Float64(py=py_freqs_d[i]), atol=1e-14,
+                freqs_d.item(i),
+                Float64(py=py_freqs_d[i]),
+                atol=1e-14,
                 msg="rfftfreq n=8 d=0.1 index " + String(i),
             )
     except:
@@ -407,7 +419,9 @@ def test_fftshift() raises:
         var py_shifted = scipy_fft.fftshift(scipy_fft.fftfreq(8))
         for i in range(shifted.size):
             assert_almost_equal(
-                shifted.item(i), Float64(py=py_shifted[i]), atol=1e-14,
+                shifted.item(i),
+                Float64(py=py_shifted[i]),
+                atol=1e-14,
                 msg="fftshift n=8 index " + String(i),
             )
 
@@ -417,7 +431,9 @@ def test_fftshift() raises:
         var py_shifted_odd = scipy_fft.fftshift(scipy_fft.fftfreq(7))
         for i in range(shifted_odd.size):
             assert_almost_equal(
-                shifted_odd.item(i), Float64(py=py_shifted_odd[i]), atol=1e-14,
+                shifted_odd.item(i),
+                Float64(py=py_shifted_odd[i]),
+                atol=1e-14,
                 msg="fftshift n=7 index " + String(i),
             )
     except:
@@ -434,7 +450,9 @@ def test_ifftshift() raises:
         var roundtrip = ifftshift[nm.f64](fftshift[nm.f64](freqs))
         for i in range(freqs.size):
             assert_almost_equal(
-                roundtrip.item(i), freqs.item(i), atol=1e-14,
+                roundtrip.item(i),
+                freqs.item(i),
+                atol=1e-14,
                 msg="ifftshift roundtrip n=8 index " + String(i),
             )
 
@@ -443,15 +461,21 @@ def test_ifftshift() raises:
         var roundtrip_odd = ifftshift[nm.f64](fftshift[nm.f64](freqs_odd))
         for i in range(freqs_odd.size):
             assert_almost_equal(
-                roundtrip_odd.item(i), freqs_odd.item(i), atol=1e-14,
+                roundtrip_odd.item(i),
+                freqs_odd.item(i),
+                atol=1e-14,
                 msg="ifftshift roundtrip n=7 index " + String(i),
             )
 
         # match scipy directly
-        var py_result = scipy_fft.ifftshift(scipy_fft.fftshift(scipy_fft.fftfreq(8)))
+        var py_result = scipy_fft.ifftshift(
+            scipy_fft.fftshift(scipy_fft.fftfreq(8))
+        )
         for i in range(freqs.size):
             assert_almost_equal(
-                freqs.item(i), Float64(py=py_result[i]), atol=1e-14,
+                freqs.item(i),
+                Float64(py=py_result[i]),
+                atol=1e-14,
                 msg="ifftshift scipy match index " + String(i),
             )
     except:

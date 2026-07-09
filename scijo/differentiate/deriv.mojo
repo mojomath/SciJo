@@ -28,6 +28,7 @@ from scijo.differentiate.utility import (
 # Derivative
 # ===----------------------------------------------------------------------=== #
 
+
 # TODO: move if condition checks and stuff to main API function and keep private
 # function focused on numerics.
 def derivative[

@@ -294,12 +294,9 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
 
         for j in range(n - 2, -1, -1):
             c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
-            b._buf.ptr[j] = (
-                (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[j]
-                - h._buf.ptr[j]
-                * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j])
-                / 3.0
-            )
+            b._buf.ptr[j] = (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[
+                j
+            ] - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
             d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
                 3.0 * h._buf.ptr[j]
             )
@@ -337,9 +334,7 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
             + self._d._buf.ptr[j] * dx * dx * dx
         )
 
-    def __call__(
-        self, xi: NDArray[Self.dtype]
-    ) raises -> NDArray[Self.dtype]:
+    def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
         """Evaluates the spline at an array of points.
 
         Args:
@@ -488,9 +483,7 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             + (s3 - s2) * h * self._t._buf.ptr[j + 1]
         )
 
-    def __call__(
-        self, xi: NDArray[Self.dtype]
-    ) raises -> NDArray[Self.dtype]:
+    def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
         """Evaluates the Akima interpolant at an array of points.
 
         Args:
@@ -834,10 +827,9 @@ def _interp1d_cubic_interpolate[
 
     for j in range(n - 2, -1, -1):
         c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
-        b._buf.ptr[j] = (
-            (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[j]
-            - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
-        )
+        b._buf.ptr[j] = (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[
+            j
+        ] - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
         d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
             3.0 * h._buf.ptr[j]
         )
@@ -937,5 +929,3 @@ def _interp1d_akima_interpolate[
         )
 
     return result^
-
-

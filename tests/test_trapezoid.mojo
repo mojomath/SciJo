@@ -277,7 +277,8 @@ def test_romb_matches_scipy() raises:
 
 
 def test_cumulative_trapezoid_dx() raises:
-    """Cumulative trapezoid with dx matches scipy.integrate.cumulative_trapezoid."""
+    """Cumulative trapezoid with dx matches scipy.integrate.cumulative_trapezoid.
+    """
     try:
         var scipy_integrate = Python.import_module("scipy.integrate")
 
@@ -289,17 +290,23 @@ def test_cumulative_trapezoid_dx() raises:
         assert_equal(cum.size, 3)
         for i in range(cum.size):
             assert_almost_equal(
-                cum.item(i), Float64(py=py_cum[i]), atol=1e-14,
+                cum.item(i),
+                Float64(py=py_cum[i]),
+                atol=1e-14,
                 msg="cumulative_trapezoid dx index " + String(i),
             )
 
         # with initial=0
         var cum_init = cumulative_trapezoid[sj.f64](y, dx=1.0, initial=0.0)
-        var py_cum_init = scipy_integrate.cumulative_trapezoid(py_y, dx=1.0, initial=0)
+        var py_cum_init = scipy_integrate.cumulative_trapezoid(
+            py_y, dx=1.0, initial=0
+        )
         assert_equal(cum_init.size, 4)
         for i in range(cum_init.size):
             assert_almost_equal(
-                cum_init.item(i), Float64(py=py_cum_init[i]), atol=1e-14,
+                cum_init.item(i),
+                Float64(py=py_cum_init[i]),
+                atol=1e-14,
                 msg="cumulative_trapezoid dx initial=0 index " + String(i),
             )
 
@@ -309,13 +316,17 @@ def test_cumulative_trapezoid_dx() raises:
         for i in range(x.size):
             y_sin.itemset(i, _sin(x.item(i)))
         var dx_sin = x.item(1) - x.item(0)
-        var cum_sin = cumulative_trapezoid[sj.f64](y_sin, dx=dx_sin, initial=0.0)
+        var cum_sin = cumulative_trapezoid[sj.f64](
+            y_sin, dx=dx_sin, initial=0.0
+        )
         var py_cum_sin = scipy_integrate.cumulative_trapezoid(
             y_sin.to_numpy(), dx=Float64(dx_sin), initial=0
         )
         for i in range(cum_sin.size):
             assert_almost_equal(
-                cum_sin.item(i), Float64(py=py_cum_sin[i]), atol=1e-4,
+                cum_sin.item(i),
+                Float64(py=py_cum_sin[i]),
+                atol=1e-4,
                 msg="cumulative_trapezoid sin index " + String(i),
             )
     except:
@@ -336,7 +347,9 @@ def test_cumulative_trapezoid_x() raises:
         assert_equal(cum.size, 4)
         for i in range(cum.size):
             assert_almost_equal(
-                cum.item(i), Float64(py=py_cum[i]), atol=1e-12,
+                cum.item(i),
+                Float64(py=py_cum[i]),
+                atol=1e-12,
                 msg="cumulative_trapezoid x index " + String(i),
             )
     except:
@@ -357,7 +370,9 @@ def test_cumulative_simpson_dx() raises:
         assert_equal(cum.size, 5)
         for i in range(cum.size):
             assert_almost_equal(
-                cum.item(i), Float64(py=py_cum[i]), atol=1e-12,
+                cum.item(i),
+                Float64(py=py_cum[i]),
+                atol=1e-12,
                 msg="cumulative_simpson n=5 index " + String(i),
             )
 
@@ -370,7 +385,9 @@ def test_cumulative_simpson_dx() raises:
         assert_equal(cum4.size, 4)
         for i in range(cum4.size):
             assert_almost_equal(
-                cum4.item(i), Float64(py=py_cum4[i]), atol=1e-12,
+                cum4.item(i),
+                Float64(py=py_cum4[i]),
+                atol=1e-12,
                 msg="cumulative_simpson n=4 index " + String(i),
             )
 
@@ -382,7 +399,9 @@ def test_cumulative_simpson_dx() raises:
         )
         for i in range(cum_lin.size):
             assert_almost_equal(
-                cum_lin.item(i), Float64(py=py_cum_lin[i]), atol=1e-12,
+                cum_lin.item(i),
+                Float64(py=py_cum_lin[i]),
+                atol=1e-12,
                 msg="cumulative_simpson linear index " + String(i),
             )
     except:

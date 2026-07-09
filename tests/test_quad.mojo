@@ -304,7 +304,8 @@ def test_quad_difficult_integrands() raises:
 
 
 def test_qag_rule_constants() raises:
-    """All six QAG_GK* constants produce correct results on ∫x² dx from 0 to 1 = 1/3."""
+    """All six QAG_GK* constants produce correct results on ∫x² dx from 0 to 1 = 1/3.
+    """
 
     @parameter
     def quadratic[
@@ -334,7 +335,8 @@ def test_qag_rule_constants() raises:
 
 
 def test_qag_rule_values() raises:
-    """QAG_GK* constants have the correct integer values matching MSL_INTEG_GAUSS*."""
+    """QAG_GK* constants have the correct integer values matching MSL_INTEG_GAUSS*.
+    """
     assert_equal(QAG_GK15, 1)
     assert_equal(QAG_GK21, 2)
     assert_equal(QAG_GK31, 3)

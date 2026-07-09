@@ -405,7 +405,9 @@ def test_hessian_quadratic() raises:
     """Hessian of x^2 + y^2 is the identity scaled by 2."""
 
     @parameter
-    def f[dtype: DType](
+    def f[
+        dtype: DType
+    ](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
     ) capturing raises -> Scalar[dtype]:
         return x.item(0) * x.item(0) + x.item(1) * x.item(1)
@@ -423,7 +425,9 @@ def test_hessian_cross_term() raises:
     """Hessian of x*y has off-diagonal 1 and diagonal 0."""
 
     @parameter
-    def f[dtype: DType](
+    def f[
+        dtype: DType
+    ](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
     ) capturing raises -> Scalar[dtype]:
         return x.item(0) * x.item(1)
@@ -441,13 +445,14 @@ def test_hessian_cubic() raises:
     """Hessian of x^3 + y^3: diagonal = 6x, 6y; off-diagonal = 0."""
 
     @parameter
-    def f[dtype: DType](
+    def f[
+        dtype: DType
+    ](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
     ) capturing raises -> Scalar[dtype]:
-        return (
-            x.item(0) * x.item(0) * x.item(0)
-            + x.item(1) * x.item(1) * x.item(1)
-        )
+        return x.item(0) * x.item(0) * x.item(0) + x.item(1) * x.item(
+            1
+        ) * x.item(1)
 
     var x = nm.fromstring[sj.f64]("[2.0, 3.0]")
     var H = hessian[sj.f64, f](x)
@@ -462,7 +467,9 @@ def test_hessian_symmetric() raises:
     """Hessian is always symmetric: H[i,j] == H[j,i]."""
 
     @parameter
-    def f[dtype: DType](
+    def f[
+        dtype: DType
+    ](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
     ) capturing raises -> Scalar[dtype]:
         return (
