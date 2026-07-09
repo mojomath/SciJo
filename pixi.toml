@@ -2,15 +2,25 @@
 authors = ["shivasankar <shivasankar.ka@gmail.com>"]
 channels = [
     "https://conda.modular.com/max",
-    "https://prefix.dev/conda-forge",
-    "https://prefix.dev/modular-community"
+    "conda-forge",
+    "https://conda.modular.com/max-nightly/",
+    "https://repo.prefix.dev/modular-community",
 ]
 platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
+[tasks]
+format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
+package = "mojo precompile scijo && cp scijo.mojoc tests/"
+
+[dependencies]
+mojo = ">=1.0.0b2,<2"
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+
 [package]
 name = "scijo"
-version = "0.1.0"
+version = "0.2.0"
 
 [package.build]
 backend = { name = "pixi-build-mojo", version = "0.*"}
@@ -19,25 +29,29 @@ backend = { name = "pixi-build-mojo", version = "0.*"}
 name = "scijo"
 
 [package.host-dependencies]
-modular = ">=25.6.1,<26"
+mojo = "==1.0.0b1"
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
 [package.build-dependencies]
-modular = ">=25.6.1,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
-# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
+mojo = "==1.0.0b1"
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
 [package.run-dependencies]
-modular = ">=25.6.1,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
-# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
+mojo = "==1.0.0b1"
+msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 
-[dependencies]
-# These deps are needed for local development, mojo test, language server, etc
-modular = ">=25.6.1,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+[feature.test.dependencies]
+python = ">=3.14.6,<3.15"
+scipy = ">=1.18.0,<2"
+numpy = ">=2.5.1,<3"
 
-[tasks]
-format = "mojo format ./"
-test = "mojo test -I . tests/"
-build = "mojo build"
-package = "mojo package scijo"
+[feature.test.tasks]
+package = "mojo precompile scijo && cp scijo.mojoc tests/"
+tests = { depends-on = ["package"], cmd = "bash ./tests/test_all.sh" }
+final = { depends-on = ["package"], cmd = "mojo format ./scijo && mojo format ./tests && bash tests/test_all.sh" }
+
+[environments]
+test = ["test"]

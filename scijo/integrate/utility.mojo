@@ -1,29 +1,47 @@
-from utils import StaticTuple
-from utils.numerics import min_finite, max_finite
+# ===----------------------------------------------------------------------=== #
+# SciJo: Integrate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Integration Utility Functions (`scijo.integrate.utility`)
+===========================================================
+Utility functions, data structures, and Gauss-Kronrod quadrature tables for
+numerical integration. Includes result types, priority queue for adaptive
+subdivision, machine epsilon computation, and precomputed quadrature nodes
+and weights from Netlib QUADPACK.
 
-alias smallest_positive_dtype[dtype: DType] = min_finite[dtype]()
-alias largest_positive_dtype[dtype: DType] = max_finite[dtype]()
+References
+----------
+- Netlib QUADPACK: https://www.netlib.org/quadpack/
+- Advanpix G10K21 coefficients:
+  https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
+"""
+
+from std.utils import StaticTuple
+from std.utils.numerics import min_finite, max_finite
+
+comptime smallest_positive_dtype[dtype: DType] = min_finite[dtype]()
+comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
 
 # TODO: Remove predefined messages in IntegralResult and add custom result according to the result.
 
 
-fn machine_epsilon[dtype: DType]() -> Float64:
-    """Return the machine epsilon for the given floating-point dtype."""
-    constrained[
-        (
-            dtype.is_floating_point()
-            and (
-                dtype == DType.float16
-                or dtype == DType.float32
-                or dtype == DType.float64
-            )
-        ),
-        "DType must be floating point.",
-    ]()
+# ===----------------------------------------------------------------------=== #
+# Helpers
+# ===----------------------------------------------------------------------=== #
+
+
+def machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
+    """Returns the machine epsilon for the given floating-point dtype.
+
+    Parameters:
+        dtype: The floating-point data type (float16, float32, or float64).
+
+    Returns:
+        The machine epsilon as a Float64 value.
+    """
 
     # TODO: Check if these values are correct lol
-    @parameter
-    if dtype == DType.float16:
+    comptime if dtype == DType.float16:
         return Float64(0.0009765625)  # 2**-10
     elif dtype == DType.float32:
         return Float64(1.1920928955078125e-07)  # 2**-23
@@ -31,17 +49,30 @@ fn machine_epsilon[dtype: DType]() -> Float64:
         return Float64(2.220446049250313e-16)  # 2**-52
 
 
+# ===----------------------------------------------------------------------=== #
+# Adaptive intervals
+# ===----------------------------------------------------------------------=== #
+
+
 struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
-    """Represents an integration interval with error estimate for priority queue.
+    """Represents an integration subinterval with error estimate for adaptive subdivision.
+
+    Parameters:
+        dtype: The floating-point data type.
     """
 
-    var a: Float64  # Left endpoint
-    var b: Float64  # Right endpoint
-    var integral: Float64  # Integral estimate for this interval
-    var error: Float64  # Error estimate for this interval
-    var level: Int  # Subdivision level (for debugging)
+    var a: Float64
+    """Left endpoint."""
+    var b: Float64
+    """Right endpoint."""
+    var integral: Float64
+    """Integral estimate for this interval."""
+    var error: Float64
+    """Error estimate for this interval."""
+    var level: Int
+    """Subdivision level."""
 
-    fn __init__(
+    def __init__(
         out self,
         a: Float64,
         b: Float64,
@@ -57,36 +88,40 @@ struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
 
 
 struct QAGSPriorityQueue[dtype: DType]:
-    """Max-heap priority queue for QAGS intervals, ordered by error estimate."""
+    """Max-heap priority queue for QAGS intervals, ordered by error estimate.
 
-    var intervals: List[QAGSInterval[dtype]]
+    Parameters:
+        dtype: The floating-point data type.
+    """
 
-    fn __init__(out self):
-        self.intervals = List[QAGSInterval[dtype]]()
+    var intervals: List[QAGSInterval[Self.dtype]]
+    """Heap-ordered list of integration intervals."""
 
-    fn __len__(self) -> Int:
+    def __init__(out self):
+        self.intervals = List[QAGSInterval[Self.dtype]]()
+
+    def __len__(self) -> Int:
         return len(self.intervals)
 
-    fn is_empty(self) -> Bool:
+    def is_empty(self) -> Bool:
+        """Returns True if the queue contains no intervals."""
         return len(self.intervals) == 0
 
-    fn _parent(self, i: Int) -> Int:
+    def _parent(self, i: Int) -> Int:
         return (i - 1) // 2
 
-    fn _left_child(self, i: Int) -> Int:
+    def _left_child(self, i: Int) -> Int:
         return 2 * i + 1
 
-    fn _right_child(self, i: Int) -> Int:
+    def _right_child(self, i: Int) -> Int:
         return 2 * i + 2
 
-    fn _swap(mut self, i: Int, j: Int):
-        """Swap two elements in the heap."""
+    def _swap(mut self, i: Int, j: Int):
         var temp = self.intervals[i]
         self.intervals[i] = self.intervals[j]
         self.intervals[j] = temp
 
-    fn _heapify_up(mut self, index: Int):
-        """Restore heap property upward from given index."""
+    def _heapify_up(mut self, index: Int):
         if index == 0:
             return
 
@@ -95,8 +130,7 @@ struct QAGSPriorityQueue[dtype: DType]:
             self._swap(index, parent_idx)
             self._heapify_up(parent_idx)
 
-    fn _heapify_down(mut self, index: Int):
-        """Restore heap property downward from given index."""
+    def _heapify_down(mut self, index: Int):
         var largest = index
         var left = self._left_child(index)
         var right = self._right_child(index)
@@ -118,16 +152,24 @@ struct QAGSPriorityQueue[dtype: DType]:
             self._swap(index, largest)
             self._heapify_down(largest)
 
-    fn push(mut self, interval: QAGSInterval[dtype]):
-        """Add interval to priority queue."""
+    def push(mut self, interval: QAGSInterval[Self.dtype]):
+        """Adds an interval to the priority queue.
+
+        Args:
+            interval: The integration interval to insert.
+        """
         self.intervals.append(interval)
         self._heapify_up(len(self.intervals) - 1)
 
-    fn pop(mut self) -> QAGSInterval[dtype]:
-        """Remove and return interval with maximum error."""
+    def pop(mut self) -> QAGSInterval[Self.dtype]:
+        """Removes and returns the interval with the largest error estimate.
+
+        Returns:
+            The interval with maximum error. Returns a zero-valued interval
+            if the queue is empty.
+        """
         if self.is_empty():
-            # This should not happen in practice
-            return QAGSInterval[dtype](
+            return QAGSInterval[Self.dtype](
                 Float64(0),
                 Float64(0),
                 Float64(0),
@@ -143,17 +185,23 @@ struct QAGSPriorityQueue[dtype: DType]:
 
         return max_interval
 
-    fn peek(self) -> QAGSInterval[dtype]:
-        """Return interval with maximum error without removing it."""
+    def peek(self) -> QAGSInterval[Self.dtype]:
+        """Returns the interval with the largest error estimate without removing it.
+
+        Returns:
+            The interval at the top of the heap.
+        """
         return self.intervals[0]
 
 
-fn get_quad_error_message(ier: Int) -> String:
-    """
-    Get error message for QUADPACK integration error codes.
+def get_quad_error_message(ier: Int) -> String:
+    """Returns the error message corresponding to a QUADPACK integration error code.
 
-    Arguments:
-        ier: Integration error code (0 = success, >0 = error type)
+    Args:
+        ier: Integration error code (0 = success, >0 = error type).
+
+    Returns:
+        A human-readable description of the error condition.
     """
     if ier == 0:
         return String("The integral converged successfully.")
@@ -191,62 +239,64 @@ fn get_quad_error_message(ier: Int) -> String:
         return String("Unknown error code.")
 
 
+# ===----------------------------------------------------------------------=== #
+# Result types
+# ===----------------------------------------------------------------------=== #
+
+
 struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     """Result structure for numerical integration operations.
 
-    Type Parameters:
-        dtype: The floating-point data type (DType.float32, DType.float64, etc.)
+    Encapsulates the computed integral value, error estimate, function evaluation
+    count, and status code returned by quadrature routines.
 
-    Fields:
-        integral: The computed integral value
-        abserr: Absolute error estimate
-        neval: Number of function evaluations used
-        ier: Integration error code (0 = success, >0 = error type)
-
-    Usage:
-        Creates a result object containing integration computation results
-        with error estimates and diagnostic information.
+    Parameters:
+        dtype: The floating-point data type (e.g., DType.float32, DType.float64).
     """
 
-    var integral: Scalar[dtype]
-    var abserr: Scalar[dtype]
-    var neval: Int
+    var integral: Scalar[Self.dtype]
+    """The computed integral value."""
+    var abserr: Scalar[Self.dtype]
+    """Absolute error estimate."""
+    var nfev: Int
+    """Number of function evaluations used."""
     var ier: Int
+    """Integration error code (0 = success, >0 = error type)."""
 
-    fn __init__(
+    def __init__(
         out self,
-        integral: Scalar[dtype] = 0,
-        abserr: Scalar[dtype] = 0,
-        neval: Int = 0,
+        integral: Scalar[Self.dtype] = 0,
+        abserr: Scalar[Self.dtype] = 0,
+        nfev: Int = 0,
         ier: Int = 0,
     ):
         self.integral = integral
         self.abserr = abserr
-        self.neval = neval
+        self.nfev = nfev
         self.ier = ier
 
-    fn success(self) -> Bool:
-        """Check if integration was successful."""
+    def success(self) -> Bool:
+        """Returns True if integration converged successfully (ier == 0)."""
         return self.ier == 0
 
-    fn message(self) -> String:
-        """Get SciPy-style error message."""
+    def message(self) -> String:
+        """Returns a human-readable status message for this result."""
         return get_quad_error_message(self.ier)
 
-    fn __str__(self) raises -> String:
+    def __str__(self) raises -> String:
         var status = "SUCCESS" if self.success() else "ERROR"
         return String(
             "QuadResult(status={}, message='{}', integral={}, abserr={:.2e},"
-            " neval={})"
+            " nfev={})"
         ).format(
             status,
             self.message(),
             self.integral,
             self.abserr,
-            self.neval,
+            self.nfev,
         )
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         try:
             var status = "SUCCESS" if self.success() else "ERROR"
             writer.write(
@@ -263,16 +313,16 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
                     self.message(),
                     self.integral,
                     self.abserr,
-                    self.neval,
+                    self.nfev,
                 )
             )
         except e:
             writer.write("Error displaying QuadResult: " + String(e) + "\n")
 
 
-# =============================================================================
+# ===----------------------------------------------------------------------=== #
 # Gauss-Kronrod Quadrature Rules (from Netlib QUADPACK qng.f)
-# =============================================================================
+# ===----------------------------------------------------------------------=== #
 # These rules use symmetric nodes about 0, so we only store positive nodes
 # and weights. During integration, we evaluate f(a+x) + f(a-x) for each node.
 
@@ -281,7 +331,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
 # x1 in QUADPACK: nodes common to 10-, 21-, 43-, and 87-point rules
 # w10 in QUADPACK: weights of the 10-point formula
 # -----------------------------------------------------------------------------
-alias x1_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+comptime x1_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.9739065285171717,  # ± (Gauss node)
     0.8650633666889845,  # ± (Gauss node)
     0.6794095682990244,  # ± (Gauss node)
@@ -289,7 +339,7 @@ alias x1_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.1488743389816312,  # ± (Gauss node)
 )
 
-alias w10_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+comptime w10_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.0666713443086881,  # ±0.9739065285171717
     0.1494513491505806,  # ±0.8650633666889845
     0.2190863625159820,  # ±0.6794095682990244
@@ -302,7 +352,7 @@ alias w10_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
 # x1 + x2 in QUADPACK
 # w21a: weights for x1 nodes, w21b: weights for x2 nodes (+ center)
 # -----------------------------------------------------------------------------
-alias x2_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+comptime x2_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.9956571630258081,  # ± (Kronrod only)
     0.9301574913557082,  # ± (Kronrod only)
     0.7808177265864169,  # ± (Kronrod only)
@@ -310,7 +360,9 @@ alias x2_nodes: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.2943928627014602,  # ± (Kronrod only)
 )
 
-alias w21a_kronrod_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+comptime w21a_kronrod_weights: StaticTuple[Float64, 5] = StaticTuple[
+    Float64, 5
+](
     0.0325816230796473,  # for x1[0] (Gauss node)
     0.0750396748109200,  # for x1[1] (Gauss node)
     0.1093871588022976,  # for x1[2] (Gauss node)
@@ -318,7 +370,9 @@ alias w21a_kronrod_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.1477391049013385,  # for x1[4] (Gauss node)
 )
 
-alias w21b_kronrod_weights: StaticTuple[Float64, 6] = StaticTuple[Float64, 6](
+comptime w21b_kronrod_weights: StaticTuple[Float64, 6] = StaticTuple[
+    Float64, 6
+](
     0.0116946388673187,  # for x2[0] (Kronrod only)
     0.0547558965743520,  # for x2[1] (Kronrod only)
     0.0931254545836976,  # for x2[2] (Kronrod only)
@@ -332,7 +386,7 @@ alias w21b_kronrod_weights: StaticTuple[Float64, 6] = StaticTuple[Float64, 6](
 # x1 + x2 + x3 in QUADPACK
 # w43a: weights for x1, x3 nodes; w43b: weights for x3 nodes (+ center)
 # -----------------------------------------------------------------------------
-alias x3_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
+comptime x3_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.9993333609019321,  # ± (Kronrod only)
     0.9874334029080889,  # ± (Kronrod only)
     0.9548079348142663,  # ± (Kronrod only)
@@ -346,7 +400,9 @@ alias x3_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.0746506174613833,  # ± (Kronrod only)
 )
 
-alias w43a_kronrod_weights: StaticTuple[Float64, 10] = StaticTuple[Float64, 10](
+comptime w43a_kronrod_weights: StaticTuple[Float64, 10] = StaticTuple[
+    Float64, 10
+](
     0.0162967342896666,  # for x1[0]
     0.0375228761208695,  # for x1[1]
     0.0546949020582554,  # for x1[2]
@@ -359,7 +415,9 @@ alias w43a_kronrod_weights: StaticTuple[Float64, 10] = StaticTuple[Float64, 10](
     0.0713872672686934,  # for x2[4]
 )
 
-alias w43b_kronrod_weights: StaticTuple[Float64, 12] = StaticTuple[Float64, 12](
+comptime w43b_kronrod_weights: StaticTuple[Float64, 12] = StaticTuple[
+    Float64, 12
+](
     0.0018444776402124,  # for x3[0]
     0.0107986895858917,  # for x3[1]
     0.0218953638677954,  # for x3[2]
@@ -379,7 +437,7 @@ alias w43b_kronrod_weights: StaticTuple[Float64, 12] = StaticTuple[Float64, 12](
 # x1 + x2 + x3 + x4 in QUADPACK
 # w87a: weights for x1, x2, x3 nodes; w87b: weights for x4 nodes (+ center)
 # -----------------------------------------------------------------------------
-alias x4_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
+comptime x4_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
     0.9999029772627292,  # ± (Kronrod only)
     0.9979898959866787,  # ± (Kronrod only)
     0.9921754978606872,  # ± (Kronrod only)
@@ -404,7 +462,9 @@ alias x4_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
     0.0373521233946199,  # ± (Kronrod only)
 )
 
-alias w87a_kronrod_weights: StaticTuple[Float64, 21] = StaticTuple[Float64, 21](
+comptime w87a_kronrod_weights: StaticTuple[Float64, 21] = StaticTuple[
+    Float64, 21
+](
     0.0081483773841492,  # for x1[0]
     0.0187614382015628,  # for x1[1]
     0.0273474510500523,  # for x1[2]
@@ -428,7 +488,9 @@ alias w87a_kronrod_weights: StaticTuple[Float64, 21] = StaticTuple[Float64, 21](
     0.0372538755030477,  # for x3[10]
 )
 
-alias w87b_kronrod_weights: StaticTuple[Float64, 23] = StaticTuple[Float64, 23](
+comptime w87b_kronrod_weights: StaticTuple[Float64, 23] = StaticTuple[
+    Float64, 23
+](
     0.0002741455637621,  # for x4[0]
     0.0018071241550579,  # for x4[1]
     0.0040968692827592,  # for x4[2]
@@ -455,14 +517,15 @@ alias w87b_kronrod_weights: StaticTuple[Float64, 23] = StaticTuple[Float64, 23](
 )
 
 
-# =============================================================================
+# ===----------------------------------------------------------------------=== #
 # Complete Gauss-Kronrod Rules (for QAGS algo, this is the better format)
-# =============================================================================
+# ===----------------------------------------------------------------------=== #
+
 # -----------------------------------------------------------------------------
 # GK15: 15-point Gauss-Kronrod (7-point Gauss + 8 Kronrod extensions)
 # Standard rule used in QAGS/QAG
 # -----------------------------------------------------------------------------
-alias gk15_nodes: StaticTuple[Float64, 8] = StaticTuple[Float64, 8](
+comptime gk15_nodes: StaticTuple[Float64, 8] = StaticTuple[Float64, 8](
     0.0000000000000000,  # 0: center (Gauss)
     0.2077849550078985,  # 1: ± (Kronrod)
     0.4058451513773972,  # 2: ± (Gauss)
@@ -473,7 +536,9 @@ alias gk15_nodes: StaticTuple[Float64, 8] = StaticTuple[Float64, 8](
     0.9914553711208126,  # 7: ± (Kronrod)
 )
 
-alias gk15_kronrod_weights: StaticTuple[Float64, 8] = StaticTuple[Float64, 8](
+comptime gk15_kronrod_weights: StaticTuple[Float64, 8] = StaticTuple[
+    Float64, 8
+](
     0.2094821410847278,  # 0: center
     0.2044329400752989,  # 1: ±0.2077849550078985
     0.1903505780647854,  # 2: ±0.4058451513773972 (Gauss)
@@ -484,7 +549,7 @@ alias gk15_kronrod_weights: StaticTuple[Float64, 8] = StaticTuple[Float64, 8](
     0.0229353220105292,  # 7: ±0.9914553711208126
 )
 
-alias gk15_gauss_weights: StaticTuple[Float64, 4] = StaticTuple[Float64, 4](
+comptime gk15_gauss_weights: StaticTuple[Float64, 4] = StaticTuple[Float64, 4](
     0.4179591836734694,  # 0: center (0.0) - note: Gauss uses double weight
     0.3818300505051189,  # 2: ±0.4058451513773972
     0.2797053914892767,  # 4: ±0.7415311855993944
@@ -494,7 +559,7 @@ alias gk15_gauss_weights: StaticTuple[Float64, 4] = StaticTuple[Float64, 4](
 # -----------------------------------------------------------------------------
 # GK21: 21-point Gauss-Kronrod (10-point Gauss + 11 Kronrod extensions)
 # -----------------------------------------------------------------------------
-alias gk21_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
+comptime gk21_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.0000000000000000,  # 0: center (Gauss)
     0.1488743389816312,  # 1: ± (Gauss)
     0.2943928627014602,  # 2: ± (Kronrod)
@@ -508,7 +573,9 @@ alias gk21_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.9956571630258081,  # 10: ± (Kronrod)
 )
 
-alias gk21_kronrod_weights: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
+comptime gk21_kronrod_weights: StaticTuple[Float64, 11] = StaticTuple[
+    Float64, 11
+](
     0.1494455540029169,  # 0: center
     0.1477391049013385,  # 1: ±0.1488743389816312 (Gauss)
     0.1427759385770601,  # 2: ±0.2943928627014602
@@ -522,7 +589,7 @@ alias gk21_kronrod_weights: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.0116946388673187,  # 10: ±0.9956571630258081
 )
 
-alias gk21_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+comptime gk21_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
     0.2955242247147529,  # 1: ±0.1488743389816312
     0.2692667193099964,  # 3: ±0.4333953941292472
     0.2190863625159820,  # 5: ±0.6794095682990244
@@ -533,7 +600,7 @@ alias gk21_gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
 # -----------------------------------------------------------------------------
 # GK43: 43-point Gauss-Kronrod (21-point GK + 22 Kronrod extensions)
 # -----------------------------------------------------------------------------
-alias gk43_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
+comptime gk43_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
     0.0000000000000000,  # 0: center
     0.0746506174613833,  # 1: ± (Kronrod)
     0.1488743389816312,  # 2: ± (from GK21)
@@ -558,7 +625,9 @@ alias gk43_nodes: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
     0.9993333609019321,  # 21: ± (Kronrod)
 )
 
-alias gk43_kronrod_weights: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
+comptime gk43_kronrod_weights: StaticTuple[Float64, 22] = StaticTuple[
+    Float64, 22
+](
     0.0747221475174030,  # 0: center
     0.0745077510141751,  # 1: ±0.0746506174613833
     0.0738701996323940,  # 2: ±0.1488743389816312 (from GK21)
@@ -583,7 +652,9 @@ alias gk43_kronrod_weights: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
     0.0018444776402124,  # 21: ±0.9993333609019321
 )
 
-alias gk43_gauss21_weights: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
+comptime gk43_gauss21_weights: StaticTuple[Float64, 11] = StaticTuple[
+    Float64, 11
+](
     0.1494455540029169,  # 0: center (0.0)
     0.1477391049013385,  # 2: ±0.1488743389816312
     0.1427759385770601,  # 4: ±0.2943928627014602
@@ -600,7 +671,7 @@ alias gk43_gauss21_weights: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
 # -----------------------------------------------------------------------------
 # GK87: 87-point Gauss-Kronrod (43-point GK + 44 Kronrod extensions)
 # -----------------------------------------------------------------------------
-alias gk87_nodes: StaticTuple[Float64, 44] = StaticTuple[Float64, 44](
+comptime gk87_nodes: StaticTuple[Float64, 44] = StaticTuple[Float64, 44](
     0.0000000000000000,  # 0: center
     0.0373521233946199,  # 1: ± (Kronrod)
     0.0746506174613833,  # 2: ± (from GK43)
@@ -647,7 +718,9 @@ alias gk87_nodes: StaticTuple[Float64, 44] = StaticTuple[Float64, 44](
     0.9999029772627292,  # 43: ± (Kronrod)
 )
 
-alias gk87_kronrod_weights: StaticTuple[Float64, 44] = StaticTuple[Float64, 44](
+comptime gk87_kronrod_weights: StaticTuple[Float64, 44] = StaticTuple[
+    Float64, 44
+](
     0.0373610737626790,  # 0: center
     0.0373342287519350,  # 1: ±0.0373521233946199
     0.0372538755030477,  # 2: ±0.0746506174613833 (from GK43)
@@ -694,7 +767,9 @@ alias gk87_kronrod_weights: StaticTuple[Float64, 44] = StaticTuple[Float64, 44](
     0.0002741455637621,  # 43: ±0.9999029772627292
 )
 
-alias gk87_gauss43_weights: StaticTuple[Float64, 22] = StaticTuple[Float64, 22](
+comptime gk87_gauss43_weights: StaticTuple[Float64, 22] = StaticTuple[
+    Float64, 22
+](
     0.0747221475174030,  # 0: center (0.0)
     0.0745077510141751,  # 2: ±0.0746506174613833
     0.0738701996323940,  # 4: ±0.1488743389816312

@@ -1,76 +1,102 @@
-from scijo.differentiate.derivative import derivative
-from testing import assert_almost_equal, assert_equal, assert_true, assert_false
-import math
+from std.testing import (
+    assert_almost_equal,
+    assert_equal,
+    assert_true,
+    assert_false,
+)
+from std.testing import TestSuite
+from std.math import sin, cos, exp
+
+from scijo.differentiate import derivative, hessian
+from numojo.core import NDArray
+import numojo as nm
+import scijo as sj
 
 
-fn constant_function[
+def constant_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
-    F(x) = 5, f'(x) = 0
+    F(x) = 5, f'(x) = 0.
     """
     return 5.0
 
 
-fn linear_function[
+def linear_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
-    F(x) = 3x + 2, f'(x) = 3
+    F(x) = 3x + 2, f'(x) = 3.
     """
     return 3.0 * x + 2.0
 
 
-fn quadratic_function[
+def quadratic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
-    F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3
+    F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3.
     """
     return 2.0 * x * x + 3.0 * x + 1.0
 
 
-fn cubic_function[
+def cubic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
-    F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1
+    F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1.
     """
     return x * x * x - 2.0 * x * x + x - 5.0
 
 
-fn sin_function[
+def sin_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
-    F(x) = sin(x), f'(x) = cos(x)
+    F(x) = sin(x), f'(x) = cos(x).
     """
-    return math.sin(x)
+    return sin(x)
 
 
-fn cos_function[
+def cos_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
-    F(x) = cos(x), f'(x) = -sin(x)
+    F(x) = cos(x), f'(x) = -sin(x).
     """
-    return math.cos(x)
+    return cos(x)
 
 
-fn exp_function[
+def exp_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """
-    F(x) = e^x, f'(x) = e^x
+    F(x) = e^x, f'(x) = e^x.
     """
-    return math.exp(x)
+    return exp(x)
 
 
-fn parameterized_function[
+def parameterized_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
+    dtype
+]:
     """
-    F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b
+    F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b.
     """
     var a = args.value()[0]
     var b = args.value()[1]
@@ -78,7 +104,7 @@ fn parameterized_function[
     return a * x * x + b * x + c
 
 
-fn test_basic_derivatives() raises:
+def test_basic_derivatives() raises:
     """Test derivatives of basic polynomial functions."""
 
     # Test constant function: F(x) = 5, f'(x) = 0
@@ -123,11 +149,11 @@ fn test_basic_derivatives() raises:
     )
 
 
-fn test_cubic_derivatives() raises:
+def test_cubic_derivatives() raises:
     """Test derivative of cubic function."""
 
     # Test cubic function: F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1
-    var test_points = List[Float64](0.0, 1.0, -1.0, 2.5)
+    var test_points: List[Float64] = [0.0, 1.0, -1.0, 2.5]
 
     for i in range(len(test_points)):
         var x = test_points[i]
@@ -144,12 +170,12 @@ fn test_cubic_derivatives() raises:
         )
 
 
-fn test_trigonometric_derivatives() raises:
+def test_trigonometric_derivatives() raises:
     """Test derivatives of trigonometric functions."""
 
     # Test sin(x): f'(x) = cos(x)
     var x_sin = 0.5
-    var expected_sin = math.cos(x_sin)
+    var expected_sin = cos(x_sin)
     var result_sin = derivative[DType.float64, sin_function, step_direction=0](
         x0=x_sin, args=None, order=6
     )
@@ -163,7 +189,7 @@ fn test_trigonometric_derivatives() raises:
 
     # Test cos(x): f'(x) = -sin(x)
     var x_cos = 1.0
-    var expected_cos = -math.sin(x_cos)
+    var expected_cos = -sin(x_cos)
     var result_cos = derivative[DType.float64, cos_function, step_direction=0](
         x0=x_cos, args=None, order=6
     )
@@ -176,12 +202,12 @@ fn test_trigonometric_derivatives() raises:
     )
 
 
-fn test_exponential_derivative() raises:
+def test_exponential_derivative() raises:
     """Test derivative of exponential function."""
 
     # Test exp(x): f'(x) = exp(x)
     var x_exp = 1.0
-    var expected_exp = math.exp(x_exp)
+    var expected_exp = exp(x_exp)
     var result_exp = derivative[DType.float64, exp_function, step_direction=0](
         x0=x_exp, args=None, order=6
     )
@@ -194,12 +220,12 @@ fn test_exponential_derivative() raises:
     )
 
 
-fn test_parameterized_function() raises:
+def test_parameterized_function() raises:
     """Test derivative with function parameters."""
 
     # Test F(x) = a*x^2 + b*x + c with a=2, b=5, c=3
     # f'(x) = 2*a*x + b = 4*x + 5
-    var args = List[Scalar[DType.float64]](2.0, 5.0, 3.0)
+    var args: List[Scalar[DType.float64]] = [2.0, 5.0, 3.0]
     var x_param = 1.5
     var expected_param = 4.0 * x_param + 5.0  # = 11.0
     var result_param = derivative[
@@ -217,7 +243,7 @@ fn test_parameterized_function() raises:
     )
 
 
-fn test_different_step_directions() raises:
+def test_different_step_directions() raises:
     """Test different finite difference methods (central, forward, backward)."""
 
     var x_test = 1.0
@@ -239,7 +265,6 @@ fn test_different_step_directions() raises:
     var result_forward = derivative[
         DType.float64, quadratic_function, step_direction=1
     ](x0=x_test, args=None, order=6, max_iter=50)
-    print(result_forward)
     assert_true(result_forward.success, "Forward difference should converge")
     assert_almost_equal(
         result_forward.df,
@@ -250,7 +275,7 @@ fn test_different_step_directions() raises:
 
     # Backward differences
     var result_backward = derivative[
-        DType.float64, quadratic_function, step_direction= -1
+        DType.float64, quadratic_function, step_direction=-1
     ](x0=x_test, args=None, order=6, max_iter=50)
     assert_true(result_backward.success, "Backward difference should converge")
     assert_almost_equal(
@@ -261,13 +286,13 @@ fn test_different_step_directions() raises:
     )
 
 
-fn test_different_orders() raises:
+def test_different_orders() raises:
     """Test different accuracy orders."""
 
     var x_test = 0.5
     var expected = 4.0 * x_test + 3.0
 
-    var orders = List[Int](2, 4, 6, 8)
+    var orders: List[Int] = [2, 4, 6, 8]
 
     for i in range(len(orders)):
         var order = orders[i]
@@ -283,19 +308,15 @@ fn test_different_orders() raises:
         )
 
 
-fn test_tolerance_settings() raises:
+def test_tolerance_settings() raises:
     """Test different tolerance settings."""
 
     var x_test = 1.0
     var expected = 4.0 * x_test + 3.0
 
-    var strict_tolerance = Dict[String, Scalar[DType.float64]]()
-    strict_tolerance["atol"] = 1e-10
-    strict_tolerance["rtol"] = 1e-10
-
     var result_strict = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerance=strict_tolerance)
+    ](x0=x_test, args=None, atol=1e-10, rtol=1e-10)
     assert_almost_equal(
         result_strict.df,
         expected,
@@ -303,13 +324,9 @@ fn test_tolerance_settings() raises:
         msg="Strict tolerance should give accurate result",
     )
 
-    var loose_tolerance = Dict[String, Scalar[DType.float64]]()
-    loose_tolerance["atol"] = 1e-3
-    loose_tolerance["rtol"] = 1e-3
-
     var result_loose = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerance=loose_tolerance)
+    ](x0=x_test, args=None, atol=1e-3, rtol=1e-3)
     assert_almost_equal(
         result_loose.df,
         expected,
@@ -318,7 +335,7 @@ fn test_tolerance_settings() raises:
     )
 
 
-fn test_convergence_properties() raises:
+def test_convergence_properties() raises:
     """Test convergence properties and diagnostic information."""
 
     var result = derivative[
@@ -335,7 +352,7 @@ fn test_convergence_properties() raises:
     assert_true(result.error >= 0.0, "Error estimate should be non-negative")
 
 
-fn test_error_conditions() raises:
+def test_error_conditions() raises:
     """Test error conditions and invalid parameters."""
 
     try:
@@ -347,13 +364,13 @@ fn test_error_conditions() raises:
         pass
 
 
-fn test_step_size_parameters() raises:
+def test_step_size_parameters() raises:
     """Test different step size parameters."""
 
     var x_test = 1.0
     var expected = 4.0 * x_test + 3.0  # = 7.0
 
-    var step_sizes = List[Float64](0.1, 0.5, 1.0)
+    var step_sizes: List[Float64] = [0.1, 0.5, 1.0]
 
     for i in range(len(step_sizes)):
         var step = step_sizes[i]
@@ -368,7 +385,7 @@ fn test_step_size_parameters() raises:
             msg="Result should be consistent across step sizes",
         )
 
-    var factors = List[Float64](1.5, 2.0, 3.0)
+    var factors: List[Float64] = [1.5, 2.0, 3.0]
 
     for i in range(len(factors)):
         var factor = factors[i]
@@ -382,3 +399,92 @@ fn test_step_size_parameters() raises:
             atol=1e-5,
             msg="Result should be consistent across step factors",
         )
+
+
+def test_hessian_quadratic() raises:
+    """Hessian of x^2 + y^2 is the identity scaled by 2."""
+
+    @parameter
+    def f[
+        dtype: DType
+    ](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        return x.item(0) * x.item(0) + x.item(1) * x.item(1)
+
+    var x = nm.fromstring[sj.f64]("[1.0, 2.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_almost_equal(H.item(0), 2.0, atol=1e-6, msg="H[0,0]")
+    assert_almost_equal(H.item(1), 0.0, atol=1e-6, msg="H[0,1]")
+    assert_almost_equal(H.item(2), 0.0, atol=1e-6, msg="H[1,0]")
+    assert_almost_equal(H.item(3), 2.0, atol=1e-6, msg="H[1,1]")
+
+
+def test_hessian_cross_term() raises:
+    """Hessian of x*y has off-diagonal 1 and diagonal 0."""
+
+    @parameter
+    def f[
+        dtype: DType
+    ](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        return x.item(0) * x.item(1)
+
+    var x = nm.fromstring[sj.f64]("[1.0, 1.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_almost_equal(H.item(0), 0.0, atol=1e-5, msg="H[0,0]")
+    assert_almost_equal(H.item(1), 1.0, atol=1e-5, msg="H[0,1]")
+    assert_almost_equal(H.item(2), 1.0, atol=1e-5, msg="H[1,0]")
+    assert_almost_equal(H.item(3), 0.0, atol=1e-5, msg="H[1,1]")
+
+
+def test_hessian_cubic() raises:
+    """Hessian of x^3 + y^3: diagonal = 6x, 6y; off-diagonal = 0."""
+
+    @parameter
+    def f[
+        dtype: DType
+    ](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        return x.item(0) * x.item(0) * x.item(0) + x.item(1) * x.item(
+            1
+        ) * x.item(1)
+
+    var x = nm.fromstring[sj.f64]("[2.0, 3.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_almost_equal(H.item(0), 12.0, atol=1e-4, msg="H[0,0] = 6*2")
+    assert_almost_equal(H.item(1), 0.0, atol=1e-4, msg="H[0,1]")
+    assert_almost_equal(H.item(2), 0.0, atol=1e-4, msg="H[1,0]")
+    assert_almost_equal(H.item(3), 18.0, atol=1e-4, msg="H[1,1] = 6*3")
+
+
+def test_hessian_symmetric() raises:
+    """Hessian is always symmetric: H[i,j] == H[j,i]."""
+
+    @parameter
+    def f[
+        dtype: DType
+    ](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        return (
+            x.item(0) * x.item(0)
+            + 3.0 * x.item(0) * x.item(1)
+            + x.item(1) * x.item(1) * x.item(1)
+        )
+
+    var x = nm.fromstring[sj.f64]("[1.5, 2.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_almost_equal(
+        H.item(1), H.item(2), atol=1e-8, msg="Hessian must be symmetric"
+    )
+
+
+def main() raises:
+    TestSuite.discover_tests[__functions_in_module()]().run()

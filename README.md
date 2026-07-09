@@ -1,11 +1,13 @@
 # SciJo
 
 <div align="center">
-  <img src="./assets/scijo.png" alt="SciJo Logo" width="200" style="border-radius: 50%; margin-bottom: 20px;"/>
+    <img src="./assets/scijo.png" alt="SciJo Logo" width="200" style="border-radius: 32px; margin-bottom: 200px; display: block; border: 3px solid rgba(0, 0, 0, 0.15); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25); background: #fff;"/>
   <p style="font-size: 1.2em; color: #666; margin: 0; padding: 10px 20px; line-height: 1.5;">
     <em>High-performance scientific computing library for Mojo, written in pure Mojo, inspired by SciPy</em>
   </p>
 </div>
+
+**[Changelog»](https://github.com/mojomath/SciJo/tree/main/docs/changelog.md)**
 
 ## Overview
 
@@ -22,21 +24,30 @@ SciJo is a high-performance scientific computing library for Mojo that brings th
 
 ### Numerical Differentiation (`scijo.differentiate`)
 Accurate derivatives using finite difference methods:
-- **Methods**: Central, forward, and backward differences
+- **`derivative`**: Central, forward, and backward differences
+- **`jacobian`**: Jacobian matrix computation for vector-valued functions
 - **Order control**: Specify accuracy order (1-6 for forward/backward, 2-8 for central)
 - **Adaptive stepping**: Automatic step size refinement with Richardson extrapolation
 - **Error estimation**: Built-in convergence tracking
 
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
-- **`quad`**: (QUADPACK QNG algorithm)
-  - Succesively increasing precision levels (10, 21, 43, 87 point rules)
-- **`trapezoid`**: Basic trapezoidal rule for uniform or non-uniform grids
+- **`quad`**: Adaptive quadrature via MSL/QUADPACK
+  - `method="qng"` — non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
+  - `method="qag"` — adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
+  - `method="qags"` — adaptive + Wynn epsilon extrapolation
+  - Rule constants: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`
+- **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
+- **`simpson`**: Simpson's rule for discrete data
+- **`romb`**: Romberg integration with Richardson extrapolation
 
 ### Interpolation (`scijo.interpolate`)
 1D data interpolation:
-- **`interp1d`**: Linear interpolation
-- Handles both extrapolation and boundary fill methods
+- **`LinearInterpolator`** / **`interp1d`**: Linear interpolation, callable object and functional interface
+- **`CubicSpline`**: Natural cubic spline interpolator (`scipy.interpolate.CubicSpline`-compatible)
+- **`Akima1DInterpolator`**: Akima piecewise cubic interpolator (`scipy.interpolate.Akima1DInterpolator`-compatible)
+- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`
+- Out-of-bounds control via `bounds_error` / `fill_value`
 - Compatible with NuMojo arrays
 
 ### FFT (`scijo.fft`)
@@ -48,23 +59,35 @@ Fast Fourier Transform operations:
 
 ### Physical Constants (`scijo.constants`)
 Access fundamental physical constants from CODATA 2022:
-- Lots physical constants with values, units, and uncertainties
+- Comprehensive physical constants with values, units, and uncertainties
+- Mathematical constants (pi, golden ratio, etc.)
+- SI prefixes, binary prefixes, and unit conversions
+- Helper functions: `value()`, `unit()`, `precision()`, `find()`
+- Temperature conversion utilities
 - Compatible with `scipy.constants` structure
-- Helper functions: `value()`, `unit()`, `uncertainty()`
+
+### Optimization (`scijo.optimize`)
+Scalar root-finding and minimization:
+- **`root_scalar`**: Unified interface for root finding
+  - **`newton`**: Newton-Raphson method
+  - **`bisect`**: Bisection method
+  - **`secant`**: Secant method (derivative-free)
+  - **`brent`**: Brent's bracketed method (MSL backend)
+- **`minimize_scalar`**: Scalar function minimization
+  - Brent's method, golden section search, bounded minimization
 
 ## Installation
 
-### Method 1:
+### Method 1: Via pixi
 1) Add to pixi.toml
 ```toml
 [workspace]
 preview = ["pixi-build"]
 
 [dependencies]
-modular = ">=25.6.1,<26"
-scijo = { git = "https://github.com/shivasankarka/SciJo.git", branch = "main"}
+mojo = ">=1.0.0b2,<2"
+scijo = { git = "https://github.com/mojomath/SciJo.git", branch = "main"}
 ```
-Note that SciJo and NuMojo require the `modular` package. We will move to `mojo` only package in future if possible.
 
 2) Install in pixi
 ```bash
@@ -74,7 +97,7 @@ pixi install
 ### Method 2: Build from Source
 ```bash
 # Clone and build
-git clone https://github.com/shivasankarka/SciJo.git
+git clone https://github.com/mojomath/SciJo.git
 cd SciJo
 mojo build scijo
 
@@ -86,7 +109,6 @@ mv build/scijo.mojopkg /path/to/your/project
 
 ### Numerical Differentiation
 ```mojo
-import scijo as sj
 from scijo.differentiate import derivative
 
 fn simple_function[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]] = None) -> Scalar[dtype]:
@@ -94,9 +116,9 @@ fn simple_function[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dt
     return a * x * x + 2.0 * x + 1.0
 
 fn main() raises:
-    var result = derivative[sj.f64, simple_function, step_direction=0](
+    var result = derivative[f64, simple_function, step_direction=0](
         x0=1.0,
-        args=List[Scalar[sj.f64]](2.0),
+        args=List[Scalar[f64]](2.0),
         tolerance={"atol": 1e-8, "rtol": 1e-8},
         order=6
     )
@@ -117,10 +139,10 @@ fn simple_function[
     return a * x * x + 2.0 * x + 1.0
 
 fn main():
-    var result = quad[sj.f64, simple_function](
+    var result = quad[f64, simple_function](
         a=0.0,
         b=1.0,
-        args=List[Scalar[sj.f64]](2.0),
+        args=List[Scalar[f64]](2.0),
         epsabs=1e-6,
         epsrel=1e-6,
     )
@@ -129,16 +151,24 @@ fn main():
 
 ### Interpolation
 ```mojo
-from scijo.interpolate.interp1d import interp1d
+from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
 import numojo as nm
 
 fn main() raises:
-    var x = nm.arange[nm.f64](0, 5, 1)
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
     var y = x * x
-    var xi = nm.linspace[nm.f64](0.5, 3.5, 4)
 
-    var yi = interp1d[nm.f64, type="linear", fill_method="interpolate"](xi, x, y)
-    print("Interpolated values:", yi)
+    # Linear (callable object)
+    var li = interp1d(x, y, bounds_error=False)
+    print(li(Scalar[nm.f64](3.7)))
+
+    # Natural cubic spline
+    var cs = CubicSpline(x, y)
+    print(cs(nm.linspace[nm.f64](0.5, 9.5, 5)))
+
+    # Akima
+    var ak = Akima1DInterpolator(x, y)
+    print(ak(Scalar[nm.f64](3.7)))
 ```
 
 ### FFT
@@ -168,18 +198,40 @@ fn main() raises:
     print("Planck constant:", value("Planck_constant"), unit("Planck_constant"))
 ```
 
+### Optimization
+```mojo
+from scijo.optimize import root_scalar, minimize_scalar
+
+fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    return x * x - 2
+
+fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    return (x - 2) * (x - 2) + 1
+
+fn main() raises:
+    # Root finding
+    var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
+    print("Root:", root)
+
+    # Minimization
+    var result = minimize_scalar[f64, objective, method="Brent"](
+        Bracket=(0.0, 4.0),
+        tol=1e-8,
+        maxiter=100
+    )
+    print("Minimum at:", result.x)
+```
+
 
 ## Roadmap
 
 ### Near Term
-- More integration algorithms (Simpson's, Romberg, QAGSE etc)
-- Real FFT (`rfft`, `irfft`) and 2D FFT support
-- Additional interpolation methods (cubic, spline)
-- Expand differentiation module.
+- 2D FFT support
+- Multi-dimensional root finding and optimization
+- Expand differentiation module (higher-order Jacobian, Hessian)
 
 ### Future
-- **Optimization**: Minimization, root finding, curve fitting
-- **Statistics**: Distributions, hypothesis tests, descriptive statistics
+- **Optimization**: Multi-dimensional minimization, curve fitting
 - **Signal Processing**: Filtering, windowing, convolution
 - **Linear Algebra**: Matrix decompositions (SVD, QR, Cholesky)
 - **Sparse Matrices**: Efficient storage and operations
@@ -204,8 +256,8 @@ Feel free to cite SciJo in your work, helps with visibility :)
 @software{scijo,
   author = {Shivasankar K.A. and SciJo Contributors},
   title = {SciJo: High-Performance Scientific Computing in Mojo},
-  url = {https://github.com/shivasankarka/SciJo},
-  year = {2025}
+  url = {https://github.com/mojomath/SciJo},
+  year = {2026}
 }
 ```
 
