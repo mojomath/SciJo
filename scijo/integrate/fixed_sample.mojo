@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Fixed Sample Integration Methods (`scijo.integrate.fixed_sample`)
-===================================================================
+====================================================================
 Integration methods for discrete, evenly or unevenly spaced sample data.
 Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration.
 
@@ -21,9 +21,14 @@ Examples
     ```
 """
 
-from numojo.core.ndarray import NDArray, NDArrayShape
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-
+from numojo.core.ndarray import (
+    NDArray,
+    NDArrayShape,
+)
 
 # ===----------------------------------------------------------------------=== #
 # Trapezoid
@@ -51,13 +56,13 @@ def trapezoid[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y is not 1-D.
-        Error: If y is empty.
-
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
+
+    Raises:
+        Error: If y is not 1-D.
+        Error: If y is empty.
 
     Examples:
         ```mojo
@@ -115,13 +120,13 @@ def trapezoid[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
-        Error: If y is empty.
-
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
+
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
+        Error: If y is empty.
 
     Examples:
         ```mojo
@@ -225,11 +230,11 @@ def simpson[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y is not 1-D.
-
     Returns:
         Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y is not 1-D.
 
     Examples:
         ```mojo
@@ -294,11 +299,11 @@ def simpson[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
-
     Returns:
         Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
 
     Examples:
         ```mojo
@@ -398,12 +403,12 @@ def romb[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Returns:
+        Best Romberg estimate of the definite integral.
+
     Raises:
         Error: If y is not 1-D.
         Error: If y.size is not of the form ``2^k + 1`` for integer k ≥ 1.
-
-    Returns:
-        Best Romberg estimate of the definite integral.
 
     Examples:
         ```mojo

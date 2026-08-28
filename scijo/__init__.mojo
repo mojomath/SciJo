@@ -27,5 +27,8 @@ Examples
     ```
 """
 
-from numojo.prelude import *
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 from numojo.core.error import NumojoError
+from numojo.prelude import *

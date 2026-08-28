@@ -7,13 +7,20 @@
 Scalar root-finding routines with SciPy-like frontend signatures.
 """
 
-from msl import root_bisect as msl_root_bisect
-from msl import root_brent as msl_root_brent
-from msl import root_newton as msl_root_newton
-from msl import root_secant as msl_root_secant
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from msl import (
+    root_bisect as msl_root_bisect,
+    root_brent as msl_root_brent,
+    root_newton as msl_root_newton,
+    root_secant as msl_root_secant,
+)
 
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from scijo.optimize.utility import RootResult
-
 
 def _root_message(success: Bool, errno: Int) -> String:
     """Maps MSL status codes into user-facing SciJo messages.

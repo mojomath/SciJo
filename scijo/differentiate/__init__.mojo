@@ -26,5 +26,11 @@ Examples
     ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from .deriv import derivative
-from .jacob import jacobian, hessian
+from .jacob import (
+    hessian,
+    jacobian,
+)

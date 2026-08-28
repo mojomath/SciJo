@@ -3,15 +3,21 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Utility Functions for Constants (`scijo.constants.utils`)
-===========================================================
+============================================================
 Includes temperature conversions, frequency-wavelength calculations, and
 functions for accessing physical constant properties.
 """
 
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
 from std.builtin.value import materialize
 
-from scijo.constants.constants import c
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from scijo.constants.codata import physical_constants
+from scijo.constants.constants import c
 
 # ===----------------------------------------------------------------------=== #
 # Functions to access physical constants
@@ -109,6 +115,9 @@ def get_constant_tuple(
 
     Returns:
         Tuple containing (value, unit, uncertainty).
+
+    Raises:
+        Error: If the constant name is not found.
     """
     var physical_constants = materialize[physical_constants]()
     if key in physical_constants:
@@ -141,14 +150,21 @@ def convert_temperature[
 ](value: Scalar[f64]) raises -> Scalar[f64]:
     """Converts a temperature value between Celsius, Fahrenheit, and Kelvin.
 
-    Compile-time parameters `old_scalar` and `new_scalar` specify the source and
-    target temperature scales. Supported scales: "Celsius", "Fahrenheit", "Kelvin".
+    Parameters:
+        old_scalar: The source temperature scale: "Celsius", "Fahrenheit",
+            or "Kelvin".
+        new_scalar: The target temperature scale: "Celsius", "Fahrenheit",
+            or "Kelvin".
 
     Args:
         value: The temperature value to be converted.
 
     Returns:
         The converted temperature value in the target scale.
+
+    Raises:
+        Error: If old_scalar/new_scalar is not one of "Celsius",
+            "Fahrenheit", "Kelvin".
 
     Examples:
         ```mojo

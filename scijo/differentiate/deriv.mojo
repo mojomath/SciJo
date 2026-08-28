@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Numerical Differentiation (`scijo.differentiate.deriv`)
-=========================================================
+==========================================================
 Numerical differentiation using finite difference methods. Provides functions to
 compute first-order derivatives of scalar functions using central, forward, and
 backward finite difference schemes with adaptive step sizing.
@@ -15,22 +15,23 @@ References
   https://en.wikipedia.org/wiki/Finite_difference_coefficient
 """
 
-
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from scijo.differentiate.utility import (
     DiffResult,
+    generate_backward_finite_difference_table,
     generate_central_finite_difference_table,
     generate_forward_finite_difference_table,
-    generate_backward_finite_difference_table,
 )
-
 
 # ===----------------------------------------------------------------------=== #
 # Derivative
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: move if condition checks and stuff to main API function and keep private
-# function focused on numerics.
+# TODO: Move if condition checks and other validation to the main API
+# function and keep this one focused on numerics.
 def derivative[
     dtype: DType,
     deriv_func: def[dtype: DType](

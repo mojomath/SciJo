@@ -20,13 +20,19 @@ Examples
     ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 from numojo import zeros
 from numojo.core import Shape
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from scijo.interpolate.utility import (
     _binary_search,
     _validate_interpolation_input,
 )
-
 
 # ===----------------------------------------------------------------------=== #
 # Linear interpolator
@@ -554,12 +560,12 @@ def interp1d[
         fill_value: Value to use for out-of-bounds points when bounds_error
             is False. If None, extrapolate linearly.
 
+    Returns:
+        A callable LinearInterpolator object.
+
     Raises:
         Error: If x and y have different lengths, have fewer than 2 points,
             or x is not strictly increasing.
-
-    Returns:
-        A callable LinearInterpolator object.
 
     Examples:
         ```mojo
@@ -611,11 +617,11 @@ def interp[
         x: Array of x-coordinates of data points, must be strictly increasing.
         y: Array of y-coordinates of data points, same length as x.
 
-    Raises:
-        Error: If inputs are invalid or method/fill_method is unsupported.
-
     Returns:
         NDArray of interpolated values at the points xi.
+
+    Raises:
+        Error: If inputs are invalid or method/fill_method is unsupported.
 
     Examples:
         ```mojo

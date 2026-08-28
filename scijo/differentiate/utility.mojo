@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Differentiation Utility Functions (`scijo.differentiate.utility`)
-===================================================================
+====================================================================
 Utility functions and data structures for numerical differentiation using finite
 difference methods. Implements central, forward, and backward finite difference
 coefficient tables.
@@ -53,6 +53,16 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
         nfev: Int,
         x: Scalar[Self.dtype],
     ):
+        """Constructs a DiffResult from the outcome of a differentiation run.
+
+        Args:
+            success: Whether the computation converged successfully.
+            df: The computed derivative value.
+            error: Estimated error or convergence tolerance achieved.
+            nit: Number of iterations performed.
+            nfev: Number of function evaluations used.
+            x: The point at which the derivative was evaluated.
+        """
         self.success = success
         self.df = df
         self.error = error
@@ -61,11 +71,24 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.x = x
 
     def __str__(self) raises -> String:
+        """Returns a single-line summary of the result.
+
+        Returns:
+            A compact string representation of this DiffResult.
+        """
         return String(
             "Result(success={}, df={}, error={:.2e}, nit={}, nfev={}, x={})"
         ).format(self.success, self.df, self.error, self.nit, self.nfev, self.x)
 
     def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
         try:
             writer.write(
                 String(
@@ -141,45 +164,6 @@ def generate_central_finite_difference_table[
             -1.0 / 280.0,
         ]
     }
-    # try:
-    #     # Order 2: points [-1, 0, 1]
-    #     coefficients[2]: List[Scalar[dtype]] = [-0.5, 0.0, 0.5]
-
-    #     # Order 4: points [-2, -1, 0, 1, 2]
-    #     coefficients[4]: List[Scalar[dtype]] = [
-    #         1.0 / 12.0,
-    #         -2.0 / 3.0,
-    #         0.0,
-    #         2.0 / 3.0,
-    #         -1.0 / 12.0,
-    #     ]
-
-    #     # Order 6: points [-3, -2, -1, 0, 1, 2, 3]
-    #     coefficients[6]: List[Scalar[dtype]] = [
-    #         -1.0 / 60.0,
-    #         3.0 / 20.0,
-    #         -3.0 / 4.0,
-    #         0.0,
-    #         3.0 / 4.0,
-    #         -3.0 / 20.0,
-    #         1.0 / 60.0,
-    #     ]
-
-    #     # Order 8: points [-4, -3, -2, -1, 0, 1, 2, 3, 4]
-    #     coefficients[8]: List[Scalar[dtype]] = [
-    #         1.0 / 280.0,
-    #         -4.0 / 105.0,
-    #         1.0 / 5.0,
-    #         -4.0 / 5.0,
-    #         0.0,
-    #         4.0 / 5.0,
-    #         -1.0 / 5.0,
-    #         4.0 / 105.0,
-    #         -1.0 / 280.0,
-    #     ]
-    # except e:
-    #     print("Error generating central finite difference table: " + String(e))
-
     return coefficients^
 
 
@@ -236,53 +220,6 @@ def generate_forward_finite_difference_table[
             -1.0 / 6.0,
         ]
     }
-
-    # try: 
-    #     # Order 1: points [0, 1]
-    #     coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
-
-    #     # Order 2: points [0, 1, 2]
-    #     coefficients[2]: List[Scalar[dtype]] = [-3.0 / 2.0, 2.0, -1.0 / 2.0]
-
-    #     # Order 3: points [0, 1, 2, 3]
-    #     coefficients[3]: List[Scalar[dtype]] = [
-    #         -11.0 / 6.0,
-    #         3.0,
-    #         -3.0 / 2.0,
-    #         1.0 / 3.0,
-    #     ]
-
-    #     # Order 4: points [0, 1, 2, 3, 4]
-    #     coefficients[4]: List[Scalar[dtype]] = [
-    #         -25.0 / 12.0,
-    #         4.0,
-    #         -3.0,
-    #         4.0 / 3.0,
-    #         -1.0 / 4.0,
-    #     ]
-
-    #     # Order 5: points [0, 1, 2, 3, 4, 5]
-    #     coefficients[5]: List[Scalar[dtype]] = [
-    #         -137.0 / 60.0,
-    #         5.0,
-    #         -5.0,
-    #         10.0 / 3.0,
-    #         -5.0 / 4.0,
-    #         1.0 / 5.0,
-    #     ]
-
-    #     # Order 6: points [0, 1, 2, 3, 4, 5, 6]
-    #     coefficients[6]: List[Scalar[dtype]] = [
-    #         -49.0 / 20.0,
-    #         6.0,
-    #         -15.0 / 2.0,
-    #         20.0 / 3.0,
-    #         -15.0 / 4.0,
-    #         6.0 / 5.0,
-    #         -1.0 / 6.0,
-    #     ]
-    # except e:
-    #     print("Error generating forward finite difference table: " + String(e))
 
     return coefficients^
 
@@ -341,52 +278,5 @@ def generate_backward_finite_difference_table[
             49.0 / 20.0,
         ]
     }
-
-    # try: 
-    #     # Order 1: points [-1, 0]
-    #     coefficients[1]: List[Scalar[dtype]] = [-1.0, 1.0]
-
-    #     # Order 2: points [-2, -1, 0]
-    #     coefficients[2]: List[Scalar[dtype]] = [1.0 / 2.0, -2.0, 3.0 / 2.0]
-
-    #     # Order 3: points [-3, -2, -1, 0]
-    #     coefficients[3]: List[Scalar[dtype]] = [
-    #         -1.0 / 3.0,
-    #         3.0 / 2.0,
-    #         -3.0,
-    #         11.0 / 6.0,
-    #     ]
-
-    #     # Order 4: points [-4, -3, -2, -1, 0]
-    #     coefficients[4]: List[Scalar[dtype]] = [
-    #         1.0 / 4.0,
-    #         -4.0 / 3.0,
-    #         3.0,
-    #         -4.0,
-    #         25.0 / 12.0,
-    #     ]
-
-    #     # Order 5: points [-5, -4, -3, -2, -1, 0]
-    #     coefficients[5]: List[Scalar[dtype]] = [
-    #         -1.0 / 5.0,
-    #         5.0 / 4.0,
-    #         -10.0 / 3.0,
-    #         5.0,
-    #         -5.0,
-    #         137.0 / 60.0,
-    #     ]
-
-    #     # Order 6: points [-6, -5, -4, -3, -2, -1, 0]
-    #     coefficients[6]: List[Scalar[dtype]] = [
-    #         1.0 / 6.0,
-    #         -6.0 / 5.0,
-    #         15.0 / 4.0,
-    #         -20.0 / 3.0,
-    #         15.0 / 2.0,
-    #         -6.0,
-    #         49.0 / 20.0,
-    #     ]
-    # except e:
-    #     print("Error generating backward finite difference table: " + String(e))
 
     return coefficients^

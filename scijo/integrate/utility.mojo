@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Integration Utility Functions (`scijo.integrate.utility`)
-===========================================================
+============================================================
 Utility functions, data structures, and Gauss-Kronrod quadrature tables for
 numerical integration. Includes result types, priority queue for adaptive
 subdivision, machine epsilon computation, and precomputed quadrature nodes
@@ -16,8 +16,14 @@ References
   https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
 from std.utils import StaticTuple
-from std.utils.numerics import min_finite, max_finite
+from std.utils.numerics import (
+    max_finite,
+    min_finite,
+)
 
 comptime smallest_positive_dtype[dtype: DType] = min_finite[dtype]()
 comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
@@ -39,8 +45,6 @@ def machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
     Returns:
         The machine epsilon as a Float64 value.
     """
-
-    # TODO: Check if these values are correct lol
     comptime if dtype == DType.float16:
         return Float64(0.0009765625)  # 2**-10
     elif dtype == DType.float32:
@@ -80,6 +84,15 @@ struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
         error: Float64,
         level: Int = 0,
     ):
+        """Constructs a QAGSInterval.
+
+        Args:
+            a: Left endpoint.
+            b: Right endpoint.
+            integral: Integral estimate for this interval.
+            error: Error estimate for this interval.
+            level: Subdivision level. Defaults to 0.
+        """
         self.a = a
         self.b = b
         self.integral = integral
@@ -98,13 +111,23 @@ struct QAGSPriorityQueue[dtype: DType]:
     """Heap-ordered list of integration intervals."""
 
     def __init__(out self):
+        """Constructs an empty QAGSPriorityQueue."""
         self.intervals = List[QAGSInterval[Self.dtype]]()
 
     def __len__(self) -> Int:
+        """Returns the number of intervals currently in the queue.
+
+        Returns:
+            The number of intervals held by the queue.
+        """
         return len(self.intervals)
 
     def is_empty(self) -> Bool:
-        """Returns True if the queue contains no intervals."""
+        """Returns True if the queue contains no intervals.
+
+        Returns:
+            True if the queue is empty, False otherwise.
+        """
         return len(self.intervals) == 0
 
     def _parent(self, i: Int) -> Int:
@@ -270,20 +293,42 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         nfev: Int = 0,
         ier: Int = 0,
     ):
+        """Constructs an IntegralResult from the outcome of a quadrature run.
+
+        Args:
+            integral: The computed integral value. Defaults to 0.
+            abserr: Absolute error estimate. Defaults to 0.
+            nfev: Number of function evaluations used. Defaults to 0.
+            ier: Integration error code (0 = success, >0 = error type).
+                Defaults to 0.
+        """
         self.integral = integral
         self.abserr = abserr
         self.nfev = nfev
         self.ier = ier
 
     def success(self) -> Bool:
-        """Returns True if integration converged successfully (ier == 0)."""
+        """Returns True if integration converged successfully (ier == 0).
+
+        Returns:
+            True if the integration converged, False otherwise.
+        """
         return self.ier == 0
 
     def message(self) -> String:
-        """Returns a human-readable status message for this result."""
+        """Returns a human-readable status message for this result.
+
+        Returns:
+            A description of the integration status/error condition.
+        """
         return get_quad_error_message(self.ier)
 
     def __str__(self) raises -> String:
+        """Returns a single-line summary of the result.
+
+        Returns:
+            A compact string representation of this IntegralResult.
+        """
         var status = "SUCCESS" if self.success() else "ERROR"
         return String(
             "QuadResult(status={}, message='{}', integral={}, abserr={:.2e},"
@@ -297,6 +342,14 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         )
 
     def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
         try:
             var status = "SUCCESS" if self.success() else "ERROR"
             writer.write(

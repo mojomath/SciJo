@@ -24,8 +24,13 @@ Examples
     ```
 """
 
-from msl import min_brent as msl_min_brent
-from msl import min_golden as msl_min_golden
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from msl import (
+    min_brent as msl_min_brent,
+    min_golden as msl_min_golden,
+)
 
 comptime _phi: Float64 = 1.618033988749895
 """Inverse of the golden ratio, used in optimization algorithms."""
@@ -62,6 +67,16 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         nit: Int,
         nfev: Int,
     ):
+        """Constructs an OptimizeResult from the outcome of a minimization run.
+
+        Args:
+            x: The minimizer.
+            fun: The function value at the minimizer.
+            success: Whether the optimization converged.
+            message: Human-readable status message.
+            nit: Number of iterations performed.
+            nfev: Number of function evaluations used.
+        """
         self.x = x
         self.fun = fun
         self.success = success
@@ -70,6 +85,11 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.nfev = nfev
 
     def __str__(self) raises -> String:
+        """Returns a single-line summary of the result.
+
+        Returns:
+            A compact string representation of this OptimizeResult.
+        """
         return String(
             "OptimizeResult(success={}, x={}, fun={}, nit={}, nfev={},"
             " message='{}')"
@@ -78,6 +98,14 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         )
 
     def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
         try:
             writer.write(
                 String(
@@ -617,6 +645,10 @@ def minimize_scalar[
 
     Returns:
         OptimizeResult[dtype] containing the optimization result.
+
+    Raises:
+        Error: If neither bracket nor bounds is provided for the chosen
+            method.
 
     Examples:
         ```mojo

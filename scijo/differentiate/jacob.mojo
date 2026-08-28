@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Jacobian Matrix Computation (`scijo.differentiate.jacob`)
-===========================================================
+============================================================
 Computes the Jacobian matrix of a vector-valued function using central finite
 differences with parallelized column evaluation.
 
@@ -21,11 +21,19 @@ Examples
     ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
 from std.algorithm.functional import parallelize
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from numojo.core import (
+    NDArray,
+    Shape,
+)
 from numojo.routines.creation import zeros
-from numojo.core import NDArray, Shape
-
 
 def jacobian[
     dtype: DType,
@@ -52,12 +60,12 @@ def jacobian[
         args: Optional arguments to pass to the function.
         step: Finite difference step size. Defaults to 0.5.
 
-    Raises:
-        Error: If function evaluation fails for any column perturbation.
-
     Returns:
         NDArray[dtype] of shape (m, n) representing the Jacobian matrix,
         where m is the output dimension and n is the input dimension.
+
+    Raises:
+        Error: If function evaluation fails for any column perturbation.
 
     Examples:
         ```mojo

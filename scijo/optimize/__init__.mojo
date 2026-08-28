@@ -30,6 +30,18 @@ Examples
     ```
 """
 
-from .root_scalar import root_scalar, newton, bisect, brent, secant
-from .min_scalar import minimize_scalar, OptimizeResult
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from .min_scalar import (
+    minimize_scalar,
+    OptimizeResult,
+)
+from .root_scalar import (
+    bisect,
+    brent,
+    newton,
+    root_scalar,
+    secant,
+)
 from .utility import RootResult

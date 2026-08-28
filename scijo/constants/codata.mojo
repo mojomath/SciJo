@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """CODATA Physical Constants Module (`scijo.constants.codata`)
-=============================================================
+==============================================================
 Provides access to the CODATA 2022 recommended values for fundamental
 physical constants. Constants are stored in a global dictionary, similar to
 SciPy's constants module.
@@ -46,21 +46,35 @@ struct PhysicalConstant[dtype: DType = DType.float64](
         unit: String,
         uncertainty: Scalar[Self.dtype],
     ):
+        """Constructs a PhysicalConstant.
+
+        Args:
+            value: The constant's numeric value.
+            unit: The constant's physical unit.
+            uncertainty: The standard uncertainty of the value.
+        """
         self.value = value
         self.unit = unit
         self.uncertainty = uncertainty
 
     def __str__(self) raises -> String:
+        """Returns a single-line summary of the constant.
+
+        Returns:
+            A string of the form "value unit ± uncertainty".
+        """
         return String("{} {} ± {}").format(
             self.value, self.unit, self.uncertainty
         )
 
     def write_to[W: Writer](self, mut writer: W):
-        """
-        Writes the array to a writer.
+        """Writes the constant's value, unit, and uncertainty to a writer.
+
+        Parameters:
+            W: The writer type.
 
         Args:
-            writer: The writer to write the array to.
+            writer: The writer to write to.
         """
         try:
             writer.write(
