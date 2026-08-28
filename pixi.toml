@@ -16,7 +16,7 @@ package = "mojo precompile scijo && cp scijo.mojoc tests/"
 [dependencies]
 mojo = ">=1.0.0b2,<2"
 msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "main"}
 
 [package]
 name = "scijo"
@@ -31,17 +31,17 @@ name = "scijo"
 [package.host-dependencies]
 mojo = "==1.0.0b1"
 msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "main"}
 
 [package.build-dependencies]
 mojo = "==1.0.0b1"
 msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "main"}
 
 [package.run-dependencies]
 mojo = "==1.0.0b1"
 msl = {git = "https://github.com/mojomath/MSL.git", branch = "main"}
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "main"}
 
 [feature.test.dependencies]
 python = ">=3.14.6,<3.15"
