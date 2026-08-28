@@ -218,6 +218,8 @@ This packages the library and runs `tests/test_all.sh`.
 | Format all code | `pixi run format` |
 | Package the library | `pixi run package` |
 | Run all tests | `pixi run tests` |
+| Check files against these standards | `python3 scripts/check_mojo_standards.py scijo` |
+| Sort/dedupe imports | `python3 scripts/organize_mojo_imports.py scijo` |
 
 ---
 
@@ -235,3 +237,5 @@ This packages the library and runs `tests/test_all.sh`.
 - [ ] `pixi run format` has been run.
 - [ ] `pixi run package` has been run and the package compiles succesfully. 
 - [ ] `pixi run tests` has been run and all the tests pass.
+- [ ] `python3 scripts/check_mojo_standards.py scijo` reports no findings.
+- [ ] `python3 scripts/organize_mojo_imports.py scijo --check` reports no changes needed.
