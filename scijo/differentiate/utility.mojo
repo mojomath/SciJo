@@ -162,7 +162,7 @@ def generate_central_finite_difference_table[
             -1.0 / 5.0,
             4.0 / 105.0,
             -1.0 / 280.0,
-        ]
+        ],
     }
     return coefficients^
 
@@ -201,7 +201,7 @@ def generate_forward_finite_difference_table[
             -3.0,
             4.0 / 3.0,
             -1.0 / 4.0,
-        ], 
+        ],
         5: [
             -137.0 / 60.0,
             5.0,
@@ -209,7 +209,7 @@ def generate_forward_finite_difference_table[
             10.0 / 3.0,
             -5.0 / 4.0,
             1.0 / 5.0,
-        ], 
+        ],
         6: [
             -49.0 / 20.0,
             6.0,
@@ -218,7 +218,7 @@ def generate_forward_finite_difference_table[
             -15.0 / 4.0,
             6.0 / 5.0,
             -1.0 / 6.0,
-        ]
+        ],
     }
 
     return coefficients^
@@ -244,7 +244,7 @@ def generate_backward_finite_difference_table[
         Coefficient arrays indexed by accuracy order.
         Available orders: 1, 2, 3, 4, 5, 6 with truncation errors O(h) through O(h⁶).
     """
-    var coefficients: Dict[Int, List[Scalar[dtype]]]  = {
+    var coefficients: Dict[Int, List[Scalar[dtype]]] = {
         1: [1.0, -1.0],
         2: [1.0 / 2.0, -2.0, 3.0 / 2.0],
         3: [
@@ -252,14 +252,14 @@ def generate_backward_finite_difference_table[
             3.0 / 2.0,
             -3.0,
             11.0 / 6.0,
-        ], 
+        ],
         4: [
             1.0 / 4.0,
             -4.0 / 3.0,
             3.0,
             -4.0,
             25.0 / 12.0,
-        ], 
+        ],
         5: [
             -1.0 / 5.0,
             5.0 / 4.0,
@@ -267,7 +267,7 @@ def generate_backward_finite_difference_table[
             5.0,
             -5.0,
             137.0 / 60.0,
-        ], 
+        ],
         6: [
             1.0 / 6.0,
             -6.0 / 5.0,
@@ -276,7 +276,7 @@ def generate_backward_finite_difference_table[
             15.0 / 2.0,
             -6.0,
             49.0 / 20.0,
-        ]
+        ],
     }
 
     return coefficients^

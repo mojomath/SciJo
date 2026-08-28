@@ -18,6 +18,13 @@ Available Modules
 - `interpolate`   — Interpolation methods for estimating values between data points.
 - `optimize`      — Optimization algorithms for minimization and root-finding.
 
+Users who also want NuMojo's array types and dtypes (`NDArray`, `f64`, etc.)
+in scope should import `scijo.prelude` explicitly:
+
+    ```mojo
+    from scijo.prelude import *
+    ```
+
 Examples
 --------
     ```mojo
@@ -31,4 +38,3 @@ Examples
 # External
 # ===----------------------------------------------------------------------=== #
 from numojo.core.error import NumojoError
-from numojo.prelude import *

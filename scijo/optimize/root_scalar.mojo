@@ -22,6 +22,7 @@ from msl import (
 # ===----------------------------------------------------------------------=== #
 from scijo.optimize.utility import RootResult
 
+
 def _root_message(success: Bool, errno: Int) -> String:
     """Maps MSL status codes into user-facing SciJo messages.
 
