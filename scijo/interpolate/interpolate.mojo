@@ -25,6 +25,7 @@ Examples
 # ===----------------------------------------------------------------------=== #
 from numojo import zeros
 from numojo.core import Shape
+from numojo.core.ndarray import NDArray
 
 # ===----------------------------------------------------------------------=== #
 # SciJo
@@ -119,8 +120,8 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             Error: If bounds_error is True and xi is outside data range.
         """
 
-        var x_min = self.x._buf.ptr[0]
-        var x_max = self.x._buf.ptr[self.x.size - 1]
+        var x_min = self.x.unsafe_load(0)
+        var x_max = self.x.unsafe_load(self.x.size - 1)
 
         if xi < x_min or xi > x_max:
             if self.bounds_error:
@@ -136,15 +137,15 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             if self.fill_value:
                 return self.fill_value.value()
             if xi < x_min:
-                return self.y._buf.ptr[0]
-            return self.y._buf.ptr[self.y.size - 1]
+                return self.y.unsafe_load(0)
+            return self.y.unsafe_load(self.y.size - 1)
 
         var j: Int = _binary_search(self.x, xi)
 
-        var x0: Scalar[Self.dtype] = self.x._buf.ptr[j - 1]
-        var x1: Scalar[Self.dtype] = self.x._buf.ptr[j]
-        var y0: Scalar[Self.dtype] = self.y._buf.ptr[j - 1]
-        var y1: Scalar[Self.dtype] = self.y._buf.ptr[j]
+        var x0: Scalar[Self.dtype] = self.x.unsafe_load(j - 1)
+        var x1: Scalar[Self.dtype] = self.x.unsafe_load(j)
+        var y0: Scalar[Self.dtype] = self.y.unsafe_load(j - 1)
+        var y1: Scalar[Self.dtype] = self.y.unsafe_load(j)
 
         var slope: Scalar[Self.dtype] = (y1 - y0) / (x1 - x0)
         return y0 + slope * (xi - x0)
@@ -164,11 +165,11 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             Error: If bounds_error is True and any point in xi is outside data range.
         """
         var result: NDArray[Self.dtype] = zeros[Self.dtype](xi.shape)
-        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
-        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[self.x.size - 1]
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(self.x.size - 1)
 
         for i in range(xi.size):
-            var x_val: Scalar[Self.dtype] = xi._buf.ptr[i]
+            var x_val: Scalar[Self.dtype] = xi.unsafe_load(i)
 
             if x_val < x_min or x_val > x_max:
                 if self.bounds_error:
@@ -182,22 +183,22 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
                         + "]"
                     )
                 if self.fill_value:
-                    result._buf.ptr[i] = self.fill_value.value()
+                    result.unsafe_store(i, self.fill_value.value())
                 elif x_val < x_min:
-                    result._buf.ptr[i] = self.y._buf.ptr[0]
+                    result.unsafe_store(i, self.y.unsafe_load(0))
                 else:
-                    result._buf.ptr[i] = self.y._buf.ptr[self.y.size - 1]
+                    result.unsafe_store(i, self.y.unsafe_load(self.y.size - 1))
                 continue
 
             var j: Int = _binary_search(self.x, x_val)
 
-            var x0: Scalar[Self.dtype] = self.x._buf.ptr[j - 1]
-            var x1: Scalar[Self.dtype] = self.x._buf.ptr[j]
-            var y0: Scalar[Self.dtype] = self.y._buf.ptr[j - 1]
-            var y1: Scalar[Self.dtype] = self.y._buf.ptr[j]
+            var x0: Scalar[Self.dtype] = self.x.unsafe_load(j - 1)
+            var x1: Scalar[Self.dtype] = self.x.unsafe_load(j)
+            var y0: Scalar[Self.dtype] = self.y.unsafe_load(j - 1)
+            var y1: Scalar[Self.dtype] = self.y.unsafe_load(j)
 
             var slope: Scalar[Self.dtype] = (y1 - y0) / (x1 - x0)
-            result._buf.ptr[i] = y0 + slope * (x_val - x0)
+            result.unsafe_store(i, y0 + slope * (x_val - x0))
 
         return result^
 
@@ -262,50 +263,48 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
 
         var h = NDArray[Self.dtype](Shape(n - 1))
         for i in range(n - 1):
-            h._buf.ptr[i] = x._buf.ptr[i + 1] - x._buf.ptr[i]
+            h.unsafe_store(i, x.unsafe_load(i + 1) - x.unsafe_load(i))
 
         var alpha = NDArray[Self.dtype](Shape(n))
-        alpha._buf.ptr[0] = 0.0
-        alpha._buf.ptr[n - 1] = 0.0
+        alpha.unsafe_store(0, 0.0)
+        alpha.unsafe_store(n - 1, 0.0)
         for i in range(1, n - 1):
-            alpha._buf.ptr[i] = (
-                3.0 * (y._buf.ptr[i + 1] - y._buf.ptr[i]) / h._buf.ptr[i]
-                - 3.0 * (y._buf.ptr[i] - y._buf.ptr[i - 1]) / h._buf.ptr[i - 1]
-            )
+            alpha.unsafe_store(i, (
+                3.0 * (y.unsafe_load(i + 1) - y.unsafe_load(i)) / h.unsafe_load(i)
+                - 3.0 * (y.unsafe_load(i) - y.unsafe_load(i - 1)) / h.unsafe_load(i - 1)
+            ))
 
         var l = NDArray[Self.dtype](Shape(n))
         var mu = NDArray[Self.dtype](Shape(n))
         var z = NDArray[Self.dtype](Shape(n))
-        l._buf.ptr[0] = 1.0
-        mu._buf.ptr[0] = 0.0
-        z._buf.ptr[0] = 0.0
+        l.unsafe_store(0, 1.0)
+        mu.unsafe_store(0, 0.0)
+        z.unsafe_store(0, 0.0)
 
         for i in range(1, n - 1):
-            l._buf.ptr[i] = (
-                2.0 * (x._buf.ptr[i + 1] - x._buf.ptr[i - 1])
-                - h._buf.ptr[i - 1] * mu._buf.ptr[i - 1]
-            )
-            mu._buf.ptr[i] = h._buf.ptr[i] / l._buf.ptr[i]
-            z._buf.ptr[i] = (
-                alpha._buf.ptr[i] - h._buf.ptr[i - 1] * z._buf.ptr[i - 1]
-            ) / l._buf.ptr[i]
+            l.unsafe_store(i, (
+                2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
+                - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
+            ))
+            mu.unsafe_store(i, h.unsafe_load(i) / l.unsafe_load(i))
+            z.unsafe_store(i, (
+                alpha.unsafe_load(i) - h.unsafe_load(i - 1) * z.unsafe_load(i - 1)
+            ) / l.unsafe_load(i))
 
-        l._buf.ptr[n - 1] = 1.0
-        z._buf.ptr[n - 1] = 0.0
+        l.unsafe_store(n - 1, 1.0)
+        z.unsafe_store(n - 1, 0.0)
 
         var c = NDArray[Self.dtype](Shape(n))
         var b = NDArray[Self.dtype](Shape(n - 1))
         var d = NDArray[Self.dtype](Shape(n - 1))
-        c._buf.ptr[n - 1] = 0.0
+        c.unsafe_store(n - 1, 0.0)
 
         for j in range(n - 2, -1, -1):
-            c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
-            b._buf.ptr[j] = (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[
-                j
-            ] - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
-            d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
-                3.0 * h._buf.ptr[j]
-            )
+            c.unsafe_store(j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1))
+            b.unsafe_store(j, (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j) - h.unsafe_load(j) * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j)) / 3.0)
+            d.unsafe_store(j, (c.unsafe_load(j + 1) - c.unsafe_load(j)) / (
+                3.0 * h.unsafe_load(j)
+            ))
 
         self._b = b^
         self._c = c^
@@ -321,23 +320,23 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
             Interpolated value at xi. Clamped to boundary values if out of range.
         """
         var n = self.x.size
-        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
-        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
         if xi <= x_min:
-            return self.y._buf.ptr[0]
+            return self.y.unsafe_load(0)
         if xi >= x_max:
-            return self.y._buf.ptr[n - 1]
+            return self.y.unsafe_load(n - 1)
         var j: Int = _binary_search(self.x, xi) - 1
         if j < 0:
             j = 0
         if j > n - 2:
             j = n - 2
-        var dx = xi - self.x._buf.ptr[j]
+        var dx = xi - self.x.unsafe_load(j)
         return (
-            self.y._buf.ptr[j]
-            + self._b._buf.ptr[j] * dx
-            + self._c._buf.ptr[j] * dx * dx
-            + self._d._buf.ptr[j] * dx * dx * dx
+            self.y.unsafe_load(j)
+            + self._b.unsafe_load(j) * dx
+            + self._c.unsafe_load(j) * dx * dx
+            + self._d.unsafe_load(j) * dx * dx * dx
         )
 
     def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
@@ -351,29 +350,29 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
         """
         var n = self.x.size
         var result: NDArray[Self.dtype] = NDArray[Self.dtype](xi.shape)
-        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
-        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
 
         for i in range(xi.size):
-            var xi_val: Scalar[Self.dtype] = xi._buf.ptr[i]
+            var xi_val: Scalar[Self.dtype] = xi.unsafe_load(i)
             if xi_val <= x_min:
-                result._buf.ptr[i] = self.y._buf.ptr[0]
+                result.unsafe_store(i, self.y.unsafe_load(0))
                 continue
             if xi_val >= x_max:
-                result._buf.ptr[i] = self.y._buf.ptr[n - 1]
+                result.unsafe_store(i, self.y.unsafe_load(n - 1))
                 continue
             var j: Int = _binary_search(self.x, xi_val) - 1
             if j < 0:
                 j = 0
             if j > n - 2:
                 j = n - 2
-            var dx = xi_val - self.x._buf.ptr[j]
-            result._buf.ptr[i] = (
-                self.y._buf.ptr[j]
-                + self._b._buf.ptr[j] * dx
-                + self._c._buf.ptr[j] * dx * dx
-                + self._d._buf.ptr[j] * dx * dx * dx
-            )
+            var dx = xi_val - self.x.unsafe_load(j)
+            result.unsafe_store(i, (
+                self.y.unsafe_load(j)
+                + self._b.unsafe_load(j) * dx
+                + self._c.unsafe_load(j) * dx * dx
+                + self._d.unsafe_load(j) * dx * dx * dx
+            ))
 
         return result^
 
@@ -429,31 +428,31 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
         var slopes = NDArray[Self.dtype](Shape(n - 1))
         for i in range(n - 1):
-            slopes._buf.ptr[i] = (y._buf.ptr[i + 1] - y._buf.ptr[i]) / (
-                x._buf.ptr[i + 1] - x._buf.ptr[i]
-            )
+            slopes.unsafe_store(i, (y.unsafe_load(i + 1) - y.unsafe_load(i)) / (
+                x.unsafe_load(i + 1) - x.unsafe_load(i)
+            ))
 
         var t = NDArray[Self.dtype](Shape(n))
-        t._buf.ptr[0] = slopes._buf.ptr[0]
+        t.unsafe_store(0, slopes.unsafe_load(0))
         if n > 1:
-            t._buf.ptr[n - 1] = slopes._buf.ptr[n - 2]
+            t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
         if n > 2:
-            t._buf.ptr[1] = (slopes._buf.ptr[0] + slopes._buf.ptr[1]) * 0.5
-            t._buf.ptr[n - 2] = (
-                slopes._buf.ptr[n - 3] + slopes._buf.ptr[n - 2]
-            ) * 0.5
+            t.unsafe_store(1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5)
+            t.unsafe_store(n - 2, (
+                slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)
+            ) * 0.5)
 
         for i in range(2, n - 2):
-            var w1 = abs(slopes._buf.ptr[i + 1] - slopes._buf.ptr[i])
-            var w2 = abs(slopes._buf.ptr[i - 1] - slopes._buf.ptr[i - 2])
+            var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
+            var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
             if w1 + w2 > 0:
-                t._buf.ptr[i] = (
-                    w1 * slopes._buf.ptr[i - 1] + w2 * slopes._buf.ptr[i]
-                ) / (w1 + w2)
+                t.unsafe_store(i, (
+                    w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i)
+                ) / (w1 + w2))
             else:
-                t._buf.ptr[i] = (
-                    slopes._buf.ptr[i - 1] + slopes._buf.ptr[i]
-                ) * 0.5
+                t.unsafe_store(i, (
+                    slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)
+                ) * 0.5)
 
         self._t = t^
 
@@ -467,26 +466,26 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             Interpolated value at xi. Clamped to boundary values if out of range.
         """
         var n = self.x.size
-        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
-        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
         if xi <= x_min:
-            return self.y._buf.ptr[0]
+            return self.y.unsafe_load(0)
         if xi >= x_max:
-            return self.y._buf.ptr[n - 1]
+            return self.y.unsafe_load(n - 1)
         var j: Int = _binary_search(self.x, xi) - 1
         if j < 0:
             j = 0
         if j > n - 2:
             j = n - 2
-        var h = self.x._buf.ptr[j + 1] - self.x._buf.ptr[j]
-        var s = (xi - self.x._buf.ptr[j]) / h
+        var h = self.x.unsafe_load(j + 1) - self.x.unsafe_load(j)
+        var s = (xi - self.x.unsafe_load(j)) / h
         var s2 = s * s
         var s3 = s2 * s
         return (
-            (2.0 * s3 - 3.0 * s2 + 1.0) * self.y._buf.ptr[j]
-            + (s3 - 2.0 * s2 + s) * h * self._t._buf.ptr[j]
-            + (-2.0 * s3 + 3.0 * s2) * self.y._buf.ptr[j + 1]
-            + (s3 - s2) * h * self._t._buf.ptr[j + 1]
+            (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
+            + (s3 - 2.0 * s2 + s) * h * self._t.unsafe_load(j)
+            + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
+            + (s3 - s2) * h * self._t.unsafe_load(j + 1)
         )
 
     def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
@@ -500,32 +499,32 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         """
         var n = self.x.size
         var result: NDArray[Self.dtype] = NDArray[Self.dtype](xi.shape)
-        var x_min: Scalar[Self.dtype] = self.x._buf.ptr[0]
-        var x_max: Scalar[Self.dtype] = self.x._buf.ptr[n - 1]
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
 
         for i in range(xi.size):
-            var xi_val: Scalar[Self.dtype] = xi._buf.ptr[i]
+            var xi_val: Scalar[Self.dtype] = xi.unsafe_load(i)
             if xi_val <= x_min:
-                result._buf.ptr[i] = self.y._buf.ptr[0]
+                result.unsafe_store(i, self.y.unsafe_load(0))
                 continue
             if xi_val >= x_max:
-                result._buf.ptr[i] = self.y._buf.ptr[n - 1]
+                result.unsafe_store(i, self.y.unsafe_load(n - 1))
                 continue
             var j: Int = _binary_search(self.x, xi_val) - 1
             if j < 0:
                 j = 0
             if j > n - 2:
                 j = n - 2
-            var h = self.x._buf.ptr[j + 1] - self.x._buf.ptr[j]
-            var s = (xi_val - self.x._buf.ptr[j]) / h
+            var h = self.x.unsafe_load(j + 1) - self.x.unsafe_load(j)
+            var s = (xi_val - self.x.unsafe_load(j)) / h
             var s2 = s * s
             var s3 = s2 * s
-            result._buf.ptr[i] = (
-                (2.0 * s3 - 3.0 * s2 + 1.0) * self.y._buf.ptr[j]
-                + (s3 - 2.0 * s2 + s) * h * self._t._buf.ptr[j]
-                + (-2.0 * s3 + 3.0 * s2) * self.y._buf.ptr[j + 1]
-                + (s3 - s2) * h * self._t._buf.ptr[j + 1]
-            )
+            result.unsafe_store(i, (
+                (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
+                + (s3 - 2.0 * s2 + s) * h * self._t.unsafe_load(j)
+                + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
+                + (s3 - s2) * h * self._t.unsafe_load(j + 1)
+            ))
 
         return result^
 
@@ -684,25 +683,25 @@ def _interp1d_linear_interpolate[
         Array of interpolated values.
     """
     var result: NDArray[dtype] = NDArray[dtype](xi.shape)
-    var x_min: Scalar[dtype] = x._buf.ptr[0]
-    var x_max: Scalar[dtype] = x._buf.ptr[x.size - 1]
+    var x_min: Scalar[dtype] = x.unsafe_load(0)
+    var x_max: Scalar[dtype] = x.unsafe_load(x.size - 1)
 
     for i in range(xi.size):
-        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        var xi_val: Scalar[dtype] = xi.unsafe_load(i)
 
         if xi_val <= x_min:
-            result.itemset(i, y._buf.ptr[0])
+            result.itemset(i, y.unsafe_load(0))
         elif xi_val >= x_max:
-            result.itemset(i, y._buf.ptr[y.size - 1])
+            result.itemset(i, y.unsafe_load(y.size - 1))
         else:
             var j: Int = _binary_search(x, xi_val)
 
-            var x0: Scalar[dtype] = x._buf.ptr[j - 1]
-            var x1: Scalar[dtype] = x._buf.ptr[j]
-            var y0: Scalar[dtype] = y._buf.ptr[j - 1]
-            var y1: Scalar[dtype] = y._buf.ptr[j]
+            var x0: Scalar[dtype] = x.unsafe_load(j - 1)
+            var x1: Scalar[dtype] = x.unsafe_load(j)
+            var y0: Scalar[dtype] = y.unsafe_load(j - 1)
+            var y1: Scalar[dtype] = y.unsafe_load(j)
             var t: Scalar[dtype] = (xi_val - x0) / (x1 - x0)
-            result._buf.ptr[i] = y0 + t * (y1 - y0)
+            result.unsafe_store(i, y0 + t * (y1 - y0))
 
     return result^
 
@@ -731,40 +730,40 @@ def _interp1d_linear_extrapolate[
         Array of interpolated/extrapolated values.
     """
     var result: NDArray[dtype] = NDArray[dtype](xi.shape)
-    var x_min: Scalar[dtype] = x._buf.ptr[0]
-    var x_max: Scalar[dtype] = x._buf.ptr[x.size - 1]
+    var x_min: Scalar[dtype] = x.unsafe_load(0)
+    var x_max: Scalar[dtype] = x.unsafe_load(x.size - 1)
 
     for i in range(xi.size):
-        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        var xi_val: Scalar[dtype] = xi.unsafe_load(i)
 
         if xi_val < x_min:
-            var slope = (y._buf.ptr[1] - y._buf.ptr[0]) / (
-                x._buf.ptr[1] - x._buf.ptr[0]
+            var slope = (y.unsafe_load(1) - y.unsafe_load(0)) / (
+                x.unsafe_load(1) - x.unsafe_load(0)
             )
-            result.itemset(i, y._buf.ptr[0] + slope * (xi_val - x._buf.ptr[0]))
+            result.itemset(i, y.unsafe_load(0) + slope * (xi_val - x.unsafe_load(0)))
         elif xi_val > x_max:
-            var slope = (y._buf.ptr[y.size - 1] - y._buf.ptr[y.size - 2]) / (
-                x._buf.ptr[x.size - 1] - x._buf.ptr[x.size - 2]
+            var slope = (y.unsafe_load(y.size - 1) - y.unsafe_load(y.size - 2)) / (
+                x.unsafe_load(x.size - 1) - x.unsafe_load(x.size - 2)
             )
             result.itemset(
                 i,
-                y._buf.ptr[y.size - 1]
-                + slope * (xi_val - x._buf.ptr[x.size - 1]),
+                y.unsafe_load(y.size - 1)
+                + slope * (xi_val - x.unsafe_load(x.size - 1)),
             )
         else:
             if xi_val == x_min:
-                result.itemset(i, y._buf.ptr[0])
+                result.itemset(i, y.unsafe_load(0))
             elif xi_val == x_max:
-                result.itemset(i, y._buf.ptr[y.size - 1])
+                result.itemset(i, y.unsafe_load(y.size - 1))
             else:
                 var j: Int = _binary_search(x, xi_val)
 
-                var x0: Scalar[dtype] = x._buf.ptr[j - 1]
-                var x1: Scalar[dtype] = x._buf.ptr[j]
-                var y0: Scalar[dtype] = y._buf.ptr[j - 1]
-                var y1: Scalar[dtype] = y._buf.ptr[j]
+                var x0: Scalar[dtype] = x.unsafe_load(j - 1)
+                var x1: Scalar[dtype] = x.unsafe_load(j)
+                var y0: Scalar[dtype] = y.unsafe_load(j - 1)
+                var y1: Scalar[dtype] = y.unsafe_load(j)
                 var t: Scalar[dtype] = (xi_val - x0) / (x1 - x0)
-                result._buf.ptr[i] = y0 + t * (y1 - y0)
+                result.unsafe_store(i, y0 + t * (y1 - y0))
 
     return result^
 
@@ -787,66 +786,64 @@ def _interp1d_cubic_interpolate[
     """
     var n = x.size
     var result: NDArray[dtype] = NDArray[dtype](xi.shape)
-    var x_min: Scalar[dtype] = x._buf.ptr[0]
-    var x_max: Scalar[dtype] = x._buf.ptr[n - 1]
+    var x_min: Scalar[dtype] = x.unsafe_load(0)
+    var x_max: Scalar[dtype] = x.unsafe_load(n - 1)
 
     if n < 3:
         return _interp1d_linear_interpolate(xi, x, y)
 
     var h = NDArray[dtype](Shape(n - 1))
     for i in range(n - 1):
-        h._buf.ptr[i] = x._buf.ptr[i + 1] - x._buf.ptr[i]
+        h.unsafe_store(i, x.unsafe_load(i + 1) - x.unsafe_load(i))
 
     var alpha = NDArray[dtype](Shape(n))
-    alpha._buf.ptr[0] = 0.0
-    alpha._buf.ptr[n - 1] = 0.0
+    alpha.unsafe_store(0, 0.0)
+    alpha.unsafe_store(n - 1, 0.0)
     for i in range(1, n - 1):
-        alpha._buf.ptr[i] = (
-            3.0 * (y._buf.ptr[i + 1] - y._buf.ptr[i]) / h._buf.ptr[i]
-            - 3.0 * (y._buf.ptr[i] - y._buf.ptr[i - 1]) / h._buf.ptr[i - 1]
-        )
+        alpha.unsafe_store(i, (
+            3.0 * (y.unsafe_load(i + 1) - y.unsafe_load(i)) / h.unsafe_load(i)
+            - 3.0 * (y.unsafe_load(i) - y.unsafe_load(i - 1)) / h.unsafe_load(i - 1)
+        ))
 
     var l = NDArray[dtype](Shape(n))
     var mu = NDArray[dtype](Shape(n))
     var z = NDArray[dtype](Shape(n))
-    l._buf.ptr[0] = 1.0
-    mu._buf.ptr[0] = 0.0
-    z._buf.ptr[0] = 0.0
+    l.unsafe_store(0, 1.0)
+    mu.unsafe_store(0, 0.0)
+    z.unsafe_store(0, 0.0)
 
     for i in range(1, n - 1):
-        l._buf.ptr[i] = (
-            2.0 * (x._buf.ptr[i + 1] - x._buf.ptr[i - 1])
-            - h._buf.ptr[i - 1] * mu._buf.ptr[i - 1]
-        )
-        mu._buf.ptr[i] = h._buf.ptr[i] / l._buf.ptr[i]
-        z._buf.ptr[i] = (
-            alpha._buf.ptr[i] - h._buf.ptr[i - 1] * z._buf.ptr[i - 1]
-        ) / l._buf.ptr[i]
+        l.unsafe_store(i, (
+            2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
+            - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
+        ))
+        mu.unsafe_store(i, h.unsafe_load(i) / l.unsafe_load(i))
+        z.unsafe_store(i, (
+            alpha.unsafe_load(i) - h.unsafe_load(i - 1) * z.unsafe_load(i - 1)
+        ) / l.unsafe_load(i))
 
-    l._buf.ptr[n - 1] = 1.0
-    z._buf.ptr[n - 1] = 0.0
+    l.unsafe_store(n - 1, 1.0)
+    z.unsafe_store(n - 1, 0.0)
 
     var c = NDArray[dtype](Shape(n))
     var b = NDArray[dtype](Shape(n - 1))
     var d = NDArray[dtype](Shape(n - 1))
-    c._buf.ptr[n - 1] = 0.0
+    c.unsafe_store(n - 1, 0.0)
 
     for j in range(n - 2, -1, -1):
-        c._buf.ptr[j] = z._buf.ptr[j] - mu._buf.ptr[j] * c._buf.ptr[j + 1]
-        b._buf.ptr[j] = (y._buf.ptr[j + 1] - y._buf.ptr[j]) / h._buf.ptr[
-            j
-        ] - h._buf.ptr[j] * (c._buf.ptr[j + 1] + 2.0 * c._buf.ptr[j]) / 3.0
-        d._buf.ptr[j] = (c._buf.ptr[j + 1] - c._buf.ptr[j]) / (
-            3.0 * h._buf.ptr[j]
-        )
+        c.unsafe_store(j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1))
+        b.unsafe_store(j, (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j) - h.unsafe_load(j) * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j)) / 3.0)
+        d.unsafe_store(j, (c.unsafe_load(j + 1) - c.unsafe_load(j)) / (
+            3.0 * h.unsafe_load(j)
+        ))
 
     for i in range(xi.size):
-        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        var xi_val: Scalar[dtype] = xi.unsafe_load(i)
         if xi_val <= x_min:
-            result._buf.ptr[i] = y._buf.ptr[0]
+            result.unsafe_store(i, y.unsafe_load(0))
             continue
         if xi_val >= x_max:
-            result._buf.ptr[i] = y._buf.ptr[n - 1]
+            result.unsafe_store(i, y.unsafe_load(n - 1))
             continue
 
         var j: Int = _binary_search(x, xi_val) - 1
@@ -855,13 +852,13 @@ def _interp1d_cubic_interpolate[
         if j > n - 2:
             j = n - 2
 
-        var dx = xi_val - x._buf.ptr[j]
-        result._buf.ptr[i] = (
-            y._buf.ptr[j]
-            + b._buf.ptr[j] * dx
-            + c._buf.ptr[j] * dx * dx
-            + d._buf.ptr[j] * dx * dx * dx
-        )
+        var dx = xi_val - x.unsafe_load(j)
+        result.unsafe_store(i, (
+            y.unsafe_load(j)
+            + b.unsafe_load(j) * dx
+            + c.unsafe_load(j) * dx * dx
+            + d.unsafe_load(j) * dx * dx * dx
+        ))
 
     return result^
 
@@ -874,41 +871,41 @@ def _interp1d_akima_interpolate[
     """Akima 1D interpolation with boundary clamping."""
     var n = x.size
     var result: NDArray[dtype] = NDArray[dtype](xi.shape)
-    var x_min: Scalar[dtype] = x._buf.ptr[0]
-    var x_max: Scalar[dtype] = x._buf.ptr[n - 1]
+    var x_min: Scalar[dtype] = x.unsafe_load(0)
+    var x_max: Scalar[dtype] = x.unsafe_load(n - 1)
 
     if n < 5:
         return _interp1d_cubic_interpolate(xi, x, y)
 
     var slopes = NDArray[dtype](Shape(n - 1))
     for i in range(n - 1):
-        slopes._buf.ptr[i] = (y._buf.ptr[i + 1] - y._buf.ptr[i]) / (
-            x._buf.ptr[i + 1] - x._buf.ptr[i]
-        )
+        slopes.unsafe_store(i, (y.unsafe_load(i + 1) - y.unsafe_load(i)) / (
+            x.unsafe_load(i + 1) - x.unsafe_load(i)
+        ))
 
     var t = NDArray[dtype](Shape(n))
-    t._buf.ptr[0] = slopes._buf.ptr[0]
-    t._buf.ptr[1] = (slopes._buf.ptr[0] + slopes._buf.ptr[1]) * 0.5
-    t._buf.ptr[n - 2] = (slopes._buf.ptr[n - 3] + slopes._buf.ptr[n - 2]) * 0.5
-    t._buf.ptr[n - 1] = slopes._buf.ptr[n - 2]
+    t.unsafe_store(0, slopes.unsafe_load(0))
+    t.unsafe_store(1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5)
+    t.unsafe_store(n - 2, (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5)
+    t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
 
     for i in range(2, n - 2):
-        var w1 = abs(slopes._buf.ptr[i + 1] - slopes._buf.ptr[i])
-        var w2 = abs(slopes._buf.ptr[i - 1] - slopes._buf.ptr[i - 2])
+        var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
+        var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
         if w1 + w2 > 0:
-            t._buf.ptr[i] = (
-                w1 * slopes._buf.ptr[i - 1] + w2 * slopes._buf.ptr[i]
-            ) / (w1 + w2)
+            t.unsafe_store(i, (
+                w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i)
+            ) / (w1 + w2))
         else:
-            t._buf.ptr[i] = (slopes._buf.ptr[i - 1] + slopes._buf.ptr[i]) * 0.5
+            t.unsafe_store(i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5)
 
     for i in range(xi.size):
-        var xi_val: Scalar[dtype] = xi._buf.ptr[i]
+        var xi_val: Scalar[dtype] = xi.unsafe_load(i)
         if xi_val <= x_min:
-            result._buf.ptr[i] = y._buf.ptr[0]
+            result.unsafe_store(i, y.unsafe_load(0))
             continue
         if xi_val >= x_max:
-            result._buf.ptr[i] = y._buf.ptr[n - 1]
+            result.unsafe_store(i, y.unsafe_load(n - 1))
             continue
 
         var j: Int = _binary_search(x, xi_val) - 1
@@ -917,8 +914,8 @@ def _interp1d_akima_interpolate[
         if j > n - 2:
             j = n - 2
 
-        var h = x._buf.ptr[j + 1] - x._buf.ptr[j]
-        var s = (xi_val - x._buf.ptr[j]) / h
+        var h = x.unsafe_load(j + 1) - x.unsafe_load(j)
+        var s = (xi_val - x.unsafe_load(j)) / h
         var s2 = s * s
         var s3 = s2 * s
 
@@ -927,11 +924,11 @@ def _interp1d_akima_interpolate[
         var h01 = -2.0 * s3 + 3.0 * s2
         var h11 = s3 - s2
 
-        result._buf.ptr[i] = (
-            h00 * y._buf.ptr[j]
-            + h10 * h * t._buf.ptr[j]
-            + h01 * y._buf.ptr[j + 1]
-            + h11 * h * t._buf.ptr[j + 1]
-        )
+        result.unsafe_store(i, (
+            h00 * y.unsafe_load(j)
+            + h10 * h * t.unsafe_load(j)
+            + h01 * y.unsafe_load(j + 1)
+            + h11 * h * t.unsafe_load(j + 1)
+        ))
 
     return result^

@@ -69,9 +69,9 @@ def fftfreq[
     var scale = Scalar[dtype](1.0) / (Scalar[dtype](n) * d)
 
     for i in range(half):
-        result._buf.ptr[i] = Scalar[dtype](i) * scale
+        result.unsafe_store(i, Scalar[dtype](i) * scale)
     for i in range(half, n):
-        result._buf.ptr[i] = Scalar[dtype](i - n) * scale
+        result.unsafe_store(i, Scalar[dtype](i - n) * scale)
 
     return result^
 
@@ -121,7 +121,7 @@ def rfftfreq[
     var scale = Scalar[dtype](1.0) / (Scalar[dtype](n) * d)
 
     for i in range(out_len):
-        result._buf.ptr[i] = Scalar[dtype](i) * scale
+        result.unsafe_store(i, Scalar[dtype](i) * scale)
 
     return result^
 
@@ -171,7 +171,7 @@ def fftshift[
     var shift = n // 2
 
     for i in range(n):
-        result._buf.ptr[(i + shift) % n] = x._buf.ptr[i]
+        result.unsafe_store((i + shift) % n, x.unsafe_load(i))
 
     return result^
 
@@ -221,7 +221,7 @@ def ifftshift[
     var shift = (n + 1) // 2
 
     for i in range(n):
-        result._buf.ptr[(i + shift) % n] = x._buf.ptr[i]
+        result.unsafe_store((i + shift) % n, x.unsafe_load(i))
 
     return result^
 

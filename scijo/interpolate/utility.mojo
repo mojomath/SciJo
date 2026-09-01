@@ -8,6 +8,8 @@ Internal utility functions for interpolation, including binary search and
 input validation.
 """
 
+from numojo.core.ndarray import NDArray
+
 # ===----------------------------------------------------------------------=== #
 # Binary search
 # ===----------------------------------------------------------------------=== #
@@ -33,7 +35,7 @@ def _binary_search[
 
     while right - left > 1:
         var mid = (left + right) // 2
-        if x._buf.ptr[mid] <= value:
+        if x.unsafe_load(mid) <= value:
             left = mid
         else:
             right = mid

@@ -552,12 +552,12 @@ def cumulative_trapezoid[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     for i in range(n - 1):
-        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running
+        running += (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running)
 
     return result^
 
@@ -634,13 +634,13 @@ def cumulative_trapezoid[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     for i in range(n - 1):
-        var dx_seg = x._buf.ptr[i + 1] - x._buf.ptr[i]
-        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx_seg * 0.5
-        result._buf.ptr[i + offset] = running
+        var dx_seg = x.unsafe_load(i + 1) - x.unsafe_load(i)
+        running += (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx_seg * 0.5
+        result.unsafe_store(i + offset, running)
 
     return result^
 
@@ -714,24 +714,24 @@ def cumulative_simpson[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     var i = 0
     while i < n - 2:
         var panel = (
-            (y._buf.ptr[i] + 4.0 * y._buf.ptr[i + 1] + y._buf.ptr[i + 2])
+            (y.unsafe_load(i) + 4.0 * y.unsafe_load(i + 1) + y.unsafe_load(i + 2))
             * dx
             / 3.0
         )
-        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running + half
+        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running + half)
         running += panel
-        result._buf.ptr[i + 1 + offset] = running
+        result.unsafe_store(i + 1 + offset, running)
         i += 2
 
     if i == n - 2:
-        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running + half
+        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running + half)
 
     return result^

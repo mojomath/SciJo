@@ -188,7 +188,7 @@ def rfft[
     var complex_input = ComplexNDArray[cdtype](NDArrayShape(n_padded))
     for i in range(n):
         complex_input[Item(i)] = ComplexSIMD[cdtype](
-            arr._buf.ptr[i].cast[cdtype.dtype](),
+            arr.unsafe_load(i).cast[cdtype.dtype](),
             Scalar[cdtype.dtype](0),
         )
     # Remaining elements are already zero-initialized
@@ -276,7 +276,7 @@ def irfft[
 
     var result = NDArray[dtype](NDArrayShape(full_n))
     for i in range(full_n):
-        result._buf.ptr[i] = complex_out[Item(i)].re.cast[dtype]()
+        result.unsafe_store(i, complex_out[Item(i)].re.cast[dtype]())
     return result^
 
 
