@@ -8,6 +8,9 @@ Internal utility functions for interpolation, including binary search and
 input validation.
 """
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 from numojo.core.ndarray import NDArray
 
 # ===----------------------------------------------------------------------=== #

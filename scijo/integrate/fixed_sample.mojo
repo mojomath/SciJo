@@ -25,11 +25,11 @@ Examples
 # External
 # ===----------------------------------------------------------------------=== #
 import numojo as nm
+from numojo.core.error import NumojoError
 from numojo.core.ndarray import (
     NDArray,
     NDArrayShape,
 )
-from numojo.core.error import NumojoError
 
 # ===----------------------------------------------------------------------=== #
 # Trapezoid
