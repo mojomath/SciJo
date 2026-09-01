@@ -26,6 +26,9 @@ References
 Based on the official CODATA 2022 adjustment for maximum accuracy.
 """
 
+comptime f64 = DType.float64
+"""Alias for the 64-bit floating-point data type (f64)."""
+
 # ===----------------------------------------------------------------------=== #
 # Data structure for physical constants
 # ===----------------------------------------------------------------------=== #

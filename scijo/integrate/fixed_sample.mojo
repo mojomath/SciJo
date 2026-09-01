@@ -29,6 +29,7 @@ from numojo.core.ndarray import (
     NDArray,
     NDArrayShape,
 )
+from numojo.core.error import NumojoError
 
 # ===----------------------------------------------------------------------=== #
 # Trapezoid

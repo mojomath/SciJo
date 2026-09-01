@@ -43,6 +43,7 @@ from numojo.core.indexing import Item
 from numojo.core.layout import NDArrayShape
 from numojo.core.ndarray import NDArray
 from numojo.routines.constants import Constants
+from numojo.core.type_aliases import CScalar
 
 # ===----------------------------------------------------------------------=== #
 # FFT

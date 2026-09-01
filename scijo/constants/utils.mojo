@@ -19,6 +19,9 @@ from std.builtin.value import materialize
 from scijo.constants.codata import physical_constants
 from scijo.constants.constants import c
 
+comptime f64 = DType.float64
+"""Alias for the 64-bit floating-point data type (f64)."""
+
 # ===----------------------------------------------------------------------=== #
 # Functions to access physical constants
 # ===----------------------------------------------------------------------=== #
