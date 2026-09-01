@@ -269,10 +269,17 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
         alpha.unsafe_store(0, 0.0)
         alpha.unsafe_store(n - 1, 0.0)
         for i in range(1, n - 1):
-            alpha.unsafe_store(i, (
-                3.0 * (y.unsafe_load(i + 1) - y.unsafe_load(i)) / h.unsafe_load(i)
-                - 3.0 * (y.unsafe_load(i) - y.unsafe_load(i - 1)) / h.unsafe_load(i - 1)
-            ))
+            alpha.unsafe_store(
+                i,
+                (
+                    3.0
+                    * (y.unsafe_load(i + 1) - y.unsafe_load(i))
+                    / h.unsafe_load(i)
+                    - 3.0
+                    * (y.unsafe_load(i) - y.unsafe_load(i - 1))
+                    / h.unsafe_load(i - 1)
+                ),
+            )
 
         var l = NDArray[Self.dtype](Shape(n))
         var mu = NDArray[Self.dtype](Shape(n))
@@ -282,14 +289,22 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
         z.unsafe_store(0, 0.0)
 
         for i in range(1, n - 1):
-            l.unsafe_store(i, (
-                2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
-                - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
-            ))
+            l.unsafe_store(
+                i,
+                (
+                    2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
+                    - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
+                ),
+            )
             mu.unsafe_store(i, h.unsafe_load(i) / l.unsafe_load(i))
-            z.unsafe_store(i, (
-                alpha.unsafe_load(i) - h.unsafe_load(i - 1) * z.unsafe_load(i - 1)
-            ) / l.unsafe_load(i))
+            z.unsafe_store(
+                i,
+                (
+                    alpha.unsafe_load(i)
+                    - h.unsafe_load(i - 1) * z.unsafe_load(i - 1)
+                )
+                / l.unsafe_load(i),
+            )
 
         l.unsafe_store(n - 1, 1.0)
         z.unsafe_store(n - 1, 0.0)
@@ -300,11 +315,21 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
         c.unsafe_store(n - 1, 0.0)
 
         for j in range(n - 2, -1, -1):
-            c.unsafe_store(j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1))
-            b.unsafe_store(j, (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j) - h.unsafe_load(j) * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j)) / 3.0)
-            d.unsafe_store(j, (c.unsafe_load(j + 1) - c.unsafe_load(j)) / (
-                3.0 * h.unsafe_load(j)
-            ))
+            c.unsafe_store(
+                j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1)
+            )
+            b.unsafe_store(
+                j,
+                (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j)
+                - h.unsafe_load(j)
+                * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j))
+                / 3.0,
+            )
+            d.unsafe_store(
+                j,
+                (c.unsafe_load(j + 1) - c.unsafe_load(j))
+                / (3.0 * h.unsafe_load(j)),
+            )
 
         self._b = b^
         self._c = c^
@@ -367,12 +392,15 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
             if j > n - 2:
                 j = n - 2
             var dx = xi_val - self.x.unsafe_load(j)
-            result.unsafe_store(i, (
-                self.y.unsafe_load(j)
-                + self._b.unsafe_load(j) * dx
-                + self._c.unsafe_load(j) * dx * dx
-                + self._d.unsafe_load(j) * dx * dx * dx
-            ))
+            result.unsafe_store(
+                i,
+                (
+                    self.y.unsafe_load(j)
+                    + self._b.unsafe_load(j) * dx
+                    + self._c.unsafe_load(j) * dx * dx
+                    + self._d.unsafe_load(j) * dx * dx * dx
+                ),
+            )
 
         return result^
 
@@ -428,31 +456,41 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
         var slopes = NDArray[Self.dtype](Shape(n - 1))
         for i in range(n - 1):
-            slopes.unsafe_store(i, (y.unsafe_load(i + 1) - y.unsafe_load(i)) / (
-                x.unsafe_load(i + 1) - x.unsafe_load(i)
-            ))
+            slopes.unsafe_store(
+                i,
+                (y.unsafe_load(i + 1) - y.unsafe_load(i))
+                / (x.unsafe_load(i + 1) - x.unsafe_load(i)),
+            )
 
         var t = NDArray[Self.dtype](Shape(n))
         t.unsafe_store(0, slopes.unsafe_load(0))
         if n > 1:
             t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
         if n > 2:
-            t.unsafe_store(1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5)
-            t.unsafe_store(n - 2, (
-                slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)
-            ) * 0.5)
+            t.unsafe_store(
+                1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5
+            )
+            t.unsafe_store(
+                n - 2,
+                (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5,
+            )
 
         for i in range(2, n - 2):
             var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
             var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
             if w1 + w2 > 0:
-                t.unsafe_store(i, (
-                    w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i)
-                ) / (w1 + w2))
+                t.unsafe_store(
+                    i,
+                    (
+                        w1 * slopes.unsafe_load(i - 1)
+                        + w2 * slopes.unsafe_load(i)
+                    )
+                    / (w1 + w2),
+                )
             else:
-                t.unsafe_store(i, (
-                    slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)
-                ) * 0.5)
+                t.unsafe_store(
+                    i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5
+                )
 
         self._t = t^
 
@@ -519,12 +557,15 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             var s = (xi_val - self.x.unsafe_load(j)) / h
             var s2 = s * s
             var s3 = s2 * s
-            result.unsafe_store(i, (
-                (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
-                + (s3 - 2.0 * s2 + s) * h * self._t.unsafe_load(j)
-                + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
-                + (s3 - s2) * h * self._t.unsafe_load(j + 1)
-            ))
+            result.unsafe_store(
+                i,
+                (
+                    (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
+                    + (s3 - 2.0 * s2 + s) * h * self._t.unsafe_load(j)
+                    + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
+                    + (s3 - s2) * h * self._t.unsafe_load(j + 1)
+                ),
+            )
 
         return result^
 
@@ -740,11 +781,13 @@ def _interp1d_linear_extrapolate[
             var slope = (y.unsafe_load(1) - y.unsafe_load(0)) / (
                 x.unsafe_load(1) - x.unsafe_load(0)
             )
-            result.itemset(i, y.unsafe_load(0) + slope * (xi_val - x.unsafe_load(0)))
-        elif xi_val > x_max:
-            var slope = (y.unsafe_load(y.size - 1) - y.unsafe_load(y.size - 2)) / (
-                x.unsafe_load(x.size - 1) - x.unsafe_load(x.size - 2)
+            result.itemset(
+                i, y.unsafe_load(0) + slope * (xi_val - x.unsafe_load(0))
             )
+        elif xi_val > x_max:
+            var slope = (
+                y.unsafe_load(y.size - 1) - y.unsafe_load(y.size - 2)
+            ) / (x.unsafe_load(x.size - 1) - x.unsafe_load(x.size - 2))
             result.itemset(
                 i,
                 y.unsafe_load(y.size - 1)
@@ -800,10 +843,17 @@ def _interp1d_cubic_interpolate[
     alpha.unsafe_store(0, 0.0)
     alpha.unsafe_store(n - 1, 0.0)
     for i in range(1, n - 1):
-        alpha.unsafe_store(i, (
-            3.0 * (y.unsafe_load(i + 1) - y.unsafe_load(i)) / h.unsafe_load(i)
-            - 3.0 * (y.unsafe_load(i) - y.unsafe_load(i - 1)) / h.unsafe_load(i - 1)
-        ))
+        alpha.unsafe_store(
+            i,
+            (
+                3.0
+                * (y.unsafe_load(i + 1) - y.unsafe_load(i))
+                / h.unsafe_load(i)
+                - 3.0
+                * (y.unsafe_load(i) - y.unsafe_load(i - 1))
+                / h.unsafe_load(i - 1)
+            ),
+        )
 
     var l = NDArray[dtype](Shape(n))
     var mu = NDArray[dtype](Shape(n))
@@ -813,14 +863,19 @@ def _interp1d_cubic_interpolate[
     z.unsafe_store(0, 0.0)
 
     for i in range(1, n - 1):
-        l.unsafe_store(i, (
-            2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
-            - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
-        ))
+        l.unsafe_store(
+            i,
+            (
+                2.0 * (x.unsafe_load(i + 1) - x.unsafe_load(i - 1))
+                - h.unsafe_load(i - 1) * mu.unsafe_load(i - 1)
+            ),
+        )
         mu.unsafe_store(i, h.unsafe_load(i) / l.unsafe_load(i))
-        z.unsafe_store(i, (
-            alpha.unsafe_load(i) - h.unsafe_load(i - 1) * z.unsafe_load(i - 1)
-        ) / l.unsafe_load(i))
+        z.unsafe_store(
+            i,
+            (alpha.unsafe_load(i) - h.unsafe_load(i - 1) * z.unsafe_load(i - 1))
+            / l.unsafe_load(i),
+        )
 
     l.unsafe_store(n - 1, 1.0)
     z.unsafe_store(n - 1, 0.0)
@@ -831,11 +886,21 @@ def _interp1d_cubic_interpolate[
     c.unsafe_store(n - 1, 0.0)
 
     for j in range(n - 2, -1, -1):
-        c.unsafe_store(j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1))
-        b.unsafe_store(j, (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j) - h.unsafe_load(j) * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j)) / 3.0)
-        d.unsafe_store(j, (c.unsafe_load(j + 1) - c.unsafe_load(j)) / (
-            3.0 * h.unsafe_load(j)
-        ))
+        c.unsafe_store(
+            j, z.unsafe_load(j) - mu.unsafe_load(j) * c.unsafe_load(j + 1)
+        )
+        b.unsafe_store(
+            j,
+            (y.unsafe_load(j + 1) - y.unsafe_load(j)) / h.unsafe_load(j)
+            - h.unsafe_load(j)
+            * (c.unsafe_load(j + 1) + 2.0 * c.unsafe_load(j))
+            / 3.0,
+        )
+        d.unsafe_store(
+            j,
+            (c.unsafe_load(j + 1) - c.unsafe_load(j))
+            / (3.0 * h.unsafe_load(j)),
+        )
 
     for i in range(xi.size):
         var xi_val: Scalar[dtype] = xi.unsafe_load(i)
@@ -853,12 +918,15 @@ def _interp1d_cubic_interpolate[
             j = n - 2
 
         var dx = xi_val - x.unsafe_load(j)
-        result.unsafe_store(i, (
-            y.unsafe_load(j)
-            + b.unsafe_load(j) * dx
-            + c.unsafe_load(j) * dx * dx
-            + d.unsafe_load(j) * dx * dx * dx
-        ))
+        result.unsafe_store(
+            i,
+            (
+                y.unsafe_load(j)
+                + b.unsafe_load(j) * dx
+                + c.unsafe_load(j) * dx * dx
+                + d.unsafe_load(j) * dx * dx * dx
+            ),
+        )
 
     return result^
 
@@ -879,25 +947,33 @@ def _interp1d_akima_interpolate[
 
     var slopes = NDArray[dtype](Shape(n - 1))
     for i in range(n - 1):
-        slopes.unsafe_store(i, (y.unsafe_load(i + 1) - y.unsafe_load(i)) / (
-            x.unsafe_load(i + 1) - x.unsafe_load(i)
-        ))
+        slopes.unsafe_store(
+            i,
+            (y.unsafe_load(i + 1) - y.unsafe_load(i))
+            / (x.unsafe_load(i + 1) - x.unsafe_load(i)),
+        )
 
     var t = NDArray[dtype](Shape(n))
     t.unsafe_store(0, slopes.unsafe_load(0))
     t.unsafe_store(1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5)
-    t.unsafe_store(n - 2, (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5)
+    t.unsafe_store(
+        n - 2, (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5
+    )
     t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
 
     for i in range(2, n - 2):
         var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
         var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
         if w1 + w2 > 0:
-            t.unsafe_store(i, (
-                w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i)
-            ) / (w1 + w2))
+            t.unsafe_store(
+                i,
+                (w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i))
+                / (w1 + w2),
+            )
         else:
-            t.unsafe_store(i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5)
+            t.unsafe_store(
+                i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5
+            )
 
     for i in range(xi.size):
         var xi_val: Scalar[dtype] = xi.unsafe_load(i)
@@ -924,11 +1000,14 @@ def _interp1d_akima_interpolate[
         var h01 = -2.0 * s3 + 3.0 * s2
         var h11 = s3 - s2
 
-        result.unsafe_store(i, (
-            h00 * y.unsafe_load(j)
-            + h10 * h * t.unsafe_load(j)
-            + h01 * y.unsafe_load(j + 1)
-            + h11 * h * t.unsafe_load(j + 1)
-        ))
+        result.unsafe_store(
+            i,
+            (
+                h00 * y.unsafe_load(j)
+                + h10 * h * t.unsafe_load(j)
+                + h01 * y.unsafe_load(j + 1)
+                + h11 * h * t.unsafe_load(j + 1)
+            ),
+        )
 
     return result^

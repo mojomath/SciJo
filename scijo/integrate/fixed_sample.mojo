@@ -720,7 +720,11 @@ def cumulative_simpson[
     var i = 0
     while i < n - 2:
         var panel = (
-            (y.unsafe_load(i) + 4.0 * y.unsafe_load(i + 1) + y.unsafe_load(i + 2))
+            (
+                y.unsafe_load(i)
+                + 4.0 * y.unsafe_load(i + 1)
+                + y.unsafe_load(i + 2)
+            )
             * dx
             / 3.0
         )

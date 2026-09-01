@@ -35,6 +35,7 @@ from numojo.core import (
 )
 from numojo.routines.creation import zeros
 
+
 def jacobian[
     dtype: DType,
     jacob_func: def[dtype: DType](
