@@ -35,7 +35,6 @@ from numojo.routines.creation import zeros
 # ===----------------------------------------------------------------------=== #
 from max.algorithm.backend.cpu import parallelize
 
-
 def jacobian[
     dtype: DType,
     jacob_func: def[dtype: DType](
