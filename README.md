@@ -3,7 +3,7 @@
 <div align="center">
     <img src="./assets/scijo.png" alt="SciJo Logo" width="200" style="border-radius: 32px; margin-bottom: 200px; display: block; border: 3px solid rgba(0, 0, 0, 0.15); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25); background: #fff;"/>
   <p style="font-size: 1.2em; color: #666; margin: 0; padding: 10px 20px; line-height: 1.5;">
-    <em>High-performance scientific computing library written in pure Mojo, inspired by SciPy</em>
+    <em>SciJo is a high-performance scientific computing library written in Mojo🔥, inspired by SciPy.</em>
   </p>
 </div>
 
