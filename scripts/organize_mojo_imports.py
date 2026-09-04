@@ -534,6 +534,21 @@ def organized_import_block(statements: list[ImportStatement]) -> str:
     return "\n".join(rendered_groups)
 
 
+TOP_LEVEL_DEF_RE = re.compile(r"^(def|struct|fn|@\w+)\b")
+
+
+def starts_with_top_level_def(tail: str) -> bool:
+    """True if `tail` (the file content after the import block) begins with
+    a top-level `def`/`struct`/`fn` (optionally behind a decorator, e.g.
+    `@value`). `mojo format` always separates these from what precedes them
+    by two blank lines, versus one blank line otherwise."""
+    for line in tail.splitlines():
+        if line.strip() == "":
+            continue
+        return bool(TOP_LEVEL_DEF_RE.match(line))
+    return False
+
+
 def organize_file(path: Path, *, keep_unused: bool) -> str | None:
     original = path.read_text()
     lines = original.splitlines(keepends=True)
@@ -581,8 +596,12 @@ def organize_file(path: Path, *, keep_unused: bool) -> str | None:
     tail = "".join(lines[end:]).lstrip("\n")
     if new_block and tail.strip():
         # new_block already ends in a single '\n' (each rendered import line
-        # does); one more gives exactly one blank line before the tail.
-        new_block += "\n"
+        # does); one more gives exactly one blank line before the tail, which
+        # is what `mojo format` wants - except before a top-level def/struct/
+        # fn, which it always separates from what precedes it by two blank
+        # lines. Match that here so this script's output is a no-op under
+        # `mojo format` instead of being reformatted right back.
+        new_block += "\n\n" if starts_with_top_level_def(tail) else "\n"
     head = "".join(lines[:start])
     if new_block and head.strip() and not head.endswith("\n\n"):
         head = head.rstrip("\n") + "\n\n"
