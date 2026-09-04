@@ -11,15 +11,17 @@ handling, and type definitions, as well as a suite of modules for advanced numer
 
 Available Modules
 -----------------
-- `constants`     — Common mathematical and physical constants.
-- `differentiate` — Tools for numerical differentiation and gradient computation.
-- `integrate`     — Numerical integration routines for single and multi-dimensional problems.
-- `fft`           — Fast Fourier Transform algorithms for signal processing.
-- `interpolate`   — Interpolation methods for estimating values between data points.
-- `optimize`      — Optimization algorithms for minimization and root-finding.
+- `constants`     - Common mathematical and physical constants.
+- `differentiate` - Tools for numerical differentiation and gradient computation.
+- `integrate`     - Numerical integration routines for single and multi-dimensional problems.
+- `fft`           - Fast Fourier Transform algorithms for signal processing.
+- `interpolate`   - Interpolation methods for estimating values between data points.
+- `optimize`      - Optimization algorithms for minimization and root-finding.
 
-Users who also want NuMojo's array types and dtypes (`NDArray`, `f64`, etc.)
-in scope should import `scijo.prelude` explicitly:
+The common dtype aliases (`f16`, `f32`, `f64`, `i8`, ..., `i64`, `u8`, ...,
+`u64`, `boolean`, etc.) are re-exported here for convenience, so `scijo.f64`
+works without a separate import. Users who also want NuMojo's array types
+(`NDArray`, `Shape`, ...) in scope should import `scijo.prelude` explicitly:
 
     ```mojo
     from scijo.prelude import *
@@ -31,10 +33,34 @@ Examples
     from scijo.constants import pi, c
     from scijo.integrate import quad
     from scijo.differentiate import derivative
+    import scijo as sj
+
+    var x: Scalar[sj.f64] = 1.0
     ```
 """
 
 # ===----------------------------------------------------------------------=== #
 # External
 # ===----------------------------------------------------------------------=== #
+from numojo.core.dtype import (
+    bf16,
+    boolean,
+    f16,
+    f32,
+    f64,
+    i8,
+    i16,
+    i32,
+    i64,
+    i128,
+    i256,
+    int,
+    u8,
+    u16,
+    u32,
+    u64,
+    u128,
+    u256,
+    uint,
+)
 from numojo.core.error import NumojoError
