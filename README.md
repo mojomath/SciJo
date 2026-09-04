@@ -3,11 +3,11 @@
 <div align="center">
     <img src="./assets/scijo.png" alt="SciJo Logo" width="200" style="border-radius: 32px; margin-bottom: 200px; display: block; border: 3px solid rgba(0, 0, 0, 0.15); box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25); background: #fff;"/>
   <p style="font-size: 1.2em; color: #666; margin: 0; padding: 10px 20px; line-height: 1.5;">
-    <em>High-performance scientific computing library for Mojo, written in pure Mojo, inspired by SciPy</em>
+    <em>High-performance scientific computing library written in pure Mojo, inspired by SciPy</em>
   </p>
 </div>
 
-**[Changelog»](https://github.com/mojomath/SciJo/tree/main/docs/changelog.md)**
+**[Manual»](docs/MANUAL.md)** | **[Changelog»](docs/changelog.md)** | **[Examples»](examples/)**
 
 ## Overview
 
@@ -33,9 +33,9 @@ Accurate derivatives using finite difference methods:
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
 - **`quad`**: Adaptive quadrature via MSL/QUADPACK
-  - `method="qng"` — non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
-  - `method="qag"` — adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
-  - `method="qags"` — adaptive + Wynn epsilon extrapolation
+  - `method="qng"` - non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
+  - `method="qag"` - adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
+  - `method="qags"` - adaptive + Wynn epsilon extrapolation
   - Rule constants: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`
 - **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
 - **`simpson`**: Simpson's rule for discrete data
@@ -78,31 +78,47 @@ Scalar root-finding and minimization:
 
 ## Installation
 
-### Method 1: Via pixi
-1) Add to pixi.toml
+### Method 1: Git Installation via pixi-build-backend
+Install SciJo directly from the GitHub repository to access the latest features.
+
+Add to your `pixi.toml`:
 ```toml
 [workspace]
 preview = ["pixi-build"]
 
 [dependencies]
-mojo = ">=1.0.0b2,<2"
+mojo = ">=1.0.0,<2"
 scijo = { git = "https://github.com/mojomath/SciJo.git", branch = "main"}
 ```
 
-2) Install in pixi
+Then run:
 ```bash
 pixi install
 ```
 
-### Method 2: Build from Source
+### Method 2: Stable Release via Pixi (prefix.dev)
+For most users, we recommend installing a stable release through Pixi for guaranteed compatibility and reproducibility.
+
+Add the following to your `pixi.toml`:
+```toml
+[workspace]
+channels = ["https://repo.prefix.dev/modular-community"]
+```
+
+Then run:
+```bash
+pixi add scijo
+```
+
+### Method 3: Build from Source
 ```bash
 # Clone and build
 git clone https://github.com/mojomath/SciJo.git
 cd SciJo
-mojo build scijo
+pixi run package   # mojo precompile scijo && cp scijo.mojoc tests/
 
-# Move package to your project
-mv build/scijo.mojopkg /path/to/your/project
+# Point your program at the precompiled package
+mojo run -I /path/to/SciJo -I /path/to/SciJo/tests my_program.mojo
 ```
 
 ## Quick Start
@@ -110,41 +126,48 @@ mv build/scijo.mojopkg /path/to/your/project
 ### Numerical Differentiation
 ```mojo
 from scijo.differentiate import derivative
+from scijo.prelude import *
 
-fn simple_function[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]] = None) -> Scalar[dtype]:
+def simple_function[
+    dtype: DType
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     var a = args.value()[0]
     return a * x * x + 2.0 * x + 1.0
 
-fn main() raises:
+def main() raises:
+    var args: List[Scalar[f64]] = [2.0]
     var result = derivative[f64, simple_function, step_direction=0](
         x0=1.0,
-        args=List[Scalar[f64]](2.0),
-        tolerance={"atol": 1e-8, "rtol": 1e-8},
-        order=6
+        args=args^,
+        atol=1e-8,
+        rtol=1e-8,
+        order=6,
     )
-    print("Derivative result:", result)
+    print("Derivative result:", result.df)
 ```
 
 ### Integration
 ```mojo
-from scijo.integrate.quad import quad
+from scijo.integrate import quad
+from scijo.prelude import *
 
-fn simple_function[
+def simple_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]] = None) -> Scalar[
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
     dtype
 ]:
     """A simple function for testing."""
     var a = args.value()[0]
     return a * x * x + 2.0 * x + 1.0
 
-fn main():
+def main() raises:
+    var args: List[Scalar[f64]] = [2.0]
     var result = quad[f64, simple_function](
         a=0.0,
         b=1.0,
-        args=List[Scalar[f64]](2.0),
-        epsabs=1e-6,
-        epsrel=1e-6,
+        args=args^,
+        atol=1e-6,
+        rtol=1e-6,
     )
     print("Integral value:", result.integral)
 ```
@@ -154,7 +177,7 @@ fn main():
 from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
 import numojo as nm
 
-fn main() raises:
+def main() raises:
     var x = nm.linspace[nm.f64](0.0, 10.0, 11)
     var y = x * x
 
@@ -176,7 +199,7 @@ fn main() raises:
 from scijo.fft import fft, ifft
 import numojo as nm
 
-fn main() raises:
+def main() raises:
     # Create complex array
     var arr = nm.arange[nm.cf64](nm.CScalar[nm.cf64](0), nm.CScalar[nm.cf64](8))
 
@@ -193,7 +216,7 @@ fn main() raises:
 ```mojo
 from scijo.constants import physical_constants, value, unit
 
-fn main() raises:
+def main() raises:
     print("Speed of light:", value("speed_of_light_in_vacuum"), "m/s")
     print("Planck constant:", value("Planck_constant"), unit("Planck_constant"))
 ```
@@ -201,27 +224,35 @@ fn main() raises:
 ### Optimization
 ```mojo
 from scijo.optimize import root_scalar, minimize_scalar
+from scijo.prelude import *
 
-fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
-    return x * x - 2
+def f[
+    dtype: DType
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+    return x * x - 2.0
 
-fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
-    return (x - 2) * (x - 2) + 1
+def objective[
+    dtype: DType
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+    return (x - 2.0) * (x - 2.0) + 1.0
 
-fn main() raises:
-    # Root finding
-    var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
-    print("Root:", root)
+def main() raises:
+    # Root finding - `method` is a compile-time parameter, so it goes in the brackets
+    var root = root_scalar[f64, f, method="bisect"](bracket=(1.0, 2.0))
+    print("Root:", root.root)
 
     # Minimization
     var result = minimize_scalar[f64, objective, method="Brent"](
-        Bracket=(0.0, 4.0),
-        tol=1e-8,
-        maxiter=100
+        bracket=(0.0, 4.0),
+        atol=1e-8,
+        maxiter=100,
     )
     print("Minimum at:", result.x)
 ```
 
+See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, and
+**[examples/»](examples/)** for runnable, longer versions of the snippets above
+(run them all with `examples/run_all.sh`, after `pixi run package`).
 
 ## Roadmap
 
