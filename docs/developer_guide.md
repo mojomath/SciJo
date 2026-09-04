@@ -24,9 +24,20 @@ tests/
 
 Each submodule follows the same internal layout:
 
-- `__init__.mojo` — Public API re-exports.
+- `__init__.mojo` - Public API re-exports.
 - One or more implementation files (e.g., `derivative.mojo`, `jacobian.mojo`).
-- `utility.mojo` — Internal helpers, result structs, and constants.
+- `utility.mojo` - Internal helpers, result structs, and constants.
+
+### Top-level `scijo` vs. `scijo.prelude`
+
+`scijo/__init__.mojo` re-exports NuMojo's dtype aliases (`f16`, `f32`, `f64`,
+`i8`...`i256`, `u8`...`u256`, `int`, `uint`, `boolean`, `bf16`) so that
+`scijo.f64` works with no separate import. It does **not** re-export NuMojo's
+array types (`NDArray`, `Shape`, etc.) - those come from `scijo.prelude`
+(`from scijo.prelude import *`), which simply re-exports `numojo.prelude`.
+Keep this split when adding new top-level re-exports: dtype aliases are cheap
+and commonly needed even without array types, so they live at the top level;
+everything else belongs in the prelude.
 
 ---
 
@@ -49,7 +60,7 @@ Immediately after the header, include a module-level docstring:
 ```
 """<Submodule> Module - <Topic> (scijo.<submodule>.<file>)
 
-Brief description of what this file provides. Keep it to 1–3 lines.
+Brief description of what this file provides. Keep it to 1-3 lines.
 
 References:
     - <URL or citation>
@@ -70,14 +81,14 @@ The `<submodule>` module provides ...
 ## Docstring Format
 
 Follow the [Mojo docstring style guide](https://docs.modular.com/mojo/manual/docstrings). Sections appear in this order (include only those that apply):
-1. **Summary** — First line, imperative mood ("Computes...", "Returns...", "Finds...").
-2. **Parameters:** — Compile-time parameters (dtype, func, etc.).
-3. **Args:** — Runtime arguments. Use `Args:`, never `Arguments:`.
-4. **Constraints:** — Compile-time constraints if any.
-5. **Returns:** — What the function returns.
-6. **Raises:** — Errors that can be raised.
+1. **Summary** - First line, imperative mood ("Computes...", "Returns...", "Finds...").
+2. **Parameters:** - Compile-time parameters (dtype, func, etc.).
+3. **Args:** - Runtime arguments. Use `Args:`, never `Arguments:`.
+4. **Constraints:** - Compile-time constraints if any.
+5. **Returns:** - What the function returns.
+6. **Raises:** - Errors that can be raised.
 7. **NOTES:** - Any notes for the user. 
-8. **References:** — Only in module-level docstrings (indent with 4 spaces).
+8. **References:** - Only in module-level docstrings (indent with 4 spaces).
 9. **Examples:** - Example usage of code wrapped within a code block (```mojo)
 
 ### Function docstring example
@@ -131,7 +142,7 @@ Key rules:
 
 - Struct fields get their own single-line docstring directly below the declaration.
 - Use `Parameters:` for the struct-level type parameters (not `Type Parameters:`).
-- Do not add `Fields:` or `Usage:` sections — per-field docstrings replace these.
+- Do not add `Fields:` or `Usage:` sections - per-field docstrings replace these.
 
 ---
 
@@ -165,7 +176,25 @@ raise Error(
 )
 ```
 
-- Validate inputs early — check tolerances, step sizes, array shapes, etc. at the top of the function before doing any computation.
+- Validate inputs early - check tolerances, step sizes, array shapes, etc. at the top of the function before doing any computation.
+
+---
+
+## NDArray Element Access
+
+Never index an `NDArray`'s backing buffer directly (`arr._buf.ptr[i]`) -
+`pixi run package` warns on it, and it reaches into an internal field that
+isn't part of NuMojo's public API. Use the unsafe accessor methods instead:
+
+```mojo
+var v = arr.unsafe_load(i)          # read
+arr.unsafe_store(i, v)              # write
+```
+
+These skip bounds checking, same as direct pointer access, so only use them
+where the index is already known to be in range (e.g. inside a `for i in
+range(arr.size)` loop). For bounds-checked access use `arr.item(i)` /
+`arr.itemset(i, v)` instead.
 
 ---
 
