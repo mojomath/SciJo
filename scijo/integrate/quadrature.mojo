@@ -5,7 +5,7 @@
 """Quadrature Integration (`scijo.integrate.quadrature`)
 ========================================================
 General-purpose numerical integration using a SciPy-like frontend signature.
-This module currently exposes `quad` with QNG quadrature support.
+This module exposes `quad`, dispatching to QNG, QAG, or QAGS quadrature.
 
 References:
     - SciPy quad documentation:

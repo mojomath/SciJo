@@ -30,8 +30,6 @@ from scijo.differentiate.utility import (
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: Move if condition checks and other validation to the main API
-# function and keep this one focused on numerics.
 def derivative[
     dtype: DType,
     deriv_func: def[dtype: DType](

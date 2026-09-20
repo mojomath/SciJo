@@ -131,7 +131,7 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
 
 
 # ===----------------------------------------------------------------------=== #
-# Implementation of scalar minimization algorithms: .
+# Implementation of scalar minimization algorithms:
 # Brent's method, Golden section search, and bounded minimization
 # ===----------------------------------------------------------------------=== #
 

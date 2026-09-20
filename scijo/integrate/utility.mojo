@@ -28,8 +28,6 @@ from std.utils.numerics import (
 comptime smallest_positive_dtype[dtype: DType] = min_finite[dtype]()
 comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
 
-# TODO: Remove predefined messages in IntegralResult and add custom result according to the result.
-
 
 # ===----------------------------------------------------------------------=== #
 # Helpers

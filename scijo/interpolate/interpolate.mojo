@@ -40,7 +40,6 @@ from scijo.interpolate.utility import (
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: Add extrapolation and fill_value handling to LinearInterpolator
 struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
     """A callable linear interpolation object similar to scipy.interpolate.interp1d.
 
@@ -575,8 +574,6 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: Add more interpolation methods like 'quadratic'.
-# TODO: Add both interpolate and extrapolate fill methods.
 def interp1d[
     dtype: DType = DType.float64
 ](

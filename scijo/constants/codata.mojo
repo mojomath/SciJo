@@ -141,7 +141,7 @@ comptime physical_constants: Dict[String, PhysicalConstant[f64]] = {
     "unified_atomic_mass_unit": PhysicalConstant[f64](
         1.66053906892e-27, "kg", 5.2e-37
     ),
-    # Additional particle masses (from CODATA 2022),
+    # Additional particle masses (from CODATA 2022)
     "muon_mass": PhysicalConstant[f64](1.883531627e-28, "kg", 4.2e-37),
     "tau_mass": PhysicalConstant[f64](3.16754e-27, "kg", 2.1e-31),
     "alpha_particle_mass": PhysicalConstant[f64](
