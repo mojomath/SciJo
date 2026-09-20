@@ -34,10 +34,13 @@ Examples
     ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from .interpolate import (
-    interp1d,
-    interp,
-    LinearInterpolator,
-    CubicSpline,
     Akima1DInterpolator,
+    CubicSpline,
+    interp,
+    interp1d,
+    LinearInterpolator,
 )

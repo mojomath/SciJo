@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Fixed Sample Integration Methods (`scijo.integrate.fixed_sample`)
-===================================================================
+====================================================================
 Integration methods for discrete, evenly or unevenly spaced sample data.
 Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration.
 
@@ -21,9 +21,15 @@ Examples
     ```
 """
 
-from numojo.core.ndarray import NDArray, NDArrayShape
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-
+from numojo.core.error import NumojoError
+from numojo.core.ndarray import (
+    NDArray,
+    NDArrayShape,
+)
 
 # ===----------------------------------------------------------------------=== #
 # Trapezoid
@@ -51,13 +57,13 @@ def trapezoid[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y is not 1-D.
-        Error: If y is empty.
-
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
+
+    Raises:
+        Error: If y is not 1-D.
+        Error: If y is empty.
 
     Examples:
         ```mojo
@@ -115,13 +121,13 @@ def trapezoid[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
-        Error: If y is empty.
-
     Returns:
         Definite integral approximated by the trapezoidal rule.
         Returns 0.0 for arrays with fewer than 2 elements.
+
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
+        Error: If y is empty.
 
     Examples:
         ```mojo
@@ -225,11 +231,11 @@ def simpson[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y is not 1-D.
-
     Returns:
         Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y is not 1-D.
 
     Examples:
         ```mojo
@@ -294,11 +300,11 @@ def simpson[
         x: Array of sample points corresponding to the y values.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
-    Raises:
-        Error: If y or x are not 1-D, or if their sizes differ.
-
     Returns:
         Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
 
     Examples:
         ```mojo
@@ -398,12 +404,12 @@ def romb[
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
+    Returns:
+        Best Romberg estimate of the definite integral.
+
     Raises:
         Error: If y is not 1-D.
         Error: If y.size is not of the form ``2^k + 1`` for integer k ≥ 1.
-
-    Returns:
-        Best Romberg estimate of the definite integral.
 
     Examples:
         ```mojo
@@ -547,12 +553,12 @@ def cumulative_trapezoid[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     for i in range(n - 1):
-        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running
+        running += (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running)
 
     return result^
 
@@ -629,13 +635,13 @@ def cumulative_trapezoid[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     for i in range(n - 1):
-        var dx_seg = x._buf.ptr[i + 1] - x._buf.ptr[i]
-        running += (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx_seg * 0.5
-        result._buf.ptr[i + offset] = running
+        var dx_seg = x.unsafe_load(i + 1) - x.unsafe_load(i)
+        running += (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx_seg * 0.5
+        result.unsafe_store(i + offset, running)
 
     return result^
 
@@ -709,24 +715,28 @@ def cumulative_simpson[
     var offset = 1 if initial else 0
 
     if initial:
-        result._buf.ptr[0] = initial.value()
+        result.unsafe_store(0, initial.value())
 
     var running: Scalar[dtype] = 0.0
     var i = 0
     while i < n - 2:
         var panel = (
-            (y._buf.ptr[i] + 4.0 * y._buf.ptr[i + 1] + y._buf.ptr[i + 2])
+            (
+                y.unsafe_load(i)
+                + 4.0 * y.unsafe_load(i + 1)
+                + y.unsafe_load(i + 2)
+            )
             * dx
             / 3.0
         )
-        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running + half
+        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running + half)
         running += panel
-        result._buf.ptr[i + 1 + offset] = running
+        result.unsafe_store(i + 1 + offset, running)
         i += 2
 
     if i == n - 2:
-        var half = (y._buf.ptr[i] + y._buf.ptr[i + 1]) * dx * 0.5
-        result._buf.ptr[i + offset] = running + half
+        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        result.unsafe_store(i + offset, running + half)
 
     return result^

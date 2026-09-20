@@ -23,14 +23,27 @@ Examples
     ```
 """
 
-from std.math import sin, cos
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
+from std.math import (
+    cos,
+    sin,
+)
 
-from numojo.core.complex import ComplexNDArray, ComplexSIMD
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from numojo.core.complex import (
+    ComplexNDArray,
+    ComplexSIMD,
+)
 from numojo.core.dtype import ComplexDType
-from numojo.core.ndarray import NDArray
-from numojo.core.layout import NDArrayShape
-from numojo.routines.constants import Constants
 from numojo.core.indexing import Item
+from numojo.core.layout import NDArrayShape
+from numojo.core.ndarray import NDArray
+from numojo.core.type_aliases import CScalar
+from numojo.routines.constants import Constants
 
 # ===----------------------------------------------------------------------=== #
 # FFT
@@ -54,13 +67,13 @@ def fft[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
-    Raises:
-        Error: If the input array is not 1-dimensional.
-        Error: If the array length is not a power of 2.
-
     Returns:
         ComplexNDArray containing the FFT of the input array with the same
         shape and dtype.
+
+    Raises:
+        Error: If the input array is not 1-dimensional.
+        Error: If the array length is not a power of 2.
 
     Examples:
         ```mojo
@@ -144,12 +157,12 @@ def rfft[
         arr: Real-valued 1-D input array. If length is not a power of 2, the
             array is zero-padded to the next power of 2 (matching NumPy behaviour).
 
-    Raises:
-        Error: If the input array is not 1-dimensional.
-
     Returns:
         ComplexNDArray of length ``N_padded // 2 + 1`` containing the non-redundant
         frequency components, where ``N_padded`` is the next power of 2 ≥ len(arr).
+
+    Raises:
+        Error: If the input array is not 1-dimensional.
 
     Examples:
         ```mojo
@@ -176,7 +189,7 @@ def rfft[
     var complex_input = ComplexNDArray[cdtype](NDArrayShape(n_padded))
     for i in range(n):
         complex_input[Item(i)] = ComplexSIMD[cdtype](
-            arr._buf.ptr[i].cast[cdtype.dtype](),
+            arr.unsafe_load(i).cast[cdtype.dtype](),
             Scalar[cdtype.dtype](0),
         )
     # Remaining elements are already zero-initialized
@@ -217,11 +230,11 @@ def irfft[
             If not a power of 2, it is rounded up to the next power of 2
             (matching NumPy behaviour).
 
-    Raises:
-        Error: If the input array is not 1-dimensional.
-
     Returns:
         Real-valued NDArray of length ``n_padded`` (next power of 2 ≥ n).
+
+    Raises:
+        Error: If the input array is not 1-dimensional.
 
     Examples:
         ```mojo
@@ -264,7 +277,7 @@ def irfft[
 
     var result = NDArray[dtype](NDArrayShape(full_n))
     for i in range(full_n):
-        result._buf.ptr[i] = complex_out[Item(i)].re.cast[dtype]()
+        result.unsafe_store(i, complex_out[Item(i)].re.cast[dtype]())
     return result^
 
 
@@ -286,12 +299,12 @@ def _ifft_unnormalized[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
+    Returns:
+        ComplexNDArray containing the unnormalized inverse FFT of the input array.
+
     Raises:
         Error: If the input array is not 1-dimensional.
         Error: If the array length is not a power of 2.
-
-    Returns:
-        ComplexNDArray containing the unnormalized inverse FFT of the input array.
     """
     if arr.ndim != 1:
         raise Error("Scijo [fft]: FFT currently only supports 1D arrays")
@@ -360,13 +373,13 @@ def ifft[
         arr: Input complex array to transform. Must be 1-dimensional with length
              that is a power of 2.
 
-    Raises:
-        Error: If the input array is not 1-dimensional.
-        Error: If the array length is not a power of 2.
-
     Returns:
         ComplexNDArray containing the IFFT of the input array with the same
         shape and dtype.
+
+    Raises:
+        Error: If the input array is not 1-dimensional.
+        Error: If the array length is not a power of 2.
 
     Examples:
         ```mojo

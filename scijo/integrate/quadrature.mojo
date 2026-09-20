@@ -3,9 +3,9 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Quadrature Integration (`scijo.integrate.quadrature`)
-=======================================================
+========================================================
 General-purpose numerical integration using a SciPy-like frontend signature.
-This module currently exposes `quad` with QNG quadrature support.
+This module exposes `quad`, dispatching to QNG, QAG, or QAGS quadrature.
 
 References:
     - SciPy quad documentation:
@@ -14,12 +14,19 @@ References:
       https://www.netlib.org/quadpack/
 """
 
-from msl import qng_integrate as msl_qng_integrate
-from msl import qag as msl_qag
-from msl import qags as msl_qags
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from msl import (
+    qag as msl_qag,
+    qags as msl_qags,
+    qng_integrate as msl_qng_integrate,
+)
 
-from .utility import IntegralResult
-
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.integrate.utility import IntegralResult
 
 # ===----------------------------------------------------------------------=== #
 # QAG rule aliases

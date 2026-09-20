@@ -3,10 +3,15 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Interpolation Utility Functions (`scijo.interpolate.utility`)
-===============================================================
+================================================================
 Internal utility functions for interpolation, including binary search and
 input validation.
 """
+
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
+from numojo.core.ndarray import NDArray
 
 # ===----------------------------------------------------------------------=== #
 # Binary search
@@ -33,7 +38,7 @@ def _binary_search[
 
     while right - left > 1:
         var mid = (left + right) // 2
-        if x._buf.ptr[mid] <= value:
+        if x.unsafe_load(mid) <= value:
             left = mid
         else:
             right = mid

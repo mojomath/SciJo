@@ -3,7 +3,7 @@
 # Distributed under the Apache 2.0 License.
 # ===----------------------------------------------------------------------=== #
 """Optimization Utility Functions (`scijo.optimize.utility`)
-===========================================================
+============================================================
 Data structures for returning results from optimization and root-finding routines.
 """
 
@@ -44,6 +44,16 @@ struct RootResult[dtype: DType = DType.float64]():
         message: String,
         method: String,
     ):
+        """Constructs a RootResult from the outcome of a root-finding run.
+
+        Args:
+            root: The estimated root value.
+            nit: Number of iterations performed.
+            nfev: Number of function evaluations used.
+            success: Whether the algorithm converged within tolerances.
+            message: Human-readable status message.
+            method: Name of the method used.
+        """
         self.root = root
         self.nit = nit
         self.nfev = nfev
@@ -52,6 +62,11 @@ struct RootResult[dtype: DType = DType.float64]():
         self.method = method
 
     def __str__(self) raises -> String:
+        """Returns a single-line summary of the result.
+
+        Returns:
+            A compact string representation of this RootResult.
+        """
         return String(
             "RootResult(root={}, nit={}, nfev={}, "
             "success={}, message='{}', method='{}')"
@@ -65,6 +80,14 @@ struct RootResult[dtype: DType = DType.float64]():
         )
 
     def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
         try:
             writer.write(
                 String(
