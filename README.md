@@ -75,12 +75,14 @@ SciPy-style linear algebra, built on NuMojo's linalg primitives:
 - Eigenvalues/SVD (and anything derived from them, like matrix 2-norm or rank-deficient `pinv`/`lstsq`) are not yet available
 
 ### Optimization (`scijo.optimize`)
-Scalar root-finding and minimization:
-- **`root_scalar`**: Unified interface for root finding
+Scalar and multi-dimensional root-finding, and scalar minimization:
+- **`root_scalar`**: Unified interface for scalar root finding
   - **`newton`**: Newton-Raphson method
   - **`bisect`**: Bisection method
   - **`secant`**: Secant method (derivative-free)
   - **`brent`**: Brent's bracketed method (MSL backend)
+- **`root`**: Multi-dimensional root finding via Newton's method (`f: R^n -> R^n`)
+  - Finite-difference Jacobian by default, or supply an analytic one: `root[f64, f, jac](x0)`
 - **`minimize_scalar`**: Scalar function minimization
   - Brent's method, golden section search, bounded minimization
 
@@ -258,6 +260,23 @@ def main() raises:
     print("Minimum at:", result.x)
 ```
 
+### Multi-Dimensional Root Finding
+```mojo
+from scijo.optimize import root
+from scijo.linalg import matmul
+import numojo as nm
+
+def f[dtype: DType](x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> nm.NDArray[dtype]:
+    var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[dtype]("[9, 8]")
+    return matmul(A, x) - b
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[0, 0]")
+    var result = root[nm.f64, f](x0)
+    print("Root:", result.x)
+```
+
 ### Linear Algebra
 ```mojo
 from scijo.linalg import solve, lu, matmul
@@ -283,9 +302,10 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 
 ### Near Term
 - 2D FFT support
-- Multi-dimensional root finding and optimization
+- Multi-dimensional minimization (multi-dimensional root finding is now available: `scijo.optimize.root`)
 - Expand differentiation module (higher-order Jacobian, Hessian)
 - Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
+- Additional `scijo.optimize.root` methods that don't require a Jacobian (e.g. Broyden's method)
 
 ### Future
 - **Optimization**: Multi-dimensional minimization, curve fitting

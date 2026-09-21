@@ -21,6 +21,13 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - Eigenvalues/eigenvectors and SVD are not yet implemented (tracked as a follow-up once available in NuMojo).
 - `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` covering the new module.
 - Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
+- **Multi-dimensional root finding** (`scijo.optimize`):
+  - `root` - find a root of a vector-valued function (`f: R^n -> R^n`) via Newton's method, matching `scipy.optimize.root`'s frontend signature.
+    - `root[dtype, f](x0, ...)` - finite-difference Jacobian, computed via `scijo.differentiate.jacobian` at every iteration.
+    - `root[dtype, f, jac](x0, ...)` - analytic-Jacobian overload, skipping the finite-difference cost.
+    - Both overloads take a `method` keyword (only `"newton"` is currently supported) and solve the Newton linear system at each step with `scijo.linalg.solve`.
+  - `RootResultVector` - the vector-valued analog of `RootResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
+- `examples/root_examples.mojo` and `tests/test_root.mojo` covering the new function.
 
 ## [v0.2.0] - 2026-09-04
 ### Added

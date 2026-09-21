@@ -44,6 +44,7 @@ not an enumeration of every signature.
   - [Optimization (`scijo.optimize`)](#optimization-scijooptimize)
     - [`root_scalar` and the individual solvers](#root_scalar-and-the-individual-solvers)
     - [`minimize_scalar`](#minimize_scalar)
+    - [`root` - multi-dimensional root finding](#root---multi-dimensional-root-finding)
   - [Errors](#errors)
   - [Appendix: NuMojo is the array backend](#appendix-numojo-is-the-array-backend)
   - [Appendix: what is not here yet](#appendix-what-is-not-here-yet)
@@ -750,8 +751,9 @@ length-1 `NDArray`, unlike `det`, which returns a bare `Scalar`.
 
 ## Optimization (`scijo.optimize`)
 
-`scijo.optimize` covers scalar root-finding and scalar minimization -
-there is no multi-dimensional optimization yet (see
+`scijo.optimize` covers scalar root-finding, multi-dimensional
+root-finding, and scalar minimization - there is no multi-dimensional
+*minimization* yet (see
 [Appendix: what is not here yet](#appendix-what-is-not-here-yet)). Every
 solver follows the callback shape from
 [Passing a function to SciJo](#passing-a-function-to-scijo).
@@ -822,6 +824,72 @@ def main() raises:
     print(result)          # multi-line report via write_to
     print(result.x, result.fun, result.success)
 ```
+
+### `root` - multi-dimensional root finding
+
+```mojo
+from scijo.optimize import root
+from scijo.linalg import matmul
+import numojo as nm
+
+def f[dtype: DType](
+    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+) capturing raises -> nm.NDArray[dtype]:
+    var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[dtype]("[9, 8]")
+    return matmul(A, x) - b            # root at the solution of Ax = b
+
+def jac[dtype: DType](
+    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+) capturing raises -> nm.NDArray[dtype]:
+    return nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[0, 0]")
+
+    # Finite-difference Jacobian, re-estimated every iteration:
+    var r1 = root[nm.f64, f](x0)
+
+    # Analytic Jacobian - skips the finite-difference cost, and converges
+    # in one Newton step here since the system is already linear:
+    var r2 = root[nm.f64, f, jac](x0)
+
+    print(r1.x, r1.success, r1.nit)
+```
+
+`root` mirrors `scipy.optimize.root`'s frontend: `f` maps `R^n -> R^n` (as
+many equations as unknowns), and the result is the vector where all of
+them are simultaneously zero. Like `root_scalar`, `method` is a
+compile-time, keyword-only parameter - today the only supported value is
+`"newton"`. Unlike `root_scalar`, there is a single unified entry point
+`root` (no separately-callable `newton` function at this level - the
+scalar `newton` already has that name, and a multivariate one is only
+reachable through `root`).
+
+Whether `root[dtype, f]` or `root[dtype, f, jac]` is chosen matters for
+cost, not just convenience: every Newton iteration needs a Jacobian, and
+without one, `root` estimates it with `scijo.differentiate.jacobian` -
+`2n` extra function evaluations per iteration, for an `n`-dimensional
+problem. Supplying `jac` replaces that with one direct call. `f` and
+`jac(x)` are checked for shape at runtime: `f(x0)` must be the same length
+as `x0` (raises `Error` immediately if not, rather than trying to solve a
+non-square Jacobian), and `jac(x)` is expected to return an `(n, n)`
+matrix.
+
+Convergence uses two independent checks per iteration, mirroring
+`root_scalar`'s `atol`/`rtol`: `||f(x)|| <= atol` (residual small enough)
+and `||dx|| <= rtol * (||x|| + atol)` (Newton step no longer moving `x`
+meaningfully), using `scijo.linalg.norm`'s default (Euclidean) norm for
+both. `result.success` reflects only the first check, evaluated once more
+after the loop exits - so a run that stops on `maxiter` with a genuinely
+small residual is still reported as converged, and one that stalls on a
+tiny step far from a root is correctly reported as not.
+
+`root` returns `RootResultVector[dtype]`: `x` (the root vector), `fun`
+(the residual `f(x)` there - near-zero at a true root, informative when
+`success` is `False`), `nit`, `nfev`, `success`, `message`, and `method` -
+the vector-valued counterpart of `RootResult`, printable the same way via
+`write_to`.
 
 `method` (default `"Brent"`) accepts `"Brent"`, `"Golden"` or `"Bounded"`,
 case-insensitively (`"brent"` and `"Brent"` both work). Brent and Golden
@@ -906,8 +974,10 @@ This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
 - **FFT**: 2-D FFT support. Every transform in `scijo.fft` is 1-D only.
-- **Optimization**: multi-dimensional root-finding and minimization -
-  everything in `scijo.optimize` today is scalar-only.
+- **Optimization**: multi-dimensional *minimization* - `scijo.optimize.root`
+  covers multi-dimensional root-finding (Newton's method only; no
+  derivative-free method like Broyden's yet), but minimization in more
+  than one dimension is still scalar-only.
 - **Differentiation**: higher-order Jacobians, and Hessians for
   vector-valued (rather than scalar-valued) functions.
 - **Linear algebra**: eigenvalues/eigenvectors and SVD, and anything
