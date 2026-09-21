@@ -39,7 +39,6 @@ from numojo.core.complex import (
     ComplexSIMD,
 )
 from numojo.core.dtype import ComplexDType
-from numojo.core.indexing import Item
 from numojo.core.layout import NDArrayShape
 from numojo.core.ndarray import NDArray
 from numojo.core.type_aliases import CScalar
@@ -103,8 +102,8 @@ def fft[
     var odd_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
 
     for i in range(half_size):
-        even_indices[Item(i)] = arr[Item(2 * i)]
-        odd_indices[Item(i)] = arr[Item(2 * i + 1)]
+        even_indices.unsafe_store(i, arr.unsafe_load(2 * i))
+        odd_indices.unsafe_store(i, arr.unsafe_load(2 * i + 1))
 
     var even_fft = fft[cdtype](even_indices)
     var odd_fft = fft[cdtype](odd_indices)
@@ -122,10 +121,11 @@ def fft[
             cos(angle).cast[cdtype.dtype](), sin(angle).cast[cdtype.dtype]()
         )
 
-        var twiddle_odd = twiddle * odd_fft[Item(k)]
+        var even_k = even_fft.unsafe_load(k)
+        var twiddle_odd = twiddle * odd_fft.unsafe_load(k)
 
-        result[Item(k)] = even_fft[Item(k)] + twiddle_odd
-        result[Item(k + half_size)] = even_fft[Item(k)] - twiddle_odd
+        result.unsafe_store(k, even_k + twiddle_odd)
+        result.unsafe_store(k + half_size, even_k - twiddle_odd)
 
     return result^
 
@@ -188,9 +188,12 @@ def rfft[
 
     var complex_input = ComplexNDArray[cdtype](NDArrayShape(n_padded))
     for i in range(n):
-        complex_input[Item(i)] = ComplexSIMD[cdtype](
-            arr.unsafe_load(i).cast[cdtype.dtype](),
-            Scalar[cdtype.dtype](0),
+        complex_input.unsafe_store(
+            i,
+            ComplexSIMD[cdtype](
+                arr.unsafe_load(i).cast[cdtype.dtype](),
+                Scalar[cdtype.dtype](0),
+            ),
         )
     # Remaining elements are already zero-initialized
 
@@ -199,7 +202,7 @@ def rfft[
     var out_len = n_padded // 2 + 1
     var result = ComplexNDArray[cdtype](NDArrayShape(out_len))
     for i in range(out_len):
-        result[Item(i)] = full[Item(i)]
+        result.unsafe_store(i, full.unsafe_load(i))
     return result^
 
 
@@ -267,17 +270,17 @@ def irfft[
     # Reconstruct the full symmetric spectrum
     var full = ComplexNDArray[cdtype](NDArrayShape(full_n))
     for i in range(m):
-        full[Item(i)] = arr[Item(i)]
+        full.unsafe_store(i, arr.unsafe_load(i))
     # Mirror: full[N-k] = conj(full[k]) for k = 1 .. N//2-1
     for k in range(1, full_n // 2):
-        var c = arr[Item(k)]
-        full[Item(full_n - k)] = ComplexSIMD[cdtype](c.re, -c.im)
+        var c = arr.unsafe_load(k)
+        full.unsafe_store(full_n - k, ComplexSIMD[cdtype](c.re, -c.im))
 
     var complex_out = ifft[cdtype](full)
 
     var result = NDArray[dtype](NDArrayShape(full_n))
     for i in range(full_n):
-        result.unsafe_store(i, complex_out[Item(i)].re.cast[dtype]())
+        result.unsafe_store(i, complex_out.unsafe_load(i).re.cast[dtype]())
     return result^
 
 
@@ -324,8 +327,8 @@ def _ifft_unnormalized[
     var odd_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
 
     for i in range(half_size):
-        even_indices[Item(i)] = arr[Item(2 * i)]
-        odd_indices[Item(i)] = arr[Item(2 * i + 1)]
+        even_indices.unsafe_store(i, arr.unsafe_load(2 * i))
+        odd_indices.unsafe_store(i, arr.unsafe_load(2 * i + 1))
 
     var even_ifft = _ifft_unnormalized[cdtype](even_indices)
     var odd_ifft = _ifft_unnormalized[cdtype](odd_indices)
@@ -343,10 +346,11 @@ def _ifft_unnormalized[
             cos(angle).cast[cdtype.dtype](), sin(angle).cast[cdtype.dtype]()
         )
 
-        var twiddle_odd = twiddle * odd_ifft[Item(k)]
+        var even_k = even_ifft.unsafe_load(k)
+        var twiddle_odd = twiddle * odd_ifft.unsafe_load(k)
 
-        result[Item(k)] = even_ifft[Item(k)] + twiddle_odd
-        result[Item(k + half_size)] = even_ifft[Item(k)] - twiddle_odd
+        result.unsafe_store(k, even_k + twiddle_odd)
+        result.unsafe_store(k + half_size, even_k - twiddle_odd)
 
     return result^
 
@@ -399,5 +403,5 @@ def ifft[
         Scalar[cdtype.dtype](n), Scalar[cdtype.dtype](n)
     )
     for i in range(n):
-        result.store[width=1](i, result.load[width=1](i) * inv_n)
+        result.unsafe_store(i, result.unsafe_load(i) * inv_n)
     return result^
