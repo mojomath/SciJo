@@ -140,15 +140,12 @@ from scijo.prelude import *
 
 def simple_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
-    var a = args.value()[0]
-    return a * x * x + 2.0 * x + 1.0
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 2.0 * x * x + 2.0 * x + 1.0
 
 def main() raises:
-    var args: List[Scalar[f64]] = [2.0]
     var result = derivative[f64, simple_function, step_direction=0](
         x0=1.0,
-        args=args^,
         atol=1e-8,
         rtol=1e-8,
         order=6,
@@ -163,19 +160,14 @@ from scijo.prelude import *
 
 def simple_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     """A simple function for testing."""
-    var a = args.value()[0]
-    return a * x * x + 2.0 * x + 1.0
+    return 2.0 * x * x + 2.0 * x + 1.0
 
 def main() raises:
-    var args: List[Scalar[f64]] = [2.0]
     var result = quad[f64, simple_function](
         a=0.0,
         b=1.0,
-        args=args^,
         atol=1e-6,
         rtol=1e-6,
     )
@@ -238,12 +230,12 @@ from scijo.prelude import *
 
 def f[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x - 2.0
 
 def objective[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return (x - 2.0) * (x - 2.0) + 1.0
 
 def main() raises:
@@ -266,7 +258,7 @@ from scijo.optimize import root
 from scijo.linalg import matmul
 import numojo as nm
 
-def f[dtype: DType](x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> nm.NDArray[dtype]:
+def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
     var b = nm.fromstring[dtype]("[9, 8]")
     return matmul(A, x) - b

@@ -6,6 +6,7 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
+- **Args-free callback overloads** for every callback-taking public function: `derivative`, `jacobian`, `hessian`, `quad`, `root_scalar`, `bisect`, `brent`, `secant`, `newton`, `root`, `minimize_scalar`. Each now has a `def(x) -> ...` overload alongside the existing `def(x, args) -> ...` one, so a callback that doesn't need extra parameters no longer has to carry an unused `args` argument - capture what you need from the enclosing scope instead. The `args`-taking overloads are unchanged and still the right tool for a function reused across call sites with different parameter values (a module-level `def` can't `capturing`-capture, since it has no enclosing scope).
 - **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
   - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.
   - `qr` - reduced QR decomposition (thin wrapper over NuMojo's Householder implementation).

@@ -97,9 +97,7 @@ A first program:
 from scijo.differentiate import derivative
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x
 
 def main() raises:
@@ -110,38 +108,47 @@ def main() raises:
 ### Passing a function to SciJo
 
 Every callback-based routine in SciJo - `derivative`, `jacobian`, `hessian`,
-`quad`, `root_scalar` and its individual solvers, `minimize_scalar` - takes
-the function to operate on as a **compile-time parameter**, not a runtime
-argument, and expects one exact parameter shape:
+`quad`, `root_scalar` and its individual solvers, `root`, `minimize_scalar`
+- takes the function to operate on as a **compile-time parameter**, not a
+runtime argument. Each one comes in two overloads, differing only in
+whether the callback takes an `args` parameter:
 
 ```mojo
+def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]
+
 def[dtype: DType](
     x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
 ) capturing -> Scalar[dtype]
 ```
 
-Read that as: a `def` (not `fn`) taking the evaluation point and an optional
-list of extra parameters, both generic over the same `dtype`, returning a
-scalar of that dtype, and `capturing` so it may close over outer variables.
-`jacobian` and `hessian` take the vector-valued version of the same shape,
-operating on `NDArray[dtype]` instead of `Scalar[dtype]`:
+Read the first as: a `def` (not `fn`) taking just the evaluation point,
+generic over `dtype`, returning a scalar of that dtype, and `capturing` so
+it may close over outer variables. `jacobian`, `hessian`, and `root` take
+the vector-valued version of the same two shapes, operating on
+`NDArray[dtype]` instead of `Scalar[dtype]` (and `raises`, since array
+operations can fail):
 
 ```mojo
-def[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]        # jacobian
-def[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]         # hessian
+def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]           # jacobian, root
+def[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype]            # hessian
 ```
 
-Two consequences follow directly from the shape:
+**Use the `args`-free overload by default.** It is the one shown in every
+quick example in this manual, and it is what you want whenever the
+function doesn't need extra runtime parameters:
 
-**`args` is always present in the signature, even when you never use it.**
-It exists so a function can be parameterised without a closure - pass extra
-coefficients through `args=List[Scalar[dtype]](2.0, 3.0)` and read them back
-with `args.value()[0]`, `args.value()[1]`, ... A function that ignores the
-argument simply never touches it:
+```mojo
+def parabola[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 2.0 * x * x
+
+var d = derivative[f64, parabola](x0=1.0)
+```
+
+**Reach for the `args`-taking overload only when you need one function,
+defined once at module level, reused across call sites with different
+parameter values** - `args` exists specifically for that case, because a
+top-level `def` (unlike one nested inside another function) has no
+enclosing scope to `capturing`-capture from:
 
 ```mojo
 def parabola[dtype: DType](
@@ -149,6 +156,20 @@ def parabola[dtype: DType](
 ) capturing -> Scalar[dtype]:
     var a = args.value()[0]
     return a * x * x
+
+var d1 = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](2.0))
+var d2 = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](3.0))
+```
+
+If you only need a one-off closure over some outer value, prefer capturing
+it directly instead - no `args` plumbing, and no `.value()[i]` indexing:
+
+```mojo
+def scale_and_differentiate[dtype: DType](a: Scalar[dtype], x0: Scalar[dtype]) raises -> Scalar[dtype]:
+    @parameter
+    def f(x: Scalar[dtype]) capturing -> Scalar[dtype]:
+        return a * x * x
+    return derivative[dtype, f](x0).df
 ```
 
 **The function is a parameter, so the call site names it in brackets, next
@@ -157,16 +178,20 @@ does - `f64` and `f` both go where NumPy would only ever see a runtime
 argument:
 
 ```mojo
-var d  = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](2.0))
-var r  = root_scalar[f64, my_f](bracket=(0.0, 2.0), method="bisect")
-var m  = minimize_scalar[f64, my_f, method="Brent"](bracket=(0.0, 4.0))
+var d = derivative[f64, parabola](x0=1.0)
+var r = root_scalar[f64, my_f](bracket=(0.0, 2.0), method="bisect")
+var m = minimize_scalar[f64, my_f, method="Brent"](bracket=(0.0, 4.0))
 ```
 
 Because the function is a compile-time parameter, SciJo can specialise the
 whole call at compile time - there is no function-pointer indirection at
 the call site - but it also means a function used with two different
 `dtype`s needs to *be* generic over `dtype`, as every example in this manual
-is. A concrete `fn(x: Float64) -> Float64` will not satisfy the parameter.
+is. A concrete `fn(x: Float64) -> Float64` will not satisfy the parameter,
+and a closure *returned from* another function (as opposed to one defined
+inline with `@parameter` at the call site) cannot be passed as a
+compile-time parameter either - Mojo rejects it as "a dynamic value in a
+parameter list".
 
 ---
 
@@ -188,9 +213,7 @@ is reached).
 from scijo.differentiate import derivative
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x + 2.0 * x + 1.0
 
 def main() raises:
@@ -239,9 +262,7 @@ import numojo as nm
 from scijo.differentiate import jacobian
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]:
+def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
     return x * x
 
 def main() raises:
@@ -258,9 +279,7 @@ matrix of a scalar-valued function, using the standard central formula on
 the diagonal and the mixed-partial four-point stencil off it:
 
 ```mojo
-def g[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]:
+def g[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype]:
     return x.item(0) * x.item(0) + x.item(1) * x.item(1)
 
 var x = nm.array[f64]([1.0, 2.0])
@@ -292,9 +311,7 @@ integrates a *function* you supply (adaptive quadrature, like
 from scijo.integrate import quad, QAG_GK61
 from scijo.prelude import *
 
-def integrand[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def integrand[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x
 
 def main() raises:
@@ -764,14 +781,10 @@ solver follows the callback shape from
 from scijo.optimize import root_scalar
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x - 2.0
 
-def fprime[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def fprime[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return 2.0 * x
 
 def main() raises:
@@ -812,9 +825,7 @@ that ran).
 from scijo.optimize import minimize_scalar
 from scijo.prelude import *
 
-def objective[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return (x - 2.0) * (x - 2.0) + 1.0
 
 def main() raises:
@@ -832,16 +843,12 @@ from scijo.optimize import root
 from scijo.linalg import matmul
 import numojo as nm
 
-def f[dtype: DType](
-    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> nm.NDArray[dtype]:
+def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
     var b = nm.fromstring[dtype]("[9, 8]")
     return matmul(A, x) - b            # root at the solution of Ax = b
 
-def jac[dtype: DType](
-    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> nm.NDArray[dtype]:
+def jac[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     return nm.fromstring[dtype]("[[3, 1], [1, 2]]")
 
 def main() raises:
