@@ -16,6 +16,7 @@ Available Modules
 - `integrate`     - Numerical integration routines for single and multi-dimensional problems.
 - `fft`           - Fast Fourier Transform algorithms for signal processing.
 - `interpolate`   - Interpolation methods for estimating values between data points.
+- `linalg`        - Matrix decompositions, linear system solvers, and norms.
 - `optimize`      - Optimization algorithms for minimization and root-finding.
 
 The common dtype aliases (`f16`, `f32`, `f64`, `i8`, ..., `i64`, `u8`, ...,
