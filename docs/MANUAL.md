@@ -37,6 +37,10 @@ not an enumeration of every signature.
   - [Constants (`scijo.constants`)](#constants-scijoconstants)
     - [Named constants vs. the CODATA table](#named-constants-vs-the-codata-table)
     - [Temperature and optics helpers](#temperature-and-optics-helpers)
+  - [Linear Algebra (`scijo.linalg`)](#linear-algebra-scijolinalg)
+    - [Decompositions](#decompositions)
+    - [Solving](#solving)
+    - [Norms, determinant, trace](#norms-determinant-trace)
   - [Optimization (`scijo.optimize`)](#optimization-scijooptimize)
     - [`root_scalar` and the individual solvers](#root_scalar-and-the-individual-solvers)
     - [`minimize_scalar`](#minimize_scalar)
@@ -644,6 +648,106 @@ direction depending on which quantity you have in hand.
 
 ---
 
+## Linear Algebra (`scijo.linalg`)
+
+`scijo.linalg` is a SciPy-style layer on top of NuMojo's linalg primitives
+(`numojo.linalg`): decompositions, solvers, and norms, with the small API
+differences (1-D right-hand sides, `(P, L, U)` from `lu`, string `ord` on
+`norm`) that make it read like `scipy.linalg` rather than `numpy.linalg`.
+
+### Decompositions
+
+```mojo
+from scijo.linalg import lu, qr, cholesky
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[4, 3], [6, 3]]")
+    var PLU = lu(A)                 # A == P @ L @ U
+    var P = PLU[0].copy()
+    var L = PLU[1].copy()
+    var U = PLU[2].copy()
+
+    var Q_R = qr(A)                 # reduced (economy) QR, matches numpy's mode="reduced"
+    var C = nm.fromstring[nm.f64]("[[4, 2], [2, 3]]")
+    var L2 = cholesky(C)            # lower factor by default; cholesky(C, lower=False) for upper
+```
+
+`lu` differs from NuMojo's own `lu_decomposition`: NuMojo's version factors
+the matrix as-is and can blow up on a matrix that needs pivoting (e.g. a
+zero in a pivot position). `scijo.linalg.lu` pivots first via NuMojo's
+`partial_pivoting`, then returns `(P, L, U)` so `A == P @ L @ U` holds
+directly, matching `scipy.linalg.lu`. `qr` and `cholesky` are thin
+wrappers with no behavior change, offered here so the whole module has one
+import path.
+
+### Solving
+
+```mojo
+from scijo.linalg import solve, solve_triangular, inv, pinv, lstsq
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[nm.f64]("[9, 8]")     # 1-D right-hand side works directly
+    var x = solve(A, b)
+
+    var Lower = nm.fromstring[nm.f64]("[[2, 0], [1, 3]]")
+    var y = solve_triangular(Lower, b, lower=True)   # forward/back substitution, no LU pass
+
+    var A_inv = inv(A)
+
+    var Tall = nm.fromstring[nm.f64]("[[1, 1], [1, 2], [1, 3]]")
+    var target = nm.fromstring[nm.f64]("[6, 0, 0]")
+    var coeffs = lstsq(Tall, target)      # least-squares fit
+    var Tall_pinv = pinv(Tall)            # Moore-Penrose pseudo-inverse
+```
+
+`solve` and `solve_triangular` both accept a 1-D `b` (shape `(m,)`) and
+return a 1-D result, even though the underlying NuMojo `solve` only takes a
+matrix right-hand side - the 1-D case is reshaped to a column and flattened
+back on the way out. `solve_triangular` does not go through LU
+decomposition at all: pass it a matrix that is only known to be
+triangular (e.g. `R` from a QR decomposition) and it runs forward or back
+substitution directly, which is both cheaper and correct in cases where
+`solve` would be wasteful.
+
+`pinv` and `lstsq` only support full-rank matrices - `pinv` is computed as
+`lstsq(A, I)`, and NuMojo's `lstsq` does not yet handle a rank-deficient
+`A`. A future SVD in NuMojo would let both handle that case with a proper
+Moore-Penrose pseudo-inverse.
+
+### Norms, determinant, trace
+
+```mojo
+from scijo.linalg import norm, det, trace
+import numojo as nm
+
+def main() raises:
+    var x = nm.fromstring[nm.f64]("[3, 4]")
+    print(norm(x))              # 5.0, Euclidean (default)
+    print(norm(x, ord="1"))     # 7.0, sum of absolute values
+    print(norm(x, ord="inf"))   # 4.0, max absolute value
+
+    var A = nm.fromstring[nm.f64]("[[1, -2], [-3, 4]]")
+    print(norm(A))               # Frobenius norm (default for a matrix)
+    print(norm(A, ord="1"))      # max absolute column sum
+    print(norm(A, ord="inf"))    # max absolute row sum
+    print(det(A))
+    print(trace(A))              # returns a length-1 NDArray, not a bare scalar
+```
+
+`norm`'s `ord` is a runtime `String`, not a Python-style `None`/number/`inf`
+value, because Mojo has no convenient sentinel for "unset or infinity" in
+one parameter. The default (`ord=""`) picks the Euclidean norm for a 1-D
+array and the Frobenius norm for a 2-D array, matching `scipy.linalg.norm`'s
+default. The matrix 2-norm (largest singular value, needed for e.g. a
+condition number) is not implemented, since it requires an SVD - see the
+Appendix below. `trace` is re-exported from NuMojo as-is and returns a
+length-1 `NDArray`, unlike `det`, which returns a bare `Scalar`.
+
+---
+
 ## Optimization (`scijo.optimize`)
 
 `scijo.optimize` covers scalar root-finding and scalar minimization -
@@ -806,8 +910,13 @@ not; as of this writing, the notable gaps are:
   everything in `scijo.optimize` today is scalar-only.
 - **Differentiation**: higher-order Jacobians, and Hessians for
   vector-valued (rather than scalar-valued) functions.
-- **Signal processing, sparse matrices, and further linear algebra** are
-  listed as future directions but have no code in the repository yet.
+- **Linear algebra**: eigenvalues/eigenvectors and SVD, and anything
+  derived from them - the matrix 2-norm/condition number, and a
+  rank-deficient `pinv`/`lstsq`. Everything else in `scijo.linalg`
+  (LU, QR, Cholesky, `solve`, `solve_triangular`, `inv`, vector/most
+  matrix norms) is implemented.
+- **Signal processing and sparse matrices** are listed as future
+  directions but have no code in the repository yet.
 
 None of these are silently half-implemented - a 2-D array handed to `fft`,
 or a bracket-based multi-dimensional call to `root_scalar`, simply does not

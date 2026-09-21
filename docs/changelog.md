@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
+## [Unreleased]
+### Added
+- **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
+  - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.
+  - `qr` - reduced QR decomposition (thin wrapper over NuMojo's Householder implementation).
+  - `cholesky` - Cholesky decomposition, with a `lower` flag for the lower/upper factor.
+  - `solve` - solve `Ax = b`, accepting a 1-D or 2-D right-hand side.
+  - `solve_triangular` - forward/back substitution for triangular systems.
+  - `inv` - matrix inverse (thin wrapper over NuMojo's `inv`).
+  - `pinv` - Moore-Penrose pseudo-inverse for full-rank matrices (via least-squares).
+  - `lstsq` - least-squares solution to `Ax = b` (thin wrapper over NuMojo's `lstsq`).
+  - `norm` - vector (`1`/`2`/`inf`) and matrix (`fro`/`1`/`inf`) norms.
+  - `det`, `trace` - re-exported from NuMojo.
+  - `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` - re-exported from NuMojo for convenience.
+  - Eigenvalues/eigenvectors and SVD are not yet implemented (tracked as a follow-up once available in NuMojo).
+- `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` covering the new module.
+- Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
+
 ## [v0.2.0] - 2026-09-04
 ### Added
 - **Optimization module** (`scijo.optimize`):

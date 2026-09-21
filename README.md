@@ -66,6 +66,14 @@ Access fundamental physical constants from CODATA 2022:
 - Temperature conversion utilities
 - Compatible with `scipy.constants` structure
 
+### Linear Algebra (`scijo.linalg`)
+SciPy-style linear algebra, built on NuMojo's linalg primitives:
+- **Decompositions**: `lu` (pivoted, `A == P @ L @ U`), `qr` (reduced, Householder), `cholesky` (lower/upper)
+- **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv`, `lstsq` — all accept 1-D or 2-D right-hand sides
+- **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`inf`), `det`, `trace`
+- Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
+- Eigenvalues/SVD (and anything derived from them, like matrix 2-norm or rank-deficient `pinv`/`lstsq`) are not yet available
+
 ### Optimization (`scijo.optimize`)
 Scalar root-finding and minimization:
 - **`root_scalar`**: Unified interface for root finding
@@ -250,6 +258,23 @@ def main() raises:
     print("Minimum at:", result.x)
 ```
 
+### Linear Algebra
+```mojo
+from scijo.linalg import solve, lu, matmul
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[nm.f64]("[9, 8]")
+    print("x:", solve(A, b))
+
+    var PLU = lu(A)
+    var P = PLU[0].copy()
+    var L = PLU[1].copy()
+    var U = PLU[2].copy()
+    print("A == P @ L @ U:", matmul(P, matmul(L, U)))
+```
+
 See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, and
 **[examples/»](examples/)** for runnable, longer versions of the snippets above
 (run them all with `examples/run_all.sh`, after `pixi run package`).
@@ -260,11 +285,11 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 - 2D FFT support
 - Multi-dimensional root finding and optimization
 - Expand differentiation module (higher-order Jacobian, Hessian)
+- Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
 
 ### Future
 - **Optimization**: Multi-dimensional minimization, curve fitting
 - **Signal Processing**: Filtering, windowing, convolution
-- **Linear Algebra**: Matrix decompositions (SVD, QR, Cholesky)
 - **Sparse Matrices**: Efficient storage and operations
 
 ## Contributing
