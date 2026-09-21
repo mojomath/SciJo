@@ -46,6 +46,7 @@ not an enumeration of every signature.
     - [`root_scalar` and the individual solvers](#root_scalar-and-the-individual-solvers)
     - [`minimize_scalar`](#minimize_scalar)
     - [`root` - multi-dimensional root finding](#root---multi-dimensional-root-finding)
+    - [`minimize` - multi-dimensional minimization](#minimize---multi-dimensional-minimization)
   - [Errors](#errors)
   - [Appendix: NuMojo is the array backend](#appendix-numojo-is-the-array-backend)
   - [Appendix: what is not here yet](#appendix-what-is-not-here-yet)
@@ -109,8 +110,8 @@ def main() raises:
 ### Passing a function to SciJo
 
 Every callback-based routine in SciJo - `derivative`, `jacobian`, `hessian`,
-`quad`, `root_scalar` and its individual solvers, `root`, `minimize_scalar`
-- takes the function to operate on as a **compile-time parameter**, not a
+`quad`, `root_scalar` and its individual solvers, `root`, `minimize_scalar`,
+`minimize` - takes the function to operate on as a **compile-time parameter**, not a
 runtime argument. Each one comes in two overloads, differing only in
 whether the callback takes an `args` parameter:
 
@@ -806,10 +807,8 @@ length-1 `NDArray`, unlike `det`, which returns a bare `Scalar`.
 ## Optimization (`scijo.optimize`)
 
 `scijo.optimize` covers scalar root-finding, multi-dimensional
-root-finding, and scalar minimization - there is no multi-dimensional
-*minimization* yet (see
-[Appendix: what is not here yet](#appendix-what-is-not-here-yet)). Every
-solver follows the callback shape from
+root-finding, scalar minimization, and multi-dimensional minimization.
+Every solver follows the callback shape from
 [Passing a function to SciJo](#passing-a-function-to-scijo).
 
 ### `root_scalar` and the individual solvers
@@ -947,6 +946,48 @@ method needs raises `Error` naming it. The result is an
 its `write_to`, producing a multi-line report rather than the compact
 `__str__` form.
 
+### `minimize` - multi-dimensional minimization
+
+```mojo
+from scijo.optimize import minimize
+import numojo as nm
+
+def rosenbrock[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
+    var a = 1.0 - x.item(0)
+    var b = x.item(1) - x.item(0) * x.item(0)
+    return a * a + 100.0 * b * b       # minimum at (1, 1)
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[-1.2, 1.0]")
+    var result = minimize[nm.f64, rosenbrock](x0, maxiter=2000)
+    print(result)
+```
+
+`minimize` mirrors `scipy.optimize.minimize`'s frontend: `f` maps
+`R^n -> R` (a scalar-valued function of several variables), and the result
+is the point where it is (locally) smallest. Like `root`, `method` is a
+compile-time, keyword-only parameter - today the only supported value is
+`"Nelder-Mead"`, the derivative-free simplex method. It never evaluates a
+gradient or Hessian, only `f` itself, which makes it the right default when
+`f` is not (easily) differentiable, at the cost of typically needing more
+function evaluations than a gradient-based method would for a smooth,
+well-scaled problem.
+
+The algorithm maintains a simplex of `n + 1` points (`n` = `len(x0)`),
+built by perturbing `x0` by `initial_step * x0[i]` along each coordinate
+(default `initial_step=0.05`; a small fixed step if `x0[i] == 0`), and
+repeatedly reflects, expands, or contracts it around the worst point,
+shrinking the whole simplex toward the best point when none of those help.
+Convergence is checked the way SciPy checks it: both the simplex's
+point-to-point spread (`xatol`, default `1e-4`) and its function-value
+spread (`fatol`, default `1e-4`) must fall below tolerance, matching
+`scipy.optimize.minimize(..., method="Nelder-Mead")`'s own criteria.
+
+`minimize` returns `OptimizeResultVector[dtype]`: `x` (the minimizer),
+`fun` (the objective value there), `nit`, `nfev`, `success`, `message`, and
+`method` - the vector-valued counterpart of `OptimizeResult`, printable the
+same way via `write_to`.
+
 ---
 
 ## Errors
@@ -986,7 +1027,7 @@ raise conditions across the library: an unsupported `order` (differentiate),
 a non-power-of-2 length (`fft`/`ifft`), wrong-dimensional or mismatched-size
 arrays (integrate, interpolate), a missing method-specific argument
 (optimize), and an unrecognised `method`/`type` string (`quad`, `interp`,
-`root_scalar`, `minimize_scalar`). Validate the obviously-checkable things
+`root_scalar`, `minimize_scalar`, `minimize`). Validate the obviously-checkable things
 - array shapes, bracket ordering, whether you actually have the arguments a
 given `method` needs - before the call if you want to avoid the exception
 path in a hot loop.
@@ -1017,10 +1058,11 @@ written to take and return NuMojo's own types.
 This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
-- **Optimization**: multi-dimensional *minimization* - `scijo.optimize.root`
-  covers multi-dimensional root-finding (Newton's method only; no
-  derivative-free method like Broyden's yet), but minimization in more
-  than one dimension is still scalar-only.
+- **Optimization**: `scijo.optimize.root` covers multi-dimensional
+  root-finding with Newton's method only (no derivative-free method like
+  Broyden's yet), and `scijo.optimize.minimize` covers multi-dimensional
+  minimization with the derivative-free Nelder-Mead method only (no
+  gradient-based method like BFGS or CG yet).
 - **Differentiation**: higher-order Jacobians, and Hessians for
   vector-valued (rather than scalar-valued) functions.
 - **Linear algebra**: eigenvalues/eigenvectors and SVD, and anything

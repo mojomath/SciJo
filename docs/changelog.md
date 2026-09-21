@@ -6,6 +6,10 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
+- **Multi-dimensional minimization** (`scijo.optimize`):
+  - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`) via the Nelder-Mead simplex method, matching `scipy.optimize.minimize`'s frontend signature. Derivative-free (never evaluates a gradient or Hessian); convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
+  - `OptimizeResultVector` - the vector-valued analog of `OptimizeResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
+- `examples/minimize_examples.mojo` and `tests/test_minimize.mojo` covering the new function.
 - **N-dimensional FFT** (`scijo.fft`):
   - `fftn` / `ifftn` - forward/inverse FFT over one or more axes of an N-dimensional `ComplexNDArray`, matching `scipy.fft.fftn`/`ifftn`. Applies the existing 1-D Cooley-Tukey `fft`/`ifft` to every line along each requested axis; every transformed axis's length must be a power of 2.
   - `fft2` / `ifft2` - convenience wrappers over `fftn`/`ifftn` defaulting to the last two axes, matching `scipy.fft.fft2`/`ifft2`.
