@@ -35,9 +35,7 @@ def main() raises:
 
 def f_linear[
     dtype: DType
-](
-    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> nm.NDArray[dtype]:
+](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
     var b = nm.fromstring[dtype]("[9, 8]")
     return matmul(A, x) - b
@@ -56,9 +54,7 @@ def linear_system() raises:
 
 def f_nonlinear[
     dtype: DType
-](
-    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> nm.NDArray[dtype]:
+](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     var out = nm.zeros[dtype](nm.Shape(2))
     out.store(0, x.item(0) * x.item(0) + x.item(1) * x.item(1) - 4.0)
     out.store(1, x.item(0) * x.item(1) - 1.0)
@@ -78,9 +74,7 @@ def nonlinear_system() raises:
 
 def jac_linear[
     dtype: DType
-](
-    x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> nm.NDArray[dtype]:
+](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
     return nm.fromstring[dtype]("[[3, 1], [1, 2]]")
 
 

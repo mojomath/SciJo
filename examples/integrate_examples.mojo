@@ -35,11 +35,7 @@ def main() raises:
 # ===----------------------------------------------------------------------=== #
 
 
-def integrand[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def integrand[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x
 
 

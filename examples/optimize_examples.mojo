@@ -32,19 +32,11 @@ def main() raises:
 # ===----------------------------------------------------------------------=== #
 
 
-def f[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x - 2.0
 
 
-def fprime[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def fprime[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return 2.0 * x
 
 
@@ -63,7 +55,7 @@ def root_finding() raises:
     print("method='secant':", r_secant.root, " success =", r_secant.success)
 
     # Calling a solver directly, without going through root_scalar.
-    var r_direct = bisect[f64, f](None, (0.0, 2.0))
+    var r_direct = bisect[f64, f]((0.0, 2.0))
     print("bisect(...) directly:", r_direct.root)
 
     # A missing method-specific argument raises.
@@ -86,9 +78,7 @@ def newton_method() raises:
     var r_newton = root_scalar[f64, f, fprime, method="newton"](x0=1.0)
     print("method='newton':", r_newton.root, " nit =", r_newton.nit)
 
-    var r_newton_direct = newton[f64, f, fprime](
-        None, x0=1.0, atol=1e-12, rtol=1e-12
-    )
+    var r_newton_direct = newton[f64, f, fprime](x0=1.0, atol=1e-12, rtol=1e-12)
     print("newton(...) directly:", r_newton_direct.root)
 
 
@@ -97,11 +87,7 @@ def newton_method() raises:
 # ===----------------------------------------------------------------------=== #
 
 
-def objective[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return (x - 2.0) * (x - 2.0) + 1.0
 
 

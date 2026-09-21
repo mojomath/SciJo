@@ -26,11 +26,7 @@ def main() raises:
 # ===----------------------------------------------------------------------=== #
 
 
-def parabola[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def parabola[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x + 2.0 * x + 1.0
 
 
@@ -47,7 +43,9 @@ def first_derivative() raises:
     print("  nit     =", res.nit)
     print("  nfev    =", res.nfev)
 
-    # A function that reads extra coefficients from `args`.
+    # A reusable, module-level function that reads extra coefficients from
+    # `args` instead of capturing them - see the `args`-taking overload of
+    # `derivative` in the manual.
     var args: List[Scalar[f64]] = [3.0]
     var res_args = derivative[f64, scaled_parabola](x0=1.0, args=args^)
     print("With args=[3.0] (f(x) = 3*x^2):", res_args.df)  # 3*2*1 = 6
@@ -84,9 +82,7 @@ def step_direction_variants() raises:
 
 def vector_square[
     dtype: DType
-](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]:
+](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
     return x * x
 
 
@@ -109,9 +105,7 @@ def jacobian_example() raises:
 
 def sum_of_squares[
     dtype: DType
-](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]:
+](x: NDArray[dtype]) capturing raises -> Scalar[dtype]:
     return x.item(0) * x.item(0) + x.item(1) * x.item(1)
 
 
