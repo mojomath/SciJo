@@ -6,16 +6,18 @@
 =====================================
 Provides tools for numerical optimization and root-finding. It includes scalar
 root-finding methods such as bisection, Newton-Raphson, and the secant method,
-as well as scalar minimization using Brent's method, golden section search,
-and bounded minimization.
+multi-dimensional root-finding via Newton's method, as well as scalar
+minimization using Brent's method, golden section search, and bounded
+minimization.
 
 Available Functions
 -------------------
 - `root_scalar`       — Find a root of a scalar function.
-- `newton`            — Newton-Raphson root-finding method.
+- `newton`            — Newton-Raphson root-finding method (scalar).
 - `bisect`            — Bisection root-finding method.
 - `secant`            — Secant root-finding method.
 - `brent`             — Brent root-finding method.
+- `root`              — Find a root of a vector-valued function (multivariate Newton).
 - `minimize_scalar`   — Minimize a scalar function.
 
 Examples
@@ -26,7 +28,7 @@ Examples
     def f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2
 
-    var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
+    var root_result = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
     ```
 """
 
@@ -37,6 +39,7 @@ from .min_scalar import (
     minimize_scalar,
     OptimizeResult,
 )
+from .root import root
 from .root_scalar import (
     bisect,
     brent,
@@ -44,4 +47,7 @@ from .root_scalar import (
     root_scalar,
     secant,
 )
-from .utility import RootResult
+from .utility import (
+    RootResult,
+    RootResultVector,
+)
