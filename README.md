@@ -26,6 +26,7 @@ SciJo is a high-performance scientific computing library for Mojo that brings th
 Accurate derivatives using finite difference methods:
 - **`derivative`**: Central, forward, and backward differences
 - **`jacobian`**: Jacobian matrix computation for vector-valued functions
+- **`hessian`**: Hessian matrix for scalar-valued functions, or Hessian tensor (one matrix per output component) for vector-valued functions
 - **Order control**: Specify accuracy order (1-6 for forward/backward, 2-8 for central)
 - **Adaptive stepping**: Automatic step size refinement with Richardson extrapolation
 - **Error estimation**: Built-in convergence tracking
@@ -324,7 +325,6 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 ## Roadmap
 
 ### Near Term
-- Expand differentiation module (higher-order Jacobian, Hessian)
 - Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
 - Additional `scijo.optimize.root` methods that don't require a Jacobian (e.g. Broyden's method)
 - Gradient-based `scijo.optimize.minimize` methods (e.g. BFGS, CG) alongside the current derivative-free Nelder-Mead

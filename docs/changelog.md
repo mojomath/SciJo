@@ -6,6 +6,14 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
+- **Hessian for vector-valued functions** (`scijo.differentiate`):
+  - `hessian` overload for `f: R^n -> R^m` (a callback returning `NDArray`
+    instead of `Scalar`): applies the existing central-difference stencil
+    to every output component and stacks the results into an `(m, n, n)`
+    tensor, `H[k, i, j] = ∂²f_k/∂x_i∂x_j`. Args-taking and args-free
+    variants, matching the existing scalar-valued `hessian`.
+  - `examples/differentiate_examples.mojo` and `tests/test_differentiate.mojo`
+    extended to cover the new overloads.
 - **Multi-dimensional minimization** (`scijo.optimize`):
   - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`) via the Nelder-Mead simplex method, matching `scipy.optimize.minimize`'s frontend signature. Derivative-free (never evaluates a gradient or Hessian); convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
   - `OptimizeResultVector` - the vector-valued analog of `OptimizeResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).

@@ -292,6 +292,21 @@ var H = hessian[f64, g](x)          # ≈ [[2, 0], [0, 2]]
 - a second-derivative stencil divides by `step * step`, so the truncation
 error scales differently and the right step size is not the same one.
 
+`hessian` also has an overload for vector-valued functions (`f: R^n -> R^m`):
+when the callback returns an `NDArray` instead of a `Scalar`, `hessian`
+applies the same stencil to every output component and stacks the `m`
+resulting `(n, n)` matrices into a single `(m, n, n)` tensor, `H[k, i, j] =
+∂²f_k/∂x_i∂x_j`:
+
+```mojo
+def h[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+    return x * x   # f_0 = x0^2, f_1 = x1^2
+
+var x = nm.array[f64]([1.0, 2.0])
+var H = hessian[f64, h](x)   # shape (2, 2, 2)
+# H[0] ≈ [[2, 0], [0, 0]], H[1] ≈ [[0, 0], [0, 2]]
+```
+
 Both functions raise if any column's (or entry's) evaluation raises inside
 the callback; `jacobian` collects errors from its parallel workers and
 re-raises the first one it finds, prefixed `"SciJo [jacobian]: "`.
@@ -1063,8 +1078,8 @@ not; as of this writing, the notable gaps are:
   Broyden's yet), and `scijo.optimize.minimize` covers multi-dimensional
   minimization with the derivative-free Nelder-Mead method only (no
   gradient-based method like BFGS or CG yet).
-- **Differentiation**: higher-order Jacobians, and Hessians for
-  vector-valued (rather than scalar-valued) functions.
+- **Differentiation**: higher-order Jacobians (e.g. a third-order tensor
+  of second derivatives of a vector-valued function's Jacobian itself).
 - **Linear algebra**: eigenvalues/eigenvectors and SVD, and anything
   derived from them - the matrix 2-norm/condition number, and a
   rank-deficient `pinv`/`lstsq`. Everything else in `scijo.linalg`
