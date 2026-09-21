@@ -52,9 +52,11 @@ Numerical integration with adaptive algorithms:
 
 ### FFT (`scijo.fft`)
 Fast Fourier Transform operations:
-- **`fft`**: Forward FFT using Cooley-Tukey algorithm
-- **`ifft`**: Inverse FFT with proper normalization
-- Supports complex arrays (power-of-2 sizes)
+- **`fft`** / **`ifft`**: Forward/inverse FFT using the Cooley-Tukey algorithm
+- **`fftn`** / **`ifftn`**: N-dimensional forward/inverse FFT over one or more axes
+- **`fft2`** / **`ifft2`**: 2-dimensional forward/inverse FFT (convenience wrapper over `fftn`/`ifftn`)
+- **`rfft`** / **`irfft`**: Real-input FFT and its inverse
+- Supports complex arrays (power-of-2 sizes per transformed axis)
 - Compatible with NumPy's FFT conventions
 
 ### Physical Constants (`scijo.constants`)
@@ -198,7 +200,7 @@ def main() raises:
 
 ### FFT
 ```mojo
-from scijo.fft import fft, ifft
+from scijo.fft import fft, ifft, fftn, ifftn
 import numojo as nm
 
 def main() raises:
@@ -212,6 +214,15 @@ def main() raises:
     # Inverse FFT
     var y_ifft = ifft[nm.cf64](y_fft)
     print("IFFT result:", y_ifft)
+
+    # N-dimensional FFT: transforms over every axis by default
+    var arr2d = nm.arange[nm.cf64](
+        nm.CScalar[nm.cf64](0), nm.CScalar[nm.cf64](16)
+    ).reshape(nm.Shape(4, 4))
+    var y_fftn = fftn[nm.cf64](arr2d)
+    print("FFTN result:", y_fftn)
+    var y_ifftn = ifftn[nm.cf64](y_fftn)
+    print("IFFTN result:", y_ifftn)
 ```
 
 ### Physical Constants
@@ -293,8 +304,7 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 ## Roadmap
 
 ### Near Term
-- 2D FFT support
-- Multi-dimensional minimization (multi-dimensional root finding is now available: `scijo.optimize.root`)
+- Multi-dimensional minimization (multi-dimensional root finding is now available: `scijo.optimize.root`; N-D FFT is now available: `scijo.fft.fftn`/`ifftn`/`fft2`/`ifft2`)
 - Expand differentiation module (higher-order Jacobian, Hessian)
 - Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
 - Additional `scijo.optimize.root` methods that don't require a Jacobian (e.g. Broyden's method)

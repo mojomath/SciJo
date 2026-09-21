@@ -6,6 +6,10 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
+- **N-dimensional FFT** (`scijo.fft`):
+  - `fftn` / `ifftn` - forward/inverse FFT over one or more axes of an N-dimensional `ComplexNDArray`, matching `scipy.fft.fftn`/`ifftn`. Applies the existing 1-D Cooley-Tukey `fft`/`ifft` to every line along each requested axis; every transformed axis's length must be a power of 2.
+  - `fft2` / `ifft2` - convenience wrappers over `fftn`/`ifftn` defaulting to the last two axes, matching `scipy.fft.fft2`/`ifft2`.
+- `examples/fft_examples.mojo` extended and `tests/test_fftn.mojo` added covering the new functions.
 - **Args-free callback overloads** for every callback-taking public function: `derivative`, `jacobian`, `hessian`, `quad`, `root_scalar`, `bisect`, `brent`, `secant`, `newton`, `root`, `minimize_scalar`. Each now has a `def(x) -> ...` overload alongside the existing `def(x, args) -> ...` one, so a callback that doesn't need extra parameters no longer has to carry an unused `args` argument - capture what you need from the enclosing scope instead. The `args`-taking overloads are unchanged and still the right tool for a function reused across call sites with different parameter values (a module-level `def` can't `capturing`-capture, since it has no enclosing scope).
 - **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
   - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.

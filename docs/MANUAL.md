@@ -32,6 +32,7 @@ not an enumeration of every signature.
     - [The functional `interp`](#the-functional-interp)
   - [FFT (`scijo.fft`)](#fft-scijofft)
     - [`fft` and `ifft`](#fft-and-ifft)
+    - [`fftn`, `ifftn`, `fft2`, and `ifft2`](#fftn-ifftn-fft2-and-ifft2)
     - [`rfft` and `irfft`](#rfft-and-irfft)
     - [Frequency helpers](#frequency-helpers)
   - [Constants (`scijo.constants`)](#constants-scijoconstants)
@@ -524,11 +525,13 @@ calling it many times avoids repeating the input validation on every call.
 ## FFT (`scijo.fft`)
 
 `scijo.fft` implements the Cooley-Tukey radix-2 decimation-in-time FFT.
-**Every transform in this module requires a 1-D input whose length is a
-power of two** (`rfft` and `irfft` zero-pad to the next power of two
-automatically; `fft` and `ifft` do not - they raise if the length is not
-already a power of two). There is no 2-D FFT yet; see
-[Appendix: what is not here yet](#appendix-what-is-not-here-yet).
+**Every transformed axis must have a length that is a power of two**
+(`rfft` and `irfft` zero-pad to the next power of two automatically; `fft`,
+`ifft`, `fftn`, `ifftn`, `fft2`, and `ifft2` do not - they raise if a
+transformed axis's length is not already a power of two). `fft`/`ifft` are
+1-D only; `fftn`/`ifftn`/`fft2`/`ifft2` transform an N-dimensional array
+over one or more axes by applying the 1-D transform to every line along
+each requested axis in turn.
 
 ### `fft` and `ifft`
 
@@ -555,6 +558,40 @@ does for you. `ifft` applies the `1/N` normalization internally, so
 5-element array raises `Error`, it does not round up for you. `n <= 1` is
 accepted trivially and returns a copy of the input unchanged (there is
 nothing to transform).
+
+### `fftn`, `ifftn`, `fft2`, and `ifft2`
+
+`fftn`/`ifftn` transform an N-dimensional `ComplexNDArray` over one or more
+axes by applying the 1-D `fft`/`ifft` to every line along each axis in
+turn, matching `scipy.fft.fftn`/`ifftn`. `fft2`/`ifft2` are convenience
+wrappers that default to the last two axes, matching `scipy.fft.fft2`/`ifft2`:
+
+```mojo
+import numojo as nm
+from scijo.fft import fftn, ifftn, fft2, ifft2
+from scijo.prelude import *
+
+def main() raises:
+    var arr = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](16)).reshape(
+        Shape(4, 4)
+    )
+
+    var freq = fftn(arr)              # transform over every axis (default)
+    var freq2 = fft2(arr)             # same result, via the fft2 wrapper
+
+    var axis_1: List[Int] = [1]
+    var freq_rows = fftn(arr, axes=axis_1^)  # transform along axis 1 only
+
+    var time = ifftn(freq)            # recovers arr, up to floating-point error
+```
+
+`axes` defaults to every axis, transformed in the order given; negative
+axes count from the end, matching NumPy/SciPy. **Every transformed axis's
+length must be a power of 2** - the same constraint as `fft`/`ifft`, just
+checked per axis instead of once. `ifftn`/`ifft2` normalize once by the
+product of the transformed axes' lengths (rather than per axis), which is
+mathematically equivalent but does one division pass instead of `len(axes)`
+of them.
 
 ### `rfft` and `irfft`
 
@@ -980,7 +1017,6 @@ written to take and return NuMojo's own types.
 This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
-- **FFT**: 2-D FFT support. Every transform in `scijo.fft` is 1-D only.
 - **Optimization**: multi-dimensional *minimization* - `scijo.optimize.root`
   covers multi-dimensional root-finding (Newton's method only; no
   derivative-free method like Broyden's yet), but minimization in more
