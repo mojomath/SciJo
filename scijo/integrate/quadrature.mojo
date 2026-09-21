@@ -150,3 +150,60 @@ def quad[
             + String(method)
             + ". Supported methods: 'qng', 'qag', 'qags'."
         )
+
+
+def quad[
+    dtype: DType,
+    integrand_func: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[
+        dtype
+    ],
+    *,
+    method: String = "qng",
+    qag_rule: Int = 2,
+](
+    a: Scalar[dtype],
+    b: Scalar[dtype],
+    atol: Scalar[dtype] = 1.49e-8,
+    rtol: Scalar[dtype] = 1.49e-8,
+    limit: Int = 50,
+) raises -> IntegralResult[dtype] where dtype.is_floating_point():
+    """Computes the definite integral of a scalar function over [a, b] (args-free overload).
+
+    For integrands that do not need `args`: `integrand_func` takes only
+    `x`, so extra parameters (if any) are captured directly from the
+    enclosing scope instead of threaded through `args`. See the
+    two-parameter overload `quad[dtype, integrand_func](..., args=...)`
+    for a function reused across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        integrand_func: Integrand function with signature `def(x) -> Scalar[dtype]`.
+        method: Quadrature method name. Supports `"qng"`, `"qag"`, and `"qags"`.
+        qag_rule: Gauss-Kronrod rule key used when `method="qag"`.
+
+    Args:
+        a: Lower integration limit.
+        b: Upper integration limit.
+        atol: Absolute error tolerance.
+        rtol: Relative error tolerance.
+        limit: Maximum number of subintervals for adaptive methods (`qag`, `qags`).
+
+    Returns:
+        IntegralResult[dtype] containing integral value, absolute error
+        estimate, and status fields.
+
+    Raises:
+        Error: If an unsupported integration method is requested or if `limit <= 0`.
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing -> Scalar[dtype2]:
+        return integrand_func(x)
+
+    return quad[dtype, _with_args, method=method, qag_rule=qag_rule](
+        a=a, b=b, atol=atol, rtol=rtol, limit=limit
+    )

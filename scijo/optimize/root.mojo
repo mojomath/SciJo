@@ -117,6 +117,122 @@ def root[
         raise Error("Scijo [root]: Unsupported method: " + String(method))
 
 
+def root[
+    dtype: DType,
+    f: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype],
+    *,
+    method: String = "newton",
+](
+    x0: NDArray[dtype],
+    atol: Scalar[dtype] = 1e-8,
+    rtol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 100,
+    fd_step: Scalar[dtype] = 1e-6,
+) raises -> RootResultVector[dtype]:
+    """Finds a root of a vector-valued function (args-free finite-difference overload).
+
+    For functions that do not need `args`: `f` takes only `x`, so extra
+    parameters (if any) are captured directly from the enclosing scope
+    instead of threaded through `args`. See the `args`-taking overload
+    `root[dtype, f](..., args=...)` for a function reused across call
+    sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Vector-valued function with signature `def(x) -> NDArray[dtype]`.
+        method: Root-finding method. Only `"newton"` is currently supported.
+
+    Args:
+        x0: Initial guess, of shape `(n,)`.
+        atol: Absolute convergence tolerance on `||f(x)||`.
+        rtol: Relative convergence tolerance on the Newton step size.
+        maxiter: Maximum number of Newton iterations.
+        fd_step: Finite-difference step size used to estimate the Jacobian.
+
+    Returns:
+        RootResultVector[dtype] with the root estimate and diagnostics.
+
+    Raises:
+        Error: If `f(x0)` is not the same length as `x0`.
+        Error: If an unsupported method is requested.
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> NDArray[dtype2]:
+        return f(x)
+
+    return root[dtype, _with_args, method=method](
+        x0=x0, atol=atol, rtol=rtol, maxiter=maxiter, fd_step=fd_step
+    )
+
+
+def root[
+    dtype: DType,
+    f: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype],
+    jac: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[
+        dtype
+    ],
+    *,
+    method: String = "newton",
+](
+    x0: NDArray[dtype],
+    atol: Scalar[dtype] = 1e-8,
+    rtol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 100,
+) raises -> RootResultVector[dtype]:
+    """Finds a root of a vector-valued function (args-free analytic-Jacobian overload).
+
+    For functions that do not need `args`: `f` and `jac` take only `x`, so
+    extra parameters (if any) are captured directly from the enclosing
+    scope instead of threaded through `args`. See the `args`-taking
+    overload `root[dtype, f, jac](..., args=...)` for functions reused
+    across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Vector-valued function with signature `def(x) -> NDArray[dtype]`.
+        jac: Jacobian of `f`, returning an `(n, n)` matrix.
+        method: Root-finding method. Only `"newton"` is currently supported.
+
+    Args:
+        x0: Initial guess, of shape `(n,)`.
+        atol: Absolute convergence tolerance on `||f(x)||`.
+        rtol: Relative convergence tolerance on the Newton step size.
+        maxiter: Maximum number of Newton iterations.
+
+    Returns:
+        RootResultVector[dtype] with the root estimate and diagnostics.
+
+    Raises:
+        Error: If `f(x0)` is not the same length as `x0`.
+        Error: If an unsupported method is requested.
+    """
+
+    @parameter
+    def _f_with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> NDArray[dtype2]:
+        return f(x)
+
+    @parameter
+    def _jac_with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> NDArray[dtype2]:
+        return jac(x)
+
+    return root[dtype, _f_with_args, _jac_with_args, method=method](
+        x0=x0, atol=atol, rtol=rtol, maxiter=maxiter
+    )
+
+
 def _newton_fd[
     dtype: DType,
     f: def[dtype: DType](

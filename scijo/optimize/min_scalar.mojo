@@ -699,3 +699,71 @@ def minimize_scalar[
             + String(method)
             + ". Supported methods: 'Brent', 'Golden', 'Bounded'."
         )
+
+
+def minimize_scalar[
+    dtype: DType,
+    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    *,
+    method: String = "Brent",
+](
+    bracket: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
+    bounds: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
+    atol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 500,
+) raises -> OptimizeResult[dtype]:
+    """Minimize a scalar function using the specified method (args-free overload).
+
+    For functions that do not need `args`: `f` takes only `x`, so extra
+    parameters (if any) are captured directly from the enclosing scope
+    instead of threaded through `args`. See the `args`-taking overload
+    `minimize_scalar[dtype, f](..., args=...)` for a function reused
+    across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Function f(x) -> Scalar[dtype] to minimize.
+        method: Optimization algorithm: "Brent", "Golden", or
+            "Bounded".
+
+    Args:
+        bracket: (a, b) tuple specifying an initial interval for Brent and Golden methods.
+        bounds: (lower, upper) tuple specifying the search interval for Bounded method.
+        atol: Absolute tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        OptimizeResult[dtype] containing the optimization result.
+
+    Raises:
+        Error: If neither bracket nor bounds is provided for the chosen
+            method.
+
+    Examples:
+        ```mojo
+        from scijo.prelude import *
+        from scijo.optimize import minimize_scalar
+
+        def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+            return (x - 2) * (x - 2) + 1
+
+        var result = minimize_scalar[f64, objective, method="Brent"](
+            bracket=(0.0, 4.0),
+            atol=1e-8,
+            maxiter=100
+        )
+        print(result)
+        ```
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing -> Scalar[dtype2]:
+        return f(x)
+
+    return minimize_scalar[dtype, _with_args, method=method](
+        bracket=bracket, bounds=bounds, atol=atol, maxiter=maxiter
+    )

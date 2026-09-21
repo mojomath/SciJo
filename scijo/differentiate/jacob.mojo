@@ -113,6 +113,60 @@ def jacobian[
     return jacob^
 
 
+def jacobian[
+    dtype: DType,
+    jacob_func: def[dtype: DType](
+        x: NDArray[dtype]
+    ) capturing raises -> NDArray[dtype],
+](x: NDArray[dtype], step: Scalar[dtype] = 0.5,) raises -> NDArray[dtype]:
+    """Computes the Jacobian matrix of a vector-valued function (args-free overload).
+
+    For functions that do not need `args`: `jacob_func` takes only `x`, so
+    extra parameters (if any) are captured directly from the enclosing
+    scope instead of threaded through `args`. See the two-parameter
+    overload `jacobian[dtype, jacob_func](..., args=...)` for a function
+    reused across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        jacob_func: Vector-valued function with signature def(x) -> NDArray[dtype].
+
+    Args:
+        x: Input vector of shape (n,) at which to evaluate the Jacobian.
+        step: Finite difference step size. Defaults to 0.5.
+
+    Returns:
+        NDArray[dtype] of shape (m, n) representing the Jacobian matrix,
+        where m is the output dimension and n is the input dimension.
+
+    Raises:
+        Error: If function evaluation fails for any column perturbation.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import jacobian
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+            return x * x
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var J = jacobian[f64, f](x)
+        ```
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> NDArray[dtype2]:
+        return jacob_func(x)
+
+    return jacobian[dtype, _with_args](x, step=step)
+
+
 # ===----------------------------------------------------------------------=== #
 # Hessian
 # ===----------------------------------------------------------------------=== #
@@ -208,3 +262,58 @@ def hessian[
             H.store(j * n + i, val=val)
 
     return H^
+
+
+def hessian[
+    dtype: DType,
+    hess_func: def[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[
+        dtype
+    ],
+](x: NDArray[dtype], step: Scalar[dtype] = 1e-5,) raises -> NDArray[dtype]:
+    """Computes the Hessian matrix of a scalar-valued function (args-free overload).
+
+    For functions that do not need `args`: `hess_func` takes only `x`, so
+    extra parameters (if any) are captured directly from the enclosing
+    scope instead of threaded through `args`. See the two-parameter
+    overload `hessian[dtype, hess_func](..., args=...)` for a function
+    reused across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        hess_func: Scalar-valued function with signature
+            ``def(x: NDArray[dtype]) -> Scalar[dtype]``.
+
+    Args:
+        x: Input vector of shape (n,) at which to evaluate the Hessian.
+        step: Finite difference step size. Defaults to 1e-5.
+
+    Returns:
+        Symmetric NDArray of shape (n, n) containing the Hessian matrix.
+
+    Raises:
+        Error: If function evaluation fails.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import hessian
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype]:
+            return x.item(0) * x.item(0) + x.item(1) * x.item(1)
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var H = hessian[f64, f](x)
+        # H ≈ [[2, 0], [0, 2]]
+        ```
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> Scalar[dtype2]:
+        return hess_func(x)
+
+    return hessian[dtype, _with_args](x, step=step)
