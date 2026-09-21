@@ -14,6 +14,10 @@ from numojo.core import CScalar
 from scijo.fft import (
     fft,
     ifft,
+    fftn,
+    ifftn,
+    fft2,
+    ifft2,
     rfft,
     irfft,
     fftfreq,
@@ -27,6 +31,7 @@ from scijo.prelude import *
 
 def main() raises:
     fft_ifft_example()
+    fftn_example()
     rfft_irfft_example()
     frequency_helpers()
 
@@ -60,6 +65,45 @@ def fft_ifft_example() raises:
     except e:
         print("fft on a length-5 array raises:")
         print(" ", e)
+
+
+# ===----------------------------------------------------------------------=== #
+# fftn / ifftn / fft2 / ifft2 on a 2-D array
+# ===----------------------------------------------------------------------=== #
+
+
+def fftn_example() raises:
+    print()
+    print("=" * 80)
+    print("FFTN / IFFTN / FFT2 / IFFT2: 2-D input, power-of-2 shape (4, 4)")
+    print("=" * 80)
+
+    var arr = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](16)).reshape(
+        Shape(4, 4)
+    )
+    print("Input (4x4 complex samples):")
+    print(arr)
+
+    var freq = fftn(arr)  # transform over every axis (equivalent to fft2)
+    print("fftn(arr) - transform over both axes:")
+    print(freq)
+
+    var freq2 = fft2(arr)  # convenience wrapper for the last two axes
+    print("fft2(arr) - same result via the fft2 wrapper:")
+    print(freq2)
+
+    var axis_1: List[Int] = [1]
+    var freq_rows = fftn(arr, axes=axis_1^)  # transform along axis 1 only
+    print("fftn(arr, axes=[1]) - transform along axis 1 only:")
+    print(freq_rows)
+
+    var time = ifftn(freq)
+    print("ifftn(fftn(arr)) - recovers the input, up to floating-point error:")
+    print(time)
+
+    var time2 = ifft2(freq2)
+    print("ifft2(fft2(arr)) - same roundtrip via the fft2/ifft2 wrappers:")
+    print(time2)
 
 
 # ===----------------------------------------------------------------------=== #
