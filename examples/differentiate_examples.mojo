@@ -9,8 +9,19 @@ mojo run -I . -I tests/ examples/differentiate_examples.mojo
 ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-from scijo.differentiate import derivative, jacobian, hessian
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.differentiate import (
+    derivative,
+    hessian,
+    jacobian,
+)
 from scijo.prelude import *
 
 
@@ -19,6 +30,7 @@ def main() raises:
     step_direction_variants()
     jacobian_example()
     hessian_example()
+    hessian_vector_valued_example()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -118,4 +130,30 @@ def hessian_example() raises:
     var x = nm.array[f64]([1.0, 2.0], [2])
     var H = hessian[f64, sum_of_squares](x)
     print("hessian(g(x,y)=x^2+y^2) at [1, 2] (should be ~[[2, 0], [0, 2]]):")
+    print(H)
+
+
+# ===----------------------------------------------------------------------=== #
+# hessian (vector-valued): f(x, y) = [x^2 + y^2, x*y]
+# ===----------------------------------------------------------------------=== #
+
+
+def sum_and_product[
+    dtype: DType
+](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+    var out = nm.zeros[dtype](nm.Shape(2))
+    out.store(0, val=x.item(0) * x.item(0) + x.item(1) * x.item(1))
+    out.store(1, val=x.item(0) * x.item(1))
+    return out^
+
+
+def hessian_vector_valued_example() raises:
+    print()
+    print("=" * 80)
+    print("HESSIAN (vector-valued): f(x,y) = [x^2 + y^2, x*y]")
+    print("=" * 80)
+
+    var x = nm.array[f64]([1.0, 1.0], [2])
+    var H = hessian[f64, sum_and_product](x)
+    print("shape (2, 2, 2): H[0] ~ [[2,0],[0,2]], H[1] ~ [[0,1],[1,0]]:")
     print(H)

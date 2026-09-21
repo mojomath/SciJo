@@ -317,3 +317,154 @@ def hessian[
         return hess_func(x)
 
     return hessian[dtype, _with_args](x, step=step)
+
+
+def hessian[
+    dtype: DType,
+    hess_func: def[dtype: DType](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> NDArray[dtype],
+](
+    x: NDArray[dtype],
+    args: Optional[List[Scalar[dtype]]] = None,
+    step: Scalar[dtype] = 1e-5,
+) raises -> NDArray[dtype]:
+    """Computes the Hessian tensor of a vector-valued function.
+
+    Generalizes `hessian` to `f: R^n -> R^m`: for every output component
+    `f_k`, computes the same central finite difference stencil used by the
+    scalar-valued overload, stacking the `m` resulting `(n, n)` matrices into
+    a single rank-3 tensor.
+
+    H[k, i, j] = ∂²f_k/∂x_i∂x_j
+
+    Parameters:
+        dtype: The floating-point data type.
+        hess_func: Vector-valued function with signature
+            ``def(x: NDArray[dtype], args) -> NDArray[dtype]``.
+
+    Args:
+        x: Input vector of shape (n,) at which to evaluate the Hessian.
+        args: Optional arguments to pass to the function.
+        step: Finite difference step size. Defaults to 1e-5.
+
+    Returns:
+        NDArray[dtype] of shape (m, n, n): `m` symmetric Hessian matrices,
+        one per output component of `hess_func`.
+
+    Raises:
+        Error: If function evaluation fails.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import hessian
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) capturing raises -> NDArray[dtype]:
+            return x * x  # f_0 = x0^2, f_1 = x1^2
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var H = hessian[f64, f](x)
+        # H[0] ≈ [[2, 0], [0, 0]], H[1] ≈ [[0, 0], [0, 2]]
+        ```
+    """
+    var n: Int = x.size
+    var f0 = hess_func(x, args)
+    var m: Int = f0.size
+    var H = zeros[dtype](Shape(m, n, n))
+    var h2 = step * step
+
+    for i in range(n):
+        var xi_pp = x.copy()
+        var xi_mm = x.copy()
+        xi_pp.store(i, val=x.load(i) + step)
+        xi_mm.store(i, val=x.load(i) - step)
+        var f_pp = hess_func(xi_pp, args)
+        var f_mm = hess_func(xi_mm, args)
+        for k in range(m):
+            var diag = (
+                f_pp.load(k) - 2.0 * f0.load(k) + f_mm.load(k)
+            ) / h2
+            H.store(k * n * n + i * n + i, val=diag)
+
+        for j in range(i + 1, n):
+            var x_pp = x.copy()
+            var x_pm = x.copy()
+            var x_mp = x.copy()
+            var x_mm = x.copy()
+            x_pp.store(i, val=x.load(i) + step)
+            x_pp.store(j, val=x.load(j) + step)
+            x_pm.store(i, val=x.load(i) + step)
+            x_pm.store(j, val=x.load(j) - step)
+            x_mp.store(i, val=x.load(i) - step)
+            x_mp.store(j, val=x.load(j) + step)
+            x_mm.store(i, val=x.load(i) - step)
+            x_mm.store(j, val=x.load(j) - step)
+            var f_pp2 = hess_func(x_pp, args)
+            var f_pm2 = hess_func(x_pm, args)
+            var f_mp2 = hess_func(x_mp, args)
+            var f_mm2 = hess_func(x_mm, args)
+            for k in range(m):
+                var val = (
+                    f_pp2.load(k) - f_pm2.load(k) - f_mp2.load(k) + f_mm2.load(k)
+                ) / (4.0 * h2)
+                H.store(k * n * n + i * n + j, val=val)
+                H.store(k * n * n + j * n + i, val=val)
+
+    return H^
+
+
+def hessian[
+    dtype: DType,
+    hess_func: def[dtype: DType](
+        x: NDArray[dtype]
+    ) capturing raises -> NDArray[dtype],
+](x: NDArray[dtype], step: Scalar[dtype] = 1e-5,) raises -> NDArray[dtype]:
+    """Computes the Hessian tensor of a vector-valued function (args-free overload).
+
+    For functions that do not need `args`: `hess_func` takes only `x`, so
+    extra parameters (if any) are captured directly from the enclosing
+    scope instead of threaded through `args`. See the two-parameter
+    overload `hessian[dtype, hess_func](..., args=...)` for a function
+    reused across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        hess_func: Vector-valued function with signature
+            ``def(x: NDArray[dtype]) -> NDArray[dtype]``.
+
+    Args:
+        x: Input vector of shape (n,) at which to evaluate the Hessian.
+        step: Finite difference step size. Defaults to 1e-5.
+
+    Returns:
+        NDArray[dtype] of shape (m, n, n): `m` symmetric Hessian matrices,
+        one per output component of `hess_func`.
+
+    Raises:
+        Error: If function evaluation fails.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import hessian
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+            return x * x
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var H = hessian[f64, f](x)
+        ```
+    """
+
+    @parameter
+    def _with_args[
+        dtype2: DType
+    ](
+        x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing raises -> NDArray[dtype2]:
+        return hess_func(x)
+
+    return hessian[dtype, _with_args](x, step=step)
