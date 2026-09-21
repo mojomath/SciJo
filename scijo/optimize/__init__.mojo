@@ -19,6 +19,7 @@ Available Functions
 - `brent`             — Brent root-finding method.
 - `root`              — Find a root of a vector-valued function (multivariate Newton).
 - `minimize_scalar`   — Minimize a scalar function.
+- `minimize`          — Minimize a scalar-valued function of several variables (Nelder-Mead).
 
 Examples
 --------
@@ -39,6 +40,7 @@ from .min_scalar import (
     minimize_scalar,
     OptimizeResult,
 )
+from .minimize import minimize
 from .root import root
 from .root_scalar import (
     bisect,
@@ -48,6 +50,7 @@ from .root_scalar import (
     secant,
 )
 from .utility import (
+    OptimizeResultVector,
     RootResult,
     RootResultVector,
 )

@@ -215,3 +215,104 @@ struct RootResultVector[dtype: DType = DType.float64](
             writer.write(
                 "Error displaying RootResultVector: " + String(e) + "\n"
             )
+
+
+# ===----------------------------------------------------------------------=== #
+# OptimizeResultVector
+# ===----------------------------------------------------------------------=== #
+
+
+struct OptimizeResultVector[dtype: DType = DType.float64](
+    Copyable, Movable, Writable
+):
+    """Result structure for multi-dimensional minimization operations.
+
+    The vector-valued analog of `OptimizeResult`: encapsulates the
+    minimizer vector, the objective value at that point, convergence
+    status, and diagnostic information returned by
+    `scijo.optimize.minimize`.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+    """
+
+    var x: NDArray[Self.dtype]
+    """The estimated minimizer, of shape (n,)."""
+    var fun: Scalar[Self.dtype]
+    """The objective value `f(x)` at the estimated minimizer."""
+    var nit: Int
+    """Number of iterations performed."""
+    var nfev: Int
+    """Number of function evaluations used."""
+    var success: Bool
+    """Whether the algorithm converged within tolerances."""
+    var message: String
+    """Human-readable status message."""
+    var method: String
+    """Name of the method used."""
+
+    def __init__(
+        out self,
+        var x: NDArray[Self.dtype],
+        fun: Scalar[Self.dtype],
+        nit: Int,
+        nfev: Int,
+        success: Bool,
+        message: String,
+        method: String,
+    ):
+        """Constructs an OptimizeResultVector from the outcome of a
+        minimization run.
+
+        Args:
+            x: The estimated minimizer.
+            fun: The objective value at the estimated minimizer.
+            nit: Number of iterations performed.
+            nfev: Number of function evaluations used.
+            success: Whether the algorithm converged within tolerances.
+            message: Human-readable status message.
+            method: Name of the method used.
+        """
+        self.x = x^
+        self.fun = fun
+        self.nit = nit
+        self.nfev = nfev
+        self.success = success
+        self.message = message
+        self.method = method
+
+    def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
+        try:
+            writer.write(
+                String(
+                    "Optimize Result\n"
+                    "===============\n"
+                    "x       : {}\n"
+                    "fun     : {}\n"
+                    "Iters   : {}\n"
+                    "Evals   : {}\n"
+                    "Success : {}\n"
+                    "Message : {}\n"
+                    "Method  : {}\n"
+                ).format(
+                    self.x,
+                    self.fun,
+                    self.nit,
+                    self.nfev,
+                    self.success,
+                    self.message,
+                    self.method,
+                )
+            )
+        except e:
+            writer.write(
+                "Error displaying OptimizeResultVector: " + String(e) + "\n"
+            )
