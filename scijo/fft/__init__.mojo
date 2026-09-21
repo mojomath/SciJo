@@ -11,6 +11,10 @@ Available Functions
 -------------------
 - `fft`          — Compute the forward FFT (complex input).
 - `ifft`         — Compute the inverse FFT (complex input).
+- `fftn`         — Compute the N-dimensional forward FFT over one or more axes.
+- `ifftn`        — Compute the N-dimensional inverse FFT over one or more axes.
+- `fft2`         — Compute the 2-dimensional forward FFT (last two axes by default).
+- `ifft2`        — Compute the 2-dimensional inverse FFT (last two axes by default).
 - `rfft`         — Compute the FFT of a real array, returning N//2+1 bins.
 - `irfft`        — Compute the inverse FFT returning a real array.
 - `fftfreq`      — Frequency bin centres for fft output.
@@ -41,6 +45,12 @@ from .fastfourier import (
     ifft,
     irfft,
     rfft,
+)
+from .fftn import (
+    fft2,
+    fftn,
+    ifft2,
+    ifftn,
 )
 from .helpers import (
     fftfreq,
