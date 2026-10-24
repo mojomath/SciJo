@@ -140,7 +140,9 @@ def derivative[
 
 def derivative[
     dtype: DType,
-    deriv_func: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    deriv_func: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     step_direction: Int = 0,
 ](

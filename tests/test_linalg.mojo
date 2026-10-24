@@ -208,9 +208,7 @@ def test_eigh_reconstructs_a() raises:
             col.store(k, val=v.item(k, i))
         var Av = matmul(A, col)
         for k in range(n):
-            assert_almost_equal(
-                Av.item(k), w.item(i) * col.item(k), atol=1e-6
-            )
+            assert_almost_equal(Av.item(k), w.item(i) * col.item(k), atol=1e-6)
 
 
 def test_eigvalsh_matches_eigh() raises:

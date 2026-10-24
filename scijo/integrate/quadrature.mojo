@@ -613,9 +613,9 @@ def quad[
 
 def quad[
     dtype: DType,
-    integrand_func: def[dtype: DType](
-        x: Scalar[dtype]
-    ) capturing[_] -> Scalar[dtype],
+    integrand_func: def[dtype: DType](x: Scalar[dtype]) capturing[_] -> Scalar[
+        dtype
+    ],
     *,
     method: String = "qng",
     qag_rule: Int = 2,

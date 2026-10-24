@@ -30,9 +30,9 @@ from numojo.routines.creation import zeros
 
 def _svd_tall[
     dtype: DType
-](
-    X: NDArray[dtype], maxsweeps: Int, tol: Scalar[dtype]
-) raises -> Tuple[NDArray[dtype], NDArray[dtype], NDArray[dtype]]:
+](X: NDArray[dtype], maxsweeps: Int, tol: Scalar[dtype]) raises -> Tuple[
+    NDArray[dtype], NDArray[dtype], NDArray[dtype]
+]:
     """One-sided Jacobi SVD of a matrix with at least as many rows as
     columns. Returns `(U, s, V)`, descending by singular value, such that
     `X == U @ diag(s) @ V.T`.
@@ -59,7 +59,9 @@ def _svd_tall[
                     gamma += ia * ib
                 off_norm_sq += gamma * gamma
 
-                if abs(gamma) <= tol * sqrt(alpha * beta + Scalar[dtype](1e-300)):
+                if abs(gamma) <= tol * sqrt(
+                    alpha * beta + Scalar[dtype](1e-300)
+                ):
                     continue
 
                 var theta = (beta - alpha) / (Scalar[dtype](2.0) * gamma)
@@ -72,9 +74,7 @@ def _svd_tall[
                     t = Scalar[dtype](-1.0) / (
                         -theta + sqrt(Scalar[dtype](1.0) + theta * theta)
                     )
-                var c = Scalar[dtype](1.0) / sqrt(
-                    Scalar[dtype](1.0) + t * t
-                )
+                var c = Scalar[dtype](1.0) / sqrt(Scalar[dtype](1.0) + t * t)
                 var s = t * c
 
                 for i in range(p):
@@ -100,9 +100,9 @@ def _svd_tall[
             norm_sq += v * v
         var sigma = sqrt(norm_sq)
         values.store(j, val=sigma)
-        var safe = sigma if sigma > Scalar[dtype](1e-300) else Scalar[
-            dtype
-        ](1e-300)
+        var safe = sigma if sigma > Scalar[dtype](1e-300) else Scalar[dtype](
+            1e-300
+        )
         for i in range(p):
             U.store(i * q + j, val=work.load(i * q + j) / safe)
 

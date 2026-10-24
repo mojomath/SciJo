@@ -18,6 +18,7 @@ Available Modules
 - `interpolate`   - Interpolation methods for estimating values between data points.
 - `linalg`        - Matrix decompositions, linear system solvers, and norms.
 - `optimize`      - Optimization algorithms for minimization and root-finding.
+- `types`         - Experimental: a `Numeric` trait and its conformers (`Value`, `Dual`).
 
 The common dtype aliases (`f16`, `f32`, `f64`, `i8`, ..., `i64`, `u8`, ...,
 `u64`, `boolean`, etc.) are re-exported here for convenience, so `scijo.f64`

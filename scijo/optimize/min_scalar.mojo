@@ -540,7 +540,9 @@ def minimize_scalar[
 
 def minimize_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "Brent",
 ](

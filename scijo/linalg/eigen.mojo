@@ -126,9 +126,7 @@ def eigh[
                     t = Scalar[dtype](-1.0) / (
                         -theta + sqrt(Scalar[dtype](1.0) + theta * theta)
                     )
-                var c = Scalar[dtype](1.0) / sqrt(
-                    Scalar[dtype](1.0) + t * t
-                )
+                var c = Scalar[dtype](1.0) / sqrt(Scalar[dtype](1.0) + t * t)
                 var s = t * c
 
                 for k in range(n):

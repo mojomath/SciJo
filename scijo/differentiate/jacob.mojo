@@ -40,7 +40,9 @@ def jacobian[
     dtype: DType,
     jacob_func: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
@@ -114,10 +116,15 @@ def jacobian[
 
 def jacobian[
     dtype: DType,
-    jacob_func: def[dtype: DType](
-        x: NDArray[dtype]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
-](x: NDArray[dtype], step: Scalar[dtype] = 0.5,) raises -> NDArray[dtype] where dtype.is_floating_point():
+    jacob_func: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[
+        _
+    ] -> NDArray[dtype] where dtype.is_floating_point(),
+](
+    x: NDArray[dtype],
+    step: Scalar[dtype] = 0.5,
+) raises -> NDArray[
+    dtype
+] where dtype.is_floating_point():
     """Computes the Jacobian matrix of a vector-valued function (args-free overload).
 
     For functions that do not need `args`: `jacob_func` takes only `x`, so
@@ -264,10 +271,15 @@ def hessian[
 
 def hessian[
     dtype: DType,
-    hess_func: def[dtype: DType](
-        x: NDArray[dtype]
-    ) raises capturing[_] -> Scalar[dtype],
-](x: NDArray[dtype], step: Scalar[dtype] = 1e-5,) raises -> NDArray[dtype] where dtype.is_floating_point():
+    hess_func: def[dtype: DType](x: NDArray[dtype]) raises capturing[
+        _
+    ] -> Scalar[dtype],
+](
+    x: NDArray[dtype],
+    step: Scalar[dtype] = 1e-5,
+) raises -> NDArray[
+    dtype
+] where dtype.is_floating_point():
     """Computes the Hessian matrix of a scalar-valued function (args-free overload).
 
     For functions that do not need `args`: `hess_func` takes only `x`, so
@@ -320,7 +332,9 @@ def hessian[
     dtype: DType,
     hess_func: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
@@ -415,10 +429,15 @@ def hessian[
 
 def hessian[
     dtype: DType,
-    hess_func: def[dtype: DType](
-        x: NDArray[dtype]
-    ) raises capturing[_] -> NDArray[dtype],
-](x: NDArray[dtype], step: Scalar[dtype] = 1e-5,) raises -> NDArray[dtype] where dtype.is_floating_point():
+    hess_func: def[dtype: DType](x: NDArray[dtype]) raises capturing[
+        _
+    ] -> NDArray[dtype],
+](
+    x: NDArray[dtype],
+    step: Scalar[dtype] = 1e-5,
+) raises -> NDArray[
+    dtype
+] where dtype.is_floating_point():
     """Computes the Hessian tensor of a vector-valued function (args-free overload).
 
     For functions that do not need `args`: `hess_func` takes only `x`, so

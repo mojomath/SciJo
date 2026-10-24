@@ -95,7 +95,9 @@ def root_scalar[
 
 def root_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "bisect",
 ](
@@ -230,8 +232,12 @@ def root_scalar[
 
 def root_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
-    fprime: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
+    fprime: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -469,7 +475,9 @@ def bisect[
 
 def bisect[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
@@ -660,7 +668,9 @@ def brent[
 
 def brent[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
@@ -796,7 +806,9 @@ def secant[
 
 def secant[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     x1: Scalar[dtype],
@@ -839,8 +851,12 @@ def secant[
 
 def newton[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
-    fprime: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
+    fprime: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x0: Optional[Scalar[dtype]] = None,
     atol: Scalar[dtype] = 1e-8,

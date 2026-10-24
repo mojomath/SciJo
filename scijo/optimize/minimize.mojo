@@ -133,7 +133,9 @@ def minimize[
 
 def minimize[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> Scalar[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "Nelder-Mead",
 ](
@@ -356,7 +358,9 @@ def _nelder_mead[
 # ===----------------------------------------------------------------------=== #
 
 
-def _dot[dtype: DType](a: NDArray[dtype], b: NDArray[dtype]) raises -> Scalar[dtype]:
+def _dot[
+    dtype: DType
+](a: NDArray[dtype], b: NDArray[dtype]) raises -> Scalar[dtype]:
     """Returns the dot product of two vectors of equal length."""
     var s: Scalar[dtype] = 0.0
     for i in range(a.size):
@@ -410,7 +414,9 @@ def _armijo_line_search[
     g: NDArray[dtype],
     p: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
-) raises -> Tuple[Scalar[dtype], Scalar[dtype], Int] where dtype.is_floating_point():
+) raises -> Tuple[
+    Scalar[dtype], Scalar[dtype], Int
+] where dtype.is_floating_point():
     """Backtracking line search satisfying the Armijo sufficient-decrease condition.
 
     Starting from a unit step, halves the step size until

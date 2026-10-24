@@ -28,7 +28,9 @@ def root[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -88,10 +90,14 @@ def root[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
     jac: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -131,7 +137,9 @@ def root[
 
 def root[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -184,10 +192,12 @@ def root[
 
 def root[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
-    jac: def[dtype: DType](
-        x: NDArray[dtype]
-    ) raises capturing[_] -> NDArray[dtype],
+    f: def[dtype: DType](x: NDArray[dtype]) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
+    jac: def[dtype: DType](x: NDArray[dtype]) raises capturing[_] -> NDArray[
+        dtype
+    ],
     *,
     method: String = "newton",
 ](
@@ -247,7 +257,9 @@ def _newton_fd[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -306,10 +318,14 @@ def _newton_jac[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
     jac: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -366,7 +382,9 @@ def _broyden1[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises thin capturing[_] -> NDArray[dtype] where dtype.is_floating_point(),
+    ) raises thin capturing[_] -> NDArray[
+        dtype
+    ] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
