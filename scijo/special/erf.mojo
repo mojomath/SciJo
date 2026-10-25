@@ -10,9 +10,6 @@ every `x`, but needs more terms than is practical once `x^2` outgrows the
 term count; the continued fraction is the standard asymptotic form for the
 tail and avoids the cancellation `1 - erf(x)` would hit there).
 
-Written generically over `scijo.types.NumericComparable`: a `Dual` gets an
-exact derivative for free, with no hand-written derivative formula.
-
 References
 ----------
 - Abramowitz & Stegun, "Handbook of Mathematical Functions", 7.1.14.

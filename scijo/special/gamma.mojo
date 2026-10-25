@@ -8,11 +8,6 @@
 approximation (`g = 7`, `n = 9` terms) for `x >= 0.5`, and the reflection
 formula `Gamma(x)*Gamma(1-x) = pi/sin(pi*x)` for `x < 0.5`.
 
-Written generically over `scijo.types.NumericComparable`: a `Dual` gets an
-exact derivative for free, via the chain rule built into `Dual`'s own
-`+`/`-`/`*`/`/`/`exp`/`log`/`sin`/`cos`, with no hand-written derivative
-formula for `gamma` itself.
-
 References
 ----------
 - Lanczos, C. (1964). "A Precision Approximation of the Gamma Function."

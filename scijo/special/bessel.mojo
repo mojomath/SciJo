@@ -11,10 +11,6 @@ shared asymptotic expansion (DLMF 10.17, 10.40) for large `|x|`, where the
 series either converges too slowly (`J`, `Y`, `I`) or loses precision to
 cancellation (`K`).
 
-Written generically over `scijo.types.NumericComparable`: a `Dual` gets an
-exact derivative for free, via the chain rule built into `Dual`'s own
-arithmetic, with no hand-written `J0' = -J1`-style derivative table.
-
 References
 ----------
 - DLMF (https://dlmf.nist.gov/), 10.8 (power series), 10.17 and 10.40

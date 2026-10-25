@@ -4,8 +4,9 @@
 # ===----------------------------------------------------------------------=== #
 """Special Functions (`scijo.special`)
 ======================================
-Gamma, error, beta, digamma, regularized incomplete gamma/beta, and Bessel
-functions.
+Gamma, error, beta, digamma, polygamma, regularized incomplete gamma/beta,
+Bessel functions (order-0/1 and general integer order), Airy functions, and
+Legendre polynomials.
 
 Every function here has two overloads: a concrete one taking and returning
 a plain `Scalar[dtype]`, and a generic one over `scijo.types.NumericComparable`.
@@ -26,6 +27,10 @@ Examples
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
+from .airy import (
+    airy_ai,
+    airy_bi,
+)
 from .bessel import (
     bessel_i0,
     bessel_i1,
@@ -35,6 +40,12 @@ from .bessel import (
     bessel_k1,
     bessel_y0,
     bessel_y1,
+)
+from .bessel_n import (
+    bessel_in,
+    bessel_jn,
+    bessel_kn,
+    bessel_yn,
 )
 from .beta import (
     beta,
@@ -53,4 +64,6 @@ from .gamma_inc import (
     gamma_inc,
     gamma_incc,
 )
+from .legendre import legendre
+from .polygamma import polygamma
 from .psi import digamma

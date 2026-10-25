@@ -9,10 +9,6 @@
 (`x >= 6`), with the reflection formula
 `psi(1-x) - psi(x) = pi*cot(pi*x)` for `x <= 0`.
 
-Written generically over `scijo.types.NumericComparable`: a `Dual` gets an
-exact derivative for free (`d/dx[psi(f)] = trigamma(f) * f'`, via the chain
-rule applied to this same algorithm), with no hand-written `trigamma`.
-
 References
 ----------
 - Abramowitz & Stegun, "Handbook of Mathematical Functions", 6.3.5, 6.3.18.

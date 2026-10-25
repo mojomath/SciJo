@@ -9,24 +9,32 @@ from std.testing import assert_almost_equal, TestSuite
 # ===----------------------------------------------------------------------=== #
 from scijo import f64
 from scijo.special import (
+    airy_ai,
+    airy_bi,
     beta,
     beta_inc,
     bessel_i0,
     bessel_i1,
+    bessel_in,
     bessel_j0,
     bessel_j1,
+    bessel_jn,
     bessel_k0,
     bessel_k1,
+    bessel_kn,
     bessel_y0,
     bessel_y1,
+    bessel_yn,
     digamma,
     erf,
     erfc,
     gamma,
     gamma_inc,
     gamma_incc,
+    legendre,
     lnbeta,
     lngamma,
+    polygamma,
 )
 from scijo.types import Dual, NumericComparable, Primal, variable
 
@@ -209,6 +217,55 @@ def test_bessel_asymptotic_branch_matches_oracle() raises:
     )
 
 
+def test_bessel_n_matches_oracle_and_order01() raises:
+    """General-order Bessel functions, checked against scipy at both a
+    Miller's-algorithm point (`J_n`/`I_n` with `n > x`) and a direct
+    forward-recurrence point (`n <= x`), plus agreement with the order-0/1
+    functions at `n = 0, 1`."""
+    assert_almost_equal(
+        bessel_jn(2, Scalar[f64](1.0)), 0.1149034849319005, msg="J2(1), n > x"
+    )
+    assert_almost_equal(
+        bessel_jn(2, Scalar[f64](20.0)),
+        -0.16034135192299823,
+        msg="J2(20), n <= x",
+    )
+    assert_almost_equal(
+        bessel_jn(10, Scalar[f64](0.5)),
+        2.613177360822802e-13,
+        atol=1e-20,
+        msg="J10(0.5), deep in the Miller's-algorithm regime",
+    )
+    assert_almost_equal(
+        bessel_yn(5, Scalar[f64](20.0)), -0.10003576788953245, msg="Y5(20)"
+    )
+    assert_almost_equal(
+        bessel_in(2, Scalar[f64](5.0)), 17.505614966624236, msg="I2(5)"
+    )
+    assert_almost_equal(
+        bessel_kn(10, Scalar[f64](1.0)),
+        180713289.90102947,
+        rtol=1e-4,
+        msg="K10(1)",
+    )
+    assert_almost_equal(
+        bessel_jn(0, Scalar[f64](3.0)), bessel_j0(Scalar[f64](3.0)), msg="J_0 == J0"
+    )
+    assert_almost_equal(
+        bessel_jn(1, Scalar[f64](3.0)), bessel_j1(Scalar[f64](3.0)), msg="J_1 == J1"
+    )
+
+
+def test_bessel_n_recurrence_identity() raises:
+    """`J_{n-1}(x) + J_{n+1}(x) == (2n/x)*J_n(x)`, true for every order and
+    independent of which branch (`x > n` or Miller's algorithm) each side
+    was computed with."""
+    var x = Scalar[f64](5.0)
+    var lhs = bessel_jn(2, x) + bessel_jn(4, x)
+    var rhs = (2.0 * 3.0 / 5.0) * bessel_jn(3, x)
+    assert_almost_equal(lhs, rhs, msg="J2(5) + J4(5) == (6/5)*J3(5)")
+
+
 # ===----------------------------------------------------------------------=== #
 # Level 2 (the generic `scijo.special` overloads, run through `Dual`): every
 # derivative here falls out of `Dual`'s own chain-rule arithmetic - there is
@@ -288,19 +345,53 @@ def test_dual_gamma_derivative() raises:
 
 
 def test_dual_digamma_derivative() raises:
-    """`d/dx psi(x) = trigamma(x)`, approximated here via a central
-    finite difference since `scijo.special` has no `trigamma` oracle to
-    compare against directly."""
+    """`d/dx psi(x) = trigamma(x) = polygamma(1, x)`, checked exactly now
+    that `scijo.special` has a `polygamma` oracle - no finite difference
+    needed."""
     var x0 = 2.5
-    var h = 1e-5
     var x = variable(x0)
     var result = digamma_fn(x)
     assert_almost_equal(result.value.v, digamma(Scalar[f64](x0)), msg="digamma(2.5)")
-    var expected_deriv = (
-        digamma(Scalar[f64](x0 + h)) - digamma(Scalar[f64](x0 - h))
-    ) / (2.0 * h)
+    var expected_deriv = polygamma(1, Scalar[f64](x0))
     assert_almost_equal(
-        result.deriv.v, expected_deriv, atol=1e-6, msg="d/dx psi(x) = trigamma(x)"
+        result.deriv.v, expected_deriv, msg="d/dx psi(x) = trigamma(x)"
+    )
+
+
+def test_polygamma_matches_oracle_and_digamma() raises:
+    assert_almost_equal(
+        polygamma(1, Scalar[f64](2.5)), 0.4903577561002349, msg="trigamma(2.5)"
+    )
+    assert_almost_equal(
+        polygamma(1, Scalar[f64](1.0)), 1.6449340668482266, msg="trigamma(1) == pi^2/6"
+    )
+    assert_almost_equal(
+        polygamma(2, Scalar[f64](1.5)), -0.8287966442343201, msg="tetragamma(1.5)"
+    )
+    assert_almost_equal(
+        polygamma(3, Scalar[f64](0.7)), 25.879149678427744, msg="polygamma(3, 0.7)"
+    )
+    assert_almost_equal(
+        polygamma(0, Scalar[f64](2.5)),
+        digamma(Scalar[f64](2.5)),
+        msg="polygamma(0, x) == digamma(x)",
+    )
+
+
+def polygamma1_fn[T: NumericComparable](x: T) -> T:
+    return polygamma(1, x)
+
+
+def test_dual_trigamma_derivative() raises:
+    """`d/dx trigamma(x) = tetragamma(x) = polygamma(2, x)`, the same
+    free-derivative chain one level deeper."""
+    var x0 = 2.5
+    var x = variable(x0)
+    var result = polygamma1_fn(x)
+    assert_almost_equal(result.value.v, polygamma(1, Scalar[f64](x0)), msg="trigamma(2.5)")
+    var expected_deriv = polygamma(2, Scalar[f64](x0))
+    assert_almost_equal(
+        result.deriv.v, expected_deriv, msg="d/dx trigamma(x) = tetragamma(x)"
     )
 
 
@@ -400,6 +491,107 @@ def test_dual_beta_inc_derivative() raises:
     assert_almost_equal(
         result.deriv.v, expected_deriv,
         msg="d/dx I_x(a, b) = x^(a-1)*(1-x)^(b-1)/B(a, b)",
+    )
+
+
+def bessel_j3_fn[T: NumericComparable](x: T) -> T:
+    return bessel_jn(3, x)
+
+
+def test_dual_bessel_jn_derivative() raises:
+    """`d/dx J_n(x) = J_{n-1}(x) - n*J_n(x)/x`, checked at `n = 3`."""
+    var x0 = 4.0
+    var x = variable(x0)
+    var result = bessel_j3_fn(x)
+    assert_almost_equal(result.value.v, bessel_jn(3, Scalar[f64](x0)))
+    var expected = bessel_jn(2, Scalar[f64](x0)) - 3.0 * bessel_jn(
+        3, Scalar[f64](x0)
+    ) / x0
+    assert_almost_equal(result.deriv.v, expected)
+
+
+def test_legendre_matches_oracle_and_order01() raises:
+    assert_almost_equal(
+        legendre(2, Scalar[f64](0.5)), -0.125, msg="P2(0.5)"
+    )
+    assert_almost_equal(
+        legendre(5, Scalar[f64](0.3)), 0.3453862499999999, msg="P5(0.3)"
+    )
+    assert_almost_equal(
+        legendre(10, Scalar[f64](-0.7)), 0.08580579553164014, msg="P10(-0.7)"
+    )
+    assert_almost_equal(
+        legendre(0, Scalar[f64](0.5)), 1.0, msg="P0(x) == 1"
+    )
+    assert_almost_equal(
+        legendre(1, Scalar[f64](0.5)), 0.5, msg="P1(x) == x"
+    )
+
+
+def legendre3_fn[T: NumericComparable](x: T) -> T:
+    return legendre(3, x)
+
+
+def test_dual_legendre_derivative() raises:
+    """`d/dx P_3(x) = (3*x*P_3(x) - 3*P_2(x)) / (x^2 - 1)`, Bonnet's
+    derivative recurrence, checked at `n = 3`."""
+    var x0 = 0.4
+    var x = variable(x0)
+    var result = legendre3_fn(x)
+    assert_almost_equal(result.value.v, legendre(3, Scalar[f64](x0)))
+    var expected = (
+        3.0 * x0 * legendre(3, Scalar[f64](x0))
+        - 3.0 * legendre(2, Scalar[f64](x0))
+    ) / (x0 * x0 - 1.0)
+    assert_almost_equal(result.deriv.v, expected)
+
+
+def test_airy_matches_oracle_across_both_thresholds() raises:
+    """Checked on both sides of the series/asymptotic split for each
+    branch (`x < -9`, `-9 <= x < 6`, `x >= 6`)."""
+    assert_almost_equal(
+        airy_ai(Scalar[f64](-20.0)), -0.17640612707798434, msg="Ai(-20), oscillatory asymptotic"
+    )
+    assert_almost_equal(
+        airy_ai(Scalar[f64](-5.0)), 0.3507610090241143, msg="Ai(-5), series"
+    )
+    assert_almost_equal(
+        airy_ai(Scalar[f64](0.0)), 0.3550280538878172, msg="Ai(0)"
+    )
+    assert_almost_equal(
+        airy_ai(Scalar[f64](10.0)),
+        1.1047532552898654e-10,
+        atol=1e-16,
+        msg="Ai(10), decaying asymptotic",
+    )
+    assert_almost_equal(
+        airy_bi(Scalar[f64](-20.0)), -0.20013930932265164, msg="Bi(-20), oscillatory asymptotic"
+    )
+    assert_almost_equal(
+        airy_bi(Scalar[f64](0.0)), 0.6149266274460007, msg="Bi(0)"
+    )
+    assert_almost_equal(
+        airy_bi(Scalar[f64](10.0)),
+        455641153.54822654,
+        rtol=1e-6,
+        msg="Bi(10), growing asymptotic",
+    )
+
+
+def airy_ai_fn[T: NumericComparable](x: T) -> T:
+    return airy_ai(x)
+
+
+def test_dual_airy_ai_derivative() raises:
+    """`d/dx Ai(x) = Ai'(x)`, which `scijo.special` has no closed form
+    for - checked against the scipy oracle for `Ai'`, the whole point of
+    `airy_ai` being generic: it falls out of the same algorithm for free."""
+    var x0 = -5.0
+    var x = variable(x0)
+    var result = airy_ai_fn(x)
+    assert_almost_equal(result.value.v, airy_ai(Scalar[f64](x0)), msg="Ai(-5)")
+    assert_almost_equal(
+        result.deriv.v, 0.3271928185544436, msg="Ai'(-5)"
     )
 
 

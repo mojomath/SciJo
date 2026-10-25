@@ -7,9 +7,6 @@
 `beta(a, b) = Gamma(a)*Gamma(b)/Gamma(a+b)`, built on `lngamma` so it stays
 accurate (and finite) for arguments where `Gamma` itself would overflow.
 Domain: `a > 0` and `b > 0`.
-
-Written generically over `scijo.types.NumericComparable`, so a `Dual` gets
-an exact derivative in each argument for free.
 """
 
 # ===----------------------------------------------------------------------=== #
