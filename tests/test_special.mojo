@@ -72,9 +72,7 @@ def test_digamma_matches_oracle() raises:
 
 
 def test_erf_matches_oracle_and_odd_symmetry() raises:
-    assert_almost_equal(
-        erf(Scalar[f64](1.0)), 0.8427007929497148, msg="erf(1)"
-    )
+    assert_almost_equal(erf(Scalar[f64](1.0)), 0.8427007929497148, msg="erf(1)")
     assert_almost_equal(
         erf(Scalar[f64](-1.0)), -0.8427007929497148, msg="erf is odd"
     )
@@ -197,9 +195,7 @@ def test_bessel_wronskian_identity() raises:
             bessel_j1(Scalar[f64](x)) * bessel_y0(Scalar[f64](x))
         )
         var rhs = -2.0 / (pi * x)
-        assert_almost_equal(
-            lhs, rhs, msg="Bessel Wronskian at x=" + String(x)
-        )
+        assert_almost_equal(lhs, rhs, msg="Bessel Wronskian at x=" + String(x))
 
 
 def test_bessel_asymptotic_branch_matches_oracle() raises:
@@ -249,10 +245,14 @@ def test_bessel_n_matches_oracle_and_order01() raises:
         msg="K10(1)",
     )
     assert_almost_equal(
-        bessel_jn(0, Scalar[f64](3.0)), bessel_j0(Scalar[f64](3.0)), msg="J_0 == J0"
+        bessel_jn(0, Scalar[f64](3.0)),
+        bessel_j0(Scalar[f64](3.0)),
+        msg="J_0 == J0",
     )
     assert_almost_equal(
-        bessel_jn(1, Scalar[f64](3.0)), bessel_j1(Scalar[f64](3.0)), msg="J_1 == J1"
+        bessel_jn(1, Scalar[f64](3.0)),
+        bessel_j1(Scalar[f64](3.0)),
+        msg="J_1 == J1",
     )
 
 
@@ -337,7 +337,9 @@ def test_dual_gamma_derivative() raises:
     var x0 = 2.5
     var x = variable(x0)
     var result = gamma_fn(x)
-    assert_almost_equal(result.value.v, gamma(Scalar[f64](x0)), msg="gamma(2.5)")
+    assert_almost_equal(
+        result.value.v, gamma(Scalar[f64](x0)), msg="gamma(2.5)"
+    )
     var expected_deriv = gamma(Scalar[f64](x0)) * digamma(Scalar[f64](x0))
     assert_almost_equal(
         result.deriv.v, expected_deriv, msg="d/dx Gamma(x) = Gamma(x)*psi(x)"
@@ -351,7 +353,9 @@ def test_dual_digamma_derivative() raises:
     var x0 = 2.5
     var x = variable(x0)
     var result = digamma_fn(x)
-    assert_almost_equal(result.value.v, digamma(Scalar[f64](x0)), msg="digamma(2.5)")
+    assert_almost_equal(
+        result.value.v, digamma(Scalar[f64](x0)), msg="digamma(2.5)"
+    )
     var expected_deriv = polygamma(1, Scalar[f64](x0))
     assert_almost_equal(
         result.deriv.v, expected_deriv, msg="d/dx psi(x) = trigamma(x)"
@@ -363,13 +367,19 @@ def test_polygamma_matches_oracle_and_digamma() raises:
         polygamma(1, Scalar[f64](2.5)), 0.4903577561002349, msg="trigamma(2.5)"
     )
     assert_almost_equal(
-        polygamma(1, Scalar[f64](1.0)), 1.6449340668482266, msg="trigamma(1) == pi^2/6"
+        polygamma(1, Scalar[f64](1.0)),
+        1.6449340668482266,
+        msg="trigamma(1) == pi^2/6",
     )
     assert_almost_equal(
-        polygamma(2, Scalar[f64](1.5)), -0.8287966442343201, msg="tetragamma(1.5)"
+        polygamma(2, Scalar[f64](1.5)),
+        -0.8287966442343201,
+        msg="tetragamma(1.5)",
     )
     assert_almost_equal(
-        polygamma(3, Scalar[f64](0.7)), 25.879149678427744, msg="polygamma(3, 0.7)"
+        polygamma(3, Scalar[f64](0.7)),
+        25.879149678427744,
+        msg="polygamma(3, 0.7)",
     )
     assert_almost_equal(
         polygamma(0, Scalar[f64](2.5)),
@@ -388,7 +398,9 @@ def test_dual_trigamma_derivative() raises:
     var x0 = 2.5
     var x = variable(x0)
     var result = polygamma1_fn(x)
-    assert_almost_equal(result.value.v, polygamma(1, Scalar[f64](x0)), msg="trigamma(2.5)")
+    assert_almost_equal(
+        result.value.v, polygamma(1, Scalar[f64](x0)), msg="trigamma(2.5)"
+    )
     var expected_deriv = polygamma(2, Scalar[f64](x0))
     assert_almost_equal(
         result.deriv.v, expected_deriv, msg="d/dx trigamma(x) = tetragamma(x)"
@@ -410,9 +422,7 @@ def test_dual_bessel_j1_derivative() raises:
     var x = variable(x0)
     var result = bessel_j1_fn(x)
     assert_almost_equal(result.value.v, bessel_j1(Scalar[f64](x0)))
-    var expected = bessel_j0(Scalar[f64](x0)) - bessel_j1(
-        Scalar[f64](x0)
-    ) / x0
+    var expected = bessel_j0(Scalar[f64](x0)) - bessel_j1(Scalar[f64](x0)) / x0
     assert_almost_equal(result.deriv.v, expected)
 
 
@@ -431,9 +441,7 @@ def test_dual_bessel_i1_derivative() raises:
     var x = variable(x0)
     var result = bessel_i1_fn(x)
     assert_almost_equal(result.value.v, bessel_i1(Scalar[f64](x0)))
-    var expected = bessel_i0(Scalar[f64](x0)) - bessel_i1(
-        Scalar[f64](x0)
-    ) / x0
+    var expected = bessel_i0(Scalar[f64](x0)) - bessel_i1(Scalar[f64](x0)) / x0
     assert_almost_equal(result.deriv.v, expected)
 
 
@@ -443,9 +451,7 @@ def test_dual_bessel_k1_derivative() raises:
     var x = variable(x0)
     var result = bessel_k1_fn(x)
     assert_almost_equal(result.value.v, bessel_k1(Scalar[f64](x0)))
-    var expected = -bessel_k0(Scalar[f64](x0)) - bessel_k1(
-        Scalar[f64](x0)
-    ) / x0
+    var expected = -bessel_k0(Scalar[f64](x0)) - bessel_k1(Scalar[f64](x0)) / x0
     assert_almost_equal(result.deriv.v, expected)
 
 
@@ -458,12 +464,16 @@ def test_dual_gamma_inc_derivative() raises:
     var x = variable(x0)
     var result = gamma_inc_fn(a, x)
     assert_almost_equal(
-        result.value.v, gamma_inc(Scalar[f64](a0), Scalar[f64](x0)),
+        result.value.v,
+        gamma_inc(Scalar[f64](a0), Scalar[f64](x0)),
         msg="gamma_inc(2.5, 1.3)",
     )
-    var expected_deriv = exp((a0 - 1.0) * log(x0) - x0 - lngamma(Scalar[f64](a0)))
+    var expected_deriv = exp(
+        (a0 - 1.0) * log(x0) - x0 - lngamma(Scalar[f64](a0))
+    )
     assert_almost_equal(
-        result.deriv.v, expected_deriv,
+        result.deriv.v,
+        expected_deriv,
         msg="d/dx P(a, x) = x^(a-1)*exp(-x)/Gamma(a)",
     )
 
@@ -489,7 +499,8 @@ def test_dual_beta_inc_derivative() raises:
         - lnbeta(Scalar[f64](a0), Scalar[f64](b0))
     )
     assert_almost_equal(
-        result.deriv.v, expected_deriv,
+        result.deriv.v,
+        expected_deriv,
         msg="d/dx I_x(a, b) = x^(a-1)*(1-x)^(b-1)/B(a, b)",
     )
 
@@ -504,28 +515,22 @@ def test_dual_bessel_jn_derivative() raises:
     var x = variable(x0)
     var result = bessel_j3_fn(x)
     assert_almost_equal(result.value.v, bessel_jn(3, Scalar[f64](x0)))
-    var expected = bessel_jn(2, Scalar[f64](x0)) - 3.0 * bessel_jn(
-        3, Scalar[f64](x0)
-    ) / x0
+    var expected = (
+        bessel_jn(2, Scalar[f64](x0)) - 3.0 * bessel_jn(3, Scalar[f64](x0)) / x0
+    )
     assert_almost_equal(result.deriv.v, expected)
 
 
 def test_legendre_matches_oracle_and_order01() raises:
-    assert_almost_equal(
-        legendre(2, Scalar[f64](0.5)), -0.125, msg="P2(0.5)"
-    )
+    assert_almost_equal(legendre(2, Scalar[f64](0.5)), -0.125, msg="P2(0.5)")
     assert_almost_equal(
         legendre(5, Scalar[f64](0.3)), 0.3453862499999999, msg="P5(0.3)"
     )
     assert_almost_equal(
         legendre(10, Scalar[f64](-0.7)), 0.08580579553164014, msg="P10(-0.7)"
     )
-    assert_almost_equal(
-        legendre(0, Scalar[f64](0.5)), 1.0, msg="P0(x) == 1"
-    )
-    assert_almost_equal(
-        legendre(1, Scalar[f64](0.5)), 0.5, msg="P1(x) == x"
-    )
+    assert_almost_equal(legendre(0, Scalar[f64](0.5)), 1.0, msg="P0(x) == 1")
+    assert_almost_equal(legendre(1, Scalar[f64](0.5)), 0.5, msg="P1(x) == x")
 
 
 def legendre3_fn[T: NumericComparable](x: T) -> T:
@@ -550,7 +555,9 @@ def test_airy_matches_oracle_across_both_thresholds() raises:
     """Checked on both sides of the series/asymptotic split for each
     branch (`x < -9`, `-9 <= x < 6`, `x >= 6`)."""
     assert_almost_equal(
-        airy_ai(Scalar[f64](-20.0)), -0.17640612707798434, msg="Ai(-20), oscillatory asymptotic"
+        airy_ai(Scalar[f64](-20.0)),
+        -0.17640612707798434,
+        msg="Ai(-20), oscillatory asymptotic",
     )
     assert_almost_equal(
         airy_ai(Scalar[f64](-5.0)), 0.3507610090241143, msg="Ai(-5), series"
@@ -565,7 +572,9 @@ def test_airy_matches_oracle_across_both_thresholds() raises:
         msg="Ai(10), decaying asymptotic",
     )
     assert_almost_equal(
-        airy_bi(Scalar[f64](-20.0)), -0.20013930932265164, msg="Bi(-20), oscillatory asymptotic"
+        airy_bi(Scalar[f64](-20.0)),
+        -0.20013930932265164,
+        msg="Bi(-20), oscillatory asymptotic",
     )
     assert_almost_equal(
         airy_bi(Scalar[f64](0.0)), 0.6149266274460007, msg="Bi(0)"
@@ -590,9 +599,7 @@ def test_dual_airy_ai_derivative() raises:
     var x = variable(x0)
     var result = airy_ai_fn(x)
     assert_almost_equal(result.value.v, airy_ai(Scalar[f64](x0)), msg="Ai(-5)")
-    assert_almost_equal(
-        result.deriv.v, 0.3271928185544436, msg="Ai'(-5)"
-    )
+    assert_almost_equal(result.deriv.v, 0.3271928185544436, msg="Ai'(-5)")
 
 
 def main() raises:

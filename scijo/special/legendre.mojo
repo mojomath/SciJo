@@ -59,9 +59,9 @@ def legendre[T: NumericComparable](n: Int, x: T) -> T:
     var p0 = T.one()
     var p1 = x
     for k in range(1, n):
-        var p2 = (
-            Float64(2 * k + 1) * x * p1 - Float64(k) * p0
-        ) / Float64(k + 1)
+        var p2 = (Float64(2 * k + 1) * x * p1 - Float64(k) * p0) / Float64(
+            k + 1
+        )
         p0 = p1
         p1 = p2
     return p1

@@ -65,7 +65,9 @@ struct Complex[dtype: DType, width: Int = 1](
         Returns:
             `Self` equal to one.
         """
-        return Self(SIMD[Self.dtype, Self.width](1), SIMD[Self.dtype, Self.width](0))
+        return Self(
+            SIMD[Self.dtype, Self.width](1), SIMD[Self.dtype, Self.width](0)
+        )
 
     @staticmethod
     def constant(v: Float64) -> Self:
@@ -77,7 +79,9 @@ struct Complex[dtype: DType, width: Int = 1](
         Returns:
             `Self` representing `v + 0i`.
         """
-        return Self(SIMD[Self.dtype, Self.width](v), SIMD[Self.dtype, Self.width](0))
+        return Self(
+            SIMD[Self.dtype, Self.width](v), SIMD[Self.dtype, Self.width](0)
+        )
 
     def __add__(self, rhs: Self) -> Self:
         """`self + rhs`, added component-wise.

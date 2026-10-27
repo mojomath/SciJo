@@ -151,7 +151,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return Self(cos(self.v))
 
-    def __lt__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+    def __lt__(
+        self, other: Self
+    ) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
         """`self < other`.
 
         Args:
@@ -162,7 +164,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return self.v[0] < other.v[0]
 
-    def __lt__(self, other: Float64) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+    def __lt__(
+        self, other: Float64
+    ) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
         """`self < other`, against a literal.
 
         Args:
@@ -173,7 +177,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return self.v[0] < Scalar[Self.dtype](other)
 
-    def __le__(self, other: Float64) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+    def __le__(
+        self, other: Float64
+    ) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
         """`self <= other`, against a literal.
 
         Args:
@@ -184,7 +190,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return self.v[0] <= Scalar[Self.dtype](other)
 
-    def __gt__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+    def __gt__(
+        self, other: Self
+    ) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
         """`self > other`.
 
         Args:
@@ -195,7 +203,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return self.v[0] > other.v[0]
 
-    def __eq__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+    def __eq__(
+        self, other: Self
+    ) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
         """`self == other`.
 
         Args:
@@ -206,7 +216,9 @@ struct Primal[dtype: DType, width: Int = 1](
         """
         return self.v[0] == other.v[0]
 
-    def floor(self) -> Self where Self.dtype.is_floating_point() and Self.width == 1:
+    def floor(
+        self,
+    ) -> Self where Self.dtype.is_floating_point() and Self.width == 1:
         """The largest integer value not greater than `self`.
 
         Returns:

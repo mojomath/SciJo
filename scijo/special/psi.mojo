@@ -68,9 +68,15 @@ def digamma[T: NumericComparable](x: T) -> T:
     # coefficients B2=1/6, B4=-1/30, B6=1/42, B8=-1/30.
     var inv = 1.0 / y
     var inv2 = inv * inv
-    result = result + y.log() - 0.5 * inv - inv2 * (
-        1.0 / 12.0
-        - inv2 * (1.0 / 120.0 - inv2 * (1.0 / 252.0 - inv2 * (1.0 / 240.0)))
+    result = (
+        result
+        + y.log()
+        - 0.5 * inv
+        - inv2
+        * (
+            1.0 / 12.0
+            - inv2 * (1.0 / 120.0 - inv2 * (1.0 / 252.0 - inv2 * (1.0 / 240.0)))
+        )
     )
     return result
 

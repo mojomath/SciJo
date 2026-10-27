@@ -47,9 +47,7 @@ comptime _LANCZOS_C7: Float64 = 9.9843695780195716e-6
 comptime _LANCZOS_C8: Float64 = 1.5056327351493116e-7
 
 
-def _lanczos_sum_and_base[
-    T: NumericComparable
-](x: T) -> Tuple[T, T]:
+def _lanczos_sum_and_base[T: NumericComparable](x: T) -> Tuple[T, T]:
     """Shared Lanczos series: returns `(a, t)` for `x >= 0.5`, where
     `Gamma(x) = sqrt(2*pi) * t^(x-0.5) * exp(-t) * a` (with `x` already
     shifted down by 1, as the Lanczos formula expects)."""

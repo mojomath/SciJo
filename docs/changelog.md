@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Added
+- **`scijo.integrate.solve_ivp`**, an initial value problem solver:
+  - `method="RK45"` (Dormand-Prince 5(4)), with adaptive step-size control
+    and FSAL (first-same-as-last) stage reuse.
+  - `t_eval` support via cheap cubic-Hermite interpolation within each
+    accepted step, instead of forcing the stepper to land on exact times.
+  - `first_step` auto-estimation (Hairer, Norsett & Wanner's heuristic) and
+    an explicit `max_step` cap.
+  - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
+  - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
+    a standalone queryable dense-output object are not yet implemented.
 
 ## [v0.4.0] - 2026-10-26
 ### Added

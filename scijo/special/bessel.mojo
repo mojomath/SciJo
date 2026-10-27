@@ -45,7 +45,9 @@ def _bessel_ak_terms[T: NumericComparable](mu: Float64, x: T) -> List[T]:
     var a = T.one()
     terms.append(a)
     for k in range(1, 9):
-        a = a * ((mu - Float64((2 * k - 1) * (2 * k - 1))) / (Float64(k) * 8.0 * x))
+        a = a * (
+            (mu - Float64((2 * k - 1) * (2 * k - 1))) / (Float64(k) * 8.0 * x)
+        )
         terms.append(a)
     return terms^
 
@@ -67,12 +69,26 @@ def _bessel_jy_asym[
 def _bessel_ik_asym[T: NumericComparable](mu: Float64, x: T) -> Tuple[T, T]:
     var terms = _bessel_ak_terms(mu, x)
     var i_sum = (
-        terms[0] - terms[1] + terms[2] - terms[3] + terms[4] - terms[5]
-        + terms[6] - terms[7] + terms[8]
+        terms[0]
+        - terms[1]
+        + terms[2]
+        - terms[3]
+        + terms[4]
+        - terms[5]
+        + terms[6]
+        - terms[7]
+        + terms[8]
     )
     var k_sum = (
-        terms[0] + terms[1] + terms[2] + terms[3] + terms[4] + terms[5]
-        + terms[6] + terms[7] + terms[8]
+        terms[0]
+        + terms[1]
+        + terms[2]
+        + terms[3]
+        + terms[4]
+        + terms[5]
+        + terms[6]
+        + terms[7]
+        + terms[8]
     )
     return (
         x.exp() / (2.0 * pi * x).sqrt() * i_sum,

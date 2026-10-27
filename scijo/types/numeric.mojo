@@ -10,8 +10,7 @@ scalar kernel needs, independent of any concrete dtype or representation.
 
 
 trait Numeric(Copyable, Deinitable, ImplicitlyCopyable, Movable):
-    """The minimal arithmetic a differentiable scalar kernel needs.
-    """
+    """The minimal arithmetic a differentiable scalar kernel needs."""
 
     @staticmethod
     def one() -> Self:

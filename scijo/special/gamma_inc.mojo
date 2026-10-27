@@ -101,9 +101,9 @@ def gamma_inc[T: NumericComparable](a: T, x: T) -> T:
 
 def gamma_inc[
     dtype: DType
-](
-    a: Scalar[dtype], x: Scalar[dtype]
-) -> Scalar[dtype] where dtype.is_floating_point():
+](a: Scalar[dtype], x: Scalar[dtype]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """The regularized lower incomplete gamma function, on plain `Scalar`s.
 
     Parameters:
@@ -151,9 +151,9 @@ def gamma_incc[T: NumericComparable](a: T, x: T) -> T:
 
 def gamma_incc[
     dtype: DType
-](
-    a: Scalar[dtype], x: Scalar[dtype]
-) -> Scalar[dtype] where dtype.is_floating_point():
+](a: Scalar[dtype], x: Scalar[dtype]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """The regularized upper incomplete gamma function, on plain `Scalar`s.
 
     Parameters:

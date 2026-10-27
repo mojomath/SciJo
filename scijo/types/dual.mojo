@@ -160,7 +160,9 @@ struct Dual[Inner: Numeric](
         """
         return Self(self.value.cos(), -(self.value.sin() * self.deriv))
 
-    def __lt__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+    def __lt__(
+        self, other: Self
+    ) -> Bool where conforms_to(Self.Inner, NumericComparable):
         """`self < other`, comparing `value` only - a branch decision must
         not depend on `deriv`, or the chain rule stops applying to
         whichever branch runs.
@@ -173,7 +175,9 @@ struct Dual[Inner: Numeric](
         """
         return self.value < other.value
 
-    def __lt__(self, other: Float64) -> Bool where conforms_to(Self.Inner, NumericComparable):
+    def __lt__(
+        self, other: Float64
+    ) -> Bool where conforms_to(Self.Inner, NumericComparable):
         """`self < other`, against a literal, comparing `value` only.
 
         Args:
@@ -184,7 +188,9 @@ struct Dual[Inner: Numeric](
         """
         return self.value < other
 
-    def __le__(self, other: Float64) -> Bool where conforms_to(Self.Inner, NumericComparable):
+    def __le__(
+        self, other: Float64
+    ) -> Bool where conforms_to(Self.Inner, NumericComparable):
         """`self <= other`, against a literal, comparing `value` only.
 
         Args:
@@ -195,7 +201,9 @@ struct Dual[Inner: Numeric](
         """
         return self.value <= other
 
-    def __gt__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+    def __gt__(
+        self, other: Self
+    ) -> Bool where conforms_to(Self.Inner, NumericComparable):
         """`self > other`, comparing `value` only.
 
         Args:
@@ -206,7 +214,9 @@ struct Dual[Inner: Numeric](
         """
         return self.value > other.value
 
-    def __eq__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+    def __eq__(
+        self, other: Self
+    ) -> Bool where conforms_to(Self.Inner, NumericComparable):
         """`self == other`, comparing `value` only.
 
         Args:

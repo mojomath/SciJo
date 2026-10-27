@@ -49,9 +49,9 @@ def lnbeta[T: NumericComparable](a: T, b: T) -> T:
 
 def lnbeta[
     dtype: DType
-](
-    a: Scalar[dtype], b: Scalar[dtype]
-) -> Scalar[dtype] where dtype.is_floating_point():
+](a: Scalar[dtype], b: Scalar[dtype]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """The log of the beta function, on plain `Scalar`s.
 
     Parameters:
@@ -93,9 +93,9 @@ def beta[T: NumericComparable](a: T, b: T) -> T:
 
 def beta[
     dtype: DType
-](
-    a: Scalar[dtype], b: Scalar[dtype]
-) -> Scalar[dtype] where dtype.is_floating_point():
+](a: Scalar[dtype], b: Scalar[dtype]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """The beta function, on plain `Scalar`s.
 
     Parameters:

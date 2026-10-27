@@ -94,9 +94,11 @@ def beta_inc[T: NumericComparable](a: T, b: T, x: T) -> T:
     if not (x < 1.0):
         return T.constant(1.0)
     var bt = (
-        lngamma(a + b) - lngamma(a) - lngamma(b) + a * x.log() + b * (
-            1.0 - x
-        ).log()
+        lngamma(a + b)
+        - lngamma(a)
+        - lngamma(b)
+        + a * x.log()
+        + b * (1.0 - x).log()
     ).exp()
     if x < (a + 1.0) / (a + b + 2.0):
         return bt * _beta_inc_cf(a, b, x) / a
@@ -105,9 +107,9 @@ def beta_inc[T: NumericComparable](a: T, b: T, x: T) -> T:
 
 def beta_inc[
     dtype: DType
-](
-    a: Scalar[dtype], b: Scalar[dtype], x: Scalar[dtype]
-) -> Scalar[dtype] where dtype.is_floating_point():
+](a: Scalar[dtype], b: Scalar[dtype], x: Scalar[dtype]) -> Scalar[
+    dtype
+] where dtype.is_floating_point():
     """The regularized incomplete beta function, on plain `Scalar`s.
 
     Parameters:

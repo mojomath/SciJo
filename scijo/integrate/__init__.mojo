@@ -14,6 +14,7 @@ Available Functions
 - `trapezoid`   — Composite trapezoidal rule for discrete data.
 - `simpson`     — Simpson's rule for discrete data.
 - `romb`        — Romberg integration with Richardson extrapolation.
+- `solve_ivp`   — Initial value problem solver (RK45/Dormand-Prince).
 
 QAG Rule Constants (use as `qag_rule=` when `method="qag"`)
 ------------------------------------------------------------
@@ -35,6 +36,11 @@ Examples
 
     var result = quad[f64, integrand](0.0, 1.0, None)
     var result_hi = quad[f64, integrand, method="qag", qag_rule=QAG_GK61](0.0, 1.0, None)
+
+    def decay[dtype: DType](t: Scalar[dtype], y: NDArray[dtype]) raises -> NDArray[dtype]:
+        return y * (-1.0)
+
+    var ivp_result = solve_ivp[f64, decay]((0.0, 1.0), nm.fromstring[f64]("[1.0]"))
     ```
 """
 
@@ -48,6 +54,8 @@ from .fixed_sample import (
     simpson,
     trapezoid,
 )
+from .ivp import solve_ivp
+from .ode_utility import OdeResult
 from .quadrature import (
     QAG_GK15,
     QAG_GK21,

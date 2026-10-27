@@ -70,9 +70,7 @@ def _polygamma_asymptotic[T: NumericComparable](m: Int, x: T) -> T:
     """
     var sign = -1.0 if m % 2 == 0 else 1.0
     var inv_xm = 1.0 / _pow_int(x, m)
-    var summ = _factorial(m - 1) * inv_xm + (_factorial(m) / 2.0) * (
-        inv_xm / x
-    )
+    var summ = _factorial(m - 1) * inv_xm + (_factorial(m) / 2.0) * (inv_xm / x)
 
     var inv_x2 = 1.0 / (x * x)
     var running = inv_xm * inv_x2

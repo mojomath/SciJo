@@ -41,6 +41,8 @@ Numerical integration with adaptive algorithms:
 - **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
 - **`simpson`**: Simpson's rule for discrete data
 - **`romb`**: Romberg integration with Richardson extrapolation
+- **`solve_ivp`**: Initial value problem solver (`method="RK45"`, Dormand-Prince),
+  with adaptive step-size control, `t_eval` support, and `first_step`/`max_step`
 
 ### Interpolation (`scijo.interpolate`)
 1D data interpolation:

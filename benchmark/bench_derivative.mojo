@@ -75,8 +75,7 @@ def poly_func[
     var coeff_ptr = coeff.unsafe_ptr()
 
     # test only for 10 coeffs.
-    @parameter
-    def closure[wid: Int](i: Int) unified {mut result, read coeff_ptr, read x}:
+    def closure[wid: Int](i: Int) {mut result, imm coeff_ptr, imm x}:
         result += SIMD[dtype, wid](
             coeff_ptr.load[width=wid](i)
         ).reduce_add() * (x**i)

@@ -17,6 +17,7 @@ runs.
 # ===----------------------------------------------------------------------=== #
 from scijo.types.numeric import Numeric
 
+
 trait NumericComparable(Numeric):
     """`Numeric` plus the comparisons a branchy algorithm needs."""
 
