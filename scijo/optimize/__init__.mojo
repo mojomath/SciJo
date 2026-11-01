@@ -20,6 +20,8 @@ Available Functions
 - `root`              — Find a root of a vector-valued function (multivariate Newton).
 - `minimize_scalar`   — Minimize a scalar function.
 - `minimize`          — Minimize a scalar-valued function of several variables (Nelder-Mead).
+- `least_squares`     — Nonlinear least squares (Levenberg-Marquardt).
+- `curve_fit`         — Fit a parametric model to `(xdata, ydata)` data.
 
 Examples
 --------
@@ -36,6 +38,8 @@ Examples
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
+from .curve_fit import curve_fit
+from .least_squares import least_squares
 from .min_scalar import (
     minimize_scalar,
     OptimizeResult,
@@ -50,6 +54,7 @@ from .root_scalar import (
     secant,
 )
 from .utility import (
+    LeastSquaresResult,
     OptimizeResultVector,
     RootResult,
     RootResultVector,

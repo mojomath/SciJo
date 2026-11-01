@@ -316,3 +316,112 @@ struct OptimizeResultVector[dtype: DType = DType.float64](
             writer.write(
                 "Error displaying OptimizeResultVector: " + String(e) + "\n"
             )
+
+
+# ===----------------------------------------------------------------------=== #
+# LeastSquaresResult
+# ===----------------------------------------------------------------------=== #
+
+
+struct LeastSquaresResult[dtype: DType = DType.float64](
+    Copyable, Movable, Writable
+):
+    """Result structure for nonlinear least-squares operations.
+
+    Returned by `scijo.optimize.least_squares`. Unlike `RootResultVector`,
+    `fun` need not vanish at `x` (the residual count `m` may exceed the
+    parameter count `n`): `x` is the point minimizing `0.5 * sum(fun(x)**2)`,
+    not a root of `fun`.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+    """
+
+    var x: NDArray[Self.dtype]
+    """The estimated solution parameters, of shape (n,)."""
+    var fun: NDArray[Self.dtype]
+    """The residuals `f(x)` at the solution, of shape (m,)."""
+    var cost: Scalar[Self.dtype]
+    """The cost `0.5 * sum(fun**2)` at the solution."""
+    var nit: Int
+    """Number of iterations performed."""
+    var nfev: Int
+    """Number of function evaluations used (including those spent on
+    finite-difference Jacobians)."""
+    var success: Bool
+    """Whether the algorithm converged within tolerances."""
+    var message: String
+    """Human-readable status message."""
+    var method: String
+    """Name of the method used."""
+
+    def __init__(
+        out self,
+        var x: NDArray[Self.dtype],
+        var fun: NDArray[Self.dtype],
+        cost: Scalar[Self.dtype],
+        nit: Int,
+        nfev: Int,
+        success: Bool,
+        message: String,
+        method: String,
+    ):
+        """Constructs a LeastSquaresResult from the outcome of a
+        least-squares run.
+
+        Args:
+            x: The estimated solution parameters.
+            fun: The residuals `f(x)` at the solution.
+            cost: The cost `0.5 * sum(fun**2)` at the solution.
+            nit: Number of iterations performed.
+            nfev: Number of function evaluations used.
+            success: Whether the algorithm converged within tolerances.
+            message: Human-readable status message.
+            method: Name of the method used.
+        """
+        self.x = x^
+        self.fun = fun^
+        self.cost = cost
+        self.nit = nit
+        self.nfev = nfev
+        self.success = success
+        self.message = message
+        self.method = method
+
+    def write_to[W: Writer](self, mut writer: W):
+        """Writes a formatted, multi-line report of the result.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write the report to.
+        """
+        try:
+            writer.write(
+                String(
+                    "Least Squares Result\n"
+                    "=====================\n"
+                    "x       : {}\n"
+                    "fun     : {}\n"
+                    "cost    : {}\n"
+                    "Iters   : {}\n"
+                    "Evals   : {}\n"
+                    "Success : {}\n"
+                    "Message : {}\n"
+                    "Method  : {}\n"
+                ).format(
+                    self.x,
+                    self.fun,
+                    self.cost,
+                    self.nit,
+                    self.nfev,
+                    self.success,
+                    self.message,
+                    self.method,
+                )
+            )
+        except e:
+            writer.write(
+                "Error displaying LeastSquaresResult: " + String(e) + "\n"
+            )

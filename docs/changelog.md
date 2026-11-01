@@ -6,6 +6,14 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
+- **`scijo.optimize.least_squares`**, nonlinear least squares via
+  Levenberg-Marquardt (`method="lm"`, the only method currently
+  supported), with a finite-difference Jacobian. Bounds, analytic
+  Jacobians, and robust loss functions are not yet implemented.
+- **`scijo.optimize.curve_fit`**, fitting a parametric model to
+  `(xdata, ydata)` data; a thin wrapper around `least_squares`.
+- **`scijo.optimize.utility.LeastSquaresResult`**, the result type returned
+  by both of the above.
 - **`scijo.integrate.solve_ivp`**, an initial value problem solver:
   - `method="RK45"` (Dormand-Prince 5(4)), with adaptive step-size control
     and FSAL (first-same-as-last) stage reuse.
