@@ -176,7 +176,7 @@ it directly instead - no `args` plumbing, and no `.value()[i]` indexing:
 
 ```mojo
 def scale_and_differentiate[dtype: DType](a: Scalar[dtype], x0: Scalar[dtype]) raises -> Scalar[dtype]:
-    @parameter
+    
     def f(x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return a * x * x
     return derivative[dtype, f](x0).df
