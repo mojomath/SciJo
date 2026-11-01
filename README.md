@@ -96,6 +96,9 @@ minimization:
 - **`minimize`**: Multi-dimensional minimization (`f: R^n -> R`)
   - `method="Nelder-Mead"` (default): derivative-free simplex method
   - `method="BFGS"` / `method="CG"`: gradient-based, with the gradient estimated via finite differences
+- **`least_squares`**: Nonlinear least squares (`f: R^n -> R^m`, minimizes `0.5 * sum(f(x)**2)`)
+  - `method="lm"` (default and only method): Levenberg-Marquardt with a finite-difference Jacobian
+- **`curve_fit`**: Fits a parametric model to `(xdata, ydata)` data, via `least_squares`
 
 ### Types (`scijo.types`)
 A `Numeric` trait and its conformers, for code that wants to run generically
@@ -355,6 +358,24 @@ def main() raises:
     # Or a gradient-based method (gradient estimated via finite differences):
     var result_bfgs = minimize[nm.f64, rosenbrock, method="BFGS"](x0)
     print("Minimum at:", result_bfgs.x)
+```
+
+### Curve Fitting
+```mojo
+from scijo.optimize import curve_fit
+import numojo as nm
+
+def line[
+    dtype: DType
+](xdata: nm.NDArray[dtype], params: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
+    return params.item(0) * xdata + params.item(1)
+
+def main() raises:
+    var xdata = nm.fromstring[nm.f64]("[0, 1, 2, 3, 4]")
+    var ydata = nm.fromstring[nm.f64]("[1, 3, 5, 7, 9]")
+    var p0 = nm.fromstring[nm.f64]("[1, 1]")
+    var result = curve_fit[nm.f64, line](xdata, ydata, p0)
+    print("Fitted params:", result.x)  # ~= [2, 1]
 ```
 
 ### Linear Algebra
