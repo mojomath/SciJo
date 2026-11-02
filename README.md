@@ -59,7 +59,9 @@ Fast Fourier Transform operations:
 - **`fftn`** / **`ifftn`**: N-dimensional forward/inverse FFT over one or more axes
 - **`fft2`** / **`ifft2`**: 2-dimensional forward/inverse FFT (convenience wrapper over `fftn`/`ifftn`)
 - **`rfft`** / **`irfft`**: Real-input FFT and its inverse
-- Supports complex arrays (power-of-2 sizes per transformed axis)
+- Arbitrary-length support: power-of-2 lengths use the Cooley-Tukey radix-2
+  algorithm directly; every other length uses Bluestein's algorithm
+  (still `O(n log n)`) - no length is silently padded
 - Compatible with NumPy's FFT conventions
 
 ### Physical Constants (`scijo.constants`)

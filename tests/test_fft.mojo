@@ -284,18 +284,44 @@ def test_edge_cases() raises:
 
 def test_error_conditions() raises:
     """Test error conditions."""
-    var np = Python.import_module("numpy")
-
-    var arr_bad = ComplexNDArray[nm.cf64](NDArrayShape(5))
-    for i in range(5):
-        arr_bad[nm.Item(i)] = ComplexSIMD[nm.cf64](Float64(i), 0.0)
+    var arr_2d = ComplexNDArray[nm.cf64](NDArrayShape(2, 2))
 
     var raised = False
     try:
-        var _ = fft[nm.cf64](arr_bad)
+        var _ = fft[nm.cf64](arr_2d)
     except:
         raised = True
-    assert_true(raised, "fft should raise for a non-power-of-2 length")
+    assert_true(raised, "fft should raise for a non-1D array")
+
+
+def test_fft_non_power_of_two_matches_numpy() raises:
+    """Test fft at a non-power-of-2 length (Bluestein path) against NumPy."""
+    var np = Python.import_module("numpy")
+
+    var n = 5
+    var arr = ComplexNDArray[nm.cf64](NDArrayShape(n))
+    var real = Python.list()
+    var imag = Python.list()
+    for i in range(n):
+        var re = Float64(i) * 0.3 - 1.0
+        var im = Float64(i) * -0.1
+        arr[nm.Item(i)] = ComplexSIMD[nm.cf64](re, im)
+        real.append(re)
+        imag.append(im)
+
+    var np_arr = np.array(real, dtype=np.complex128)
+    np_arr.imag = np.array(imag, dtype=np.float64)
+
+    var result = fft[nm.cf64](arr)
+    var np_result = np.fft.fft(np_arr)
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "fft: length 5 (Bluestein)", atol=1e-9
+    )
+
+    var back = ifft[nm.cf64](result)
+    compare_complex_arrays[nm.cf64](
+        back, np_arr, "ifft: length 5 roundtrip (Bluestein)", atol=1e-9
+    )
 
 
 def test_rfft_basic() raises:
@@ -337,14 +363,13 @@ def test_rfft_sine() raises:
     )
 
 
-def test_rfft_zero_pads_non_power_of_two() raises:
-    """Test non-power-of-two rfft zero-padding against NumPy."""
+def test_rfft_preserves_non_power_of_two_length() raises:
+    """Test that rfft uses the exact input length (no padding), vs. NumPy."""
     var np = Python.import_module("numpy")
 
     var n = 6
-    var padded_n = 8
     var x = nm.zeros[nm.f64](nm.Shape(n))
-    var np_x = np.zeros(padded_n)
+    var np_x = np.zeros(n)
     for i in range(n):
         var value = Float64(i) * 0.2
         x.itemset(i, value)
@@ -352,16 +377,47 @@ def test_rfft_zero_pads_non_power_of_two() raises:
 
     var result = rfft[nm.f64](x)
     var np_result = np.fft.rfft(np_x)
+    assert_equal(
+        result.shape[0], 4, msg="rfft(len=6) should return N//2+1 = 4 bins"
+    )
     compare_complex_arrays[nm.cf64](
-        result, np_result, "rfft: zero-padded length 6", atol=1e-10
+        result, np_result, "rfft: length 6 (no padding)", atol=1e-10
     )
 
-    var reconstructed = irfft[nm.f64](result, padded_n)
+    var reconstructed = irfft[nm.f64](result, n)
     compare_real_arrays[nm.f64](
         reconstructed,
         np_x,
-        "irfft: zero-padded length 6 roundtrip",
+        "irfft: length 6 roundtrip (no padding)",
         atol=1e-10,
+    )
+
+
+def test_rfft_odd_length_matches_numpy() raises:
+    """Test rfft/irfft at an odd length (exercises the Nyquist-less mirror
+    path in irfft) against NumPy."""
+    var np = Python.import_module("numpy")
+
+    var n = 7
+    var x = nm.zeros[nm.f64](nm.Shape(n))
+    var np_x = np.zeros(n)
+    for i in range(n):
+        var value = Float64(i) * 0.2 - 0.5
+        x.itemset(i, value)
+        np_x[i] = value
+
+    var result = rfft[nm.f64](x)
+    var np_result = np.fft.rfft(np_x)
+    assert_equal(
+        result.shape[0], 4, msg="rfft(len=7) should return N//2+1 = 4 bins"
+    )
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "rfft: odd length 7", atol=1e-10
+    )
+
+    var reconstructed = irfft[nm.f64](result, n)
+    compare_real_arrays[nm.f64](
+        reconstructed, np_x, "irfft: odd length 7 roundtrip", atol=1e-10
     )
 
 

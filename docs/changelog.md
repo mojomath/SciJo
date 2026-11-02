@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- **`scijo.fft`** arbitrary-length support: `fft`/`ifft` (and the axes they
+  drive in `fftn`/`ifftn`/`fft2`/`ifft2`) no longer require a power-of-2
+  length - every other length now goes through Bluestein's algorithm
+  (still `O(n log n)`, reusing the existing radix-2 engine for the
+  convolution it reduces to). `rfft` no longer zero-pads a non-power-of-2
+  input to the next power of 2; it now transforms the exact input length,
+  matching NumPy/SciPy. `irfft` no longer rounds its output length up to
+  a power of 2, and its conjugate-symmetry mirroring is now correct for
+  odd output lengths too (previously only exercised with even lengths,
+  since every length was rounded up to a power of 2 beforehand).
+
 ### Added
 - **`scijo.optimize.least_squares`**, nonlinear least squares via
   Levenberg-Marquardt (`method="lm"`, the only method currently

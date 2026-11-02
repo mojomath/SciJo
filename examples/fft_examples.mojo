@@ -37,13 +37,14 @@ def main() raises:
 
 
 # ===----------------------------------------------------------------------=== #
-# fft / ifft on a complex, power-of-2-length array
+# fft / ifft: power-of-2 length (direct radix-2) vs. any other length
+# (Bluestein's algorithm) - both are exact, no padding either way.
 # ===----------------------------------------------------------------------=== #
 
 
 def fft_ifft_example() raises:
     print("=" * 80)
-    print("FFT / IFFT: complex input, power-of-2 length")
+    print("FFT / IFFT: complex input, power-of-2 length (radix-2)")
     print("=" * 80)
 
     var arr = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](8))
@@ -58,13 +59,22 @@ def fft_ifft_example() raises:
     print("ifft(fft(arr)) - recovers the input, up to floating-point error:")
     print(time)
 
-    # A length that is not a power of 2 raises.
-    var bad = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](5))
-    try:
-        _ = fft(bad)
-    except e:
-        print("fft on a length-5 array raises:")
-        print(" ", e)
+    print()
+    print("=" * 80)
+    print("FFT / IFFT: complex input, length 5 (Bluestein, not a power of 2)")
+    print("=" * 80)
+
+    var arr5 = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](5))
+    print("Input (5 complex samples):")
+    print(arr5)
+
+    var freq5 = fft(arr5)
+    print("fft(arr5) - computed exactly at length 5, no padding:")
+    print(freq5)
+
+    var time5 = ifft(freq5)
+    print("ifft(fft(arr5)) - recovers the input:")
+    print(time5)
 
 
 # ===----------------------------------------------------------------------=== #
@@ -75,7 +85,7 @@ def fft_ifft_example() raises:
 def fftn_example() raises:
     print()
     print("=" * 80)
-    print("FFTN / IFFTN / FFT2 / IFFT2: 2-D input, power-of-2 shape (4, 4)")
+    print("FFTN / IFFTN / FFT2 / IFFT2: 2-D input, shape (4, 4)")
     print("=" * 80)
 
     var arr = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](16)).reshape(
@@ -114,19 +124,19 @@ def fftn_example() raises:
 def rfft_irfft_example() raises:
     print()
     print("=" * 80)
-    print("RFFT / IRFFT: real input, any length (zero-padded internally)")
+    print("RFFT / IRFFT: real input, any length (no padding)")
     print("=" * 80)
 
     var x = nm.linspace[f64](0.0, 1.0, 6)  # length 6, not a power of 2
-    print("Input (6 real samples), zero-padded to 8 internally:")
+    print("Input (6 real samples):")
     print(x)
 
-    var freqs = rfft(x)  # returns 8 // 2 + 1 = 5 bins
-    print("rfft(x) -> 5 non-redundant bins:")
+    var freqs = rfft(x)  # returns 6 // 2 + 1 = 4 bins, at the exact length
+    print("rfft(x) -> 4 non-redundant bins (no padding to length 8):")
     print(freqs)
 
-    var x_rec = irfft(freqs, 8)
-    print("irfft(freqs, n=8) -> reconstructs the padded 8-length signal:")
+    var x_rec = irfft(freqs, 6)
+    print("irfft(freqs, n=6) -> reconstructs the original length-6 signal:")
     print(x_rec)
 
 
