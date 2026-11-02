@@ -49,7 +49,8 @@ Numerical integration with adaptive algorithms:
 - **`LinearInterpolator`** / **`interp1d`**: Linear interpolation, callable object and functional interface
 - **`CubicSpline`**: Natural cubic spline interpolator (`scipy.interpolate.CubicSpline`-compatible)
 - **`Akima1DInterpolator`**: Akima piecewise cubic interpolator (`scipy.interpolate.Akima1DInterpolator`-compatible)
-- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`
+- **`PchipInterpolator`** / **`pchip_interpolate`**: Shape-preserving piecewise cubic Hermite interpolator (`scipy.interpolate.PchipInterpolator`-compatible), callable object and functional interface
+- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`, `"pchip"`
 - Out-of-bounds control via `bounds_error` / `fill_value`
 - Compatible with NuMojo arrays
 
@@ -236,7 +237,7 @@ def main() raises:
 
 ### Interpolation
 ```mojo
-from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
+from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator, PchipInterpolator
 import numojo as nm
 
 def main() raises:
@@ -254,6 +255,10 @@ def main() raises:
     # Akima
     var ak = Akima1DInterpolator(x, y)
     print(ak(Scalar[nm.f64](3.7)))
+
+    # PCHIP (shape-preserving: won't overshoot monotonic data)
+    var pc = PchipInterpolator(x, y)
+    print(pc(Scalar[nm.f64](3.7)))
 ```
 
 ### FFT

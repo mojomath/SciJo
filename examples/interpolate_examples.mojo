@@ -1,5 +1,5 @@
 """
-A tour of `scijo.interpolate`: linear, cubic-spline and Akima 1-D
+A tour of `scijo.interpolate`: linear, cubic-spline, Akima, and PCHIP 1-D
 interpolation, both as callable objects and via the functional `interp`.
 
 Run with (from the repository root, after `pixi run package`):
@@ -15,6 +15,8 @@ from scijo.interpolate import (
     LinearInterpolator,
     CubicSpline,
     Akima1DInterpolator,
+    PchipInterpolator,
+    pchip_interpolate,
     interp,
 )
 from scijo.prelude import *
@@ -24,6 +26,7 @@ def main() raises:
     linear_interpolation()
     bounds_behavior()
     cubic_and_akima()
+    pchip_example()
     functional_interp()
 
 
@@ -107,6 +110,34 @@ def cubic_and_akima() raises:
 
 
 # ===----------------------------------------------------------------------=== #
+# PCHIP: shape-preserving piecewise cubic Hermite interpolation
+# ===----------------------------------------------------------------------=== #
+
+
+def pchip_example() raises:
+    print()
+    print("=" * 80)
+    print("PCHIP: shape-preserving piecewise cubic Hermite interpolation")
+    print("=" * 80)
+
+    # Monotonic step-like data: PCHIP won't overshoot between knots (unlike
+    # a natural cubic spline, which can introduce a dip/bump the data never
+    # had).
+    var x = nm.array[f64]([0.0, 1.0, 2.0, 3.0, 4.0], [5])
+    var y = nm.array[f64]([0.0, 0.0, 0.0, 10.0, 10.0], [5])
+
+    var pc = PchipInterpolator(x, y)
+    print("PchipInterpolator at [0 .. 4]:")
+    print(pc(nm.linspace[f64](0.0, 4.0, 9)))
+
+    # pchip_interpolate is the one-shot functional form, equivalent to
+    # PchipInterpolator(x, y)(xi).
+    var direct = pchip_interpolate(x, y, nm.linspace[f64](0.0, 4.0, 9))
+    print("pchip_interpolate (same result, no reusable object):")
+    print(direct)
+
+
+# ===----------------------------------------------------------------------=== #
 # Functional interp()
 # ===----------------------------------------------------------------------=== #
 
@@ -136,6 +167,9 @@ def functional_interp() raises:
 
     var yq_akima = interp[f64, type="akima"](xq, x, y)
     print("interp, akima:", yq_akima)
+
+    var yq_pchip = interp[f64, type="pchip"](xq, x, y)
+    print("interp, pchip:", yq_pchip)
 
     # "extrapolate" is only supported for type="linear".
     try:

@@ -30,6 +30,8 @@ from scijo.interpolate import (
     interp,
     interp1d,
     LinearInterpolator,
+    pchip_interpolate,
+    PchipInterpolator,
 )
 
 
@@ -957,6 +959,164 @@ def test_akima_sparse_knots() raises:
             atol=2e-2,
             msg="Akima sparse knots should match SciPy",
         )
+
+
+def test_pchip_interpolator_struct() raises:
+    """Test PchipInterpolator callable struct against scipy.interpolate.PchipInterpolator.
+    """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping PchipInterpolator struct test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+
+    var pc = PchipInterpolator(x, y)
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_pc = scipy_interpolate.PchipInterpolator(py_x, py_y)
+
+    # Test array call
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+    var yi = pc(xi)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_yi = py_pc(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=2e-2,
+            msg="PchipInterpolator array call should be close to SciPy",
+        )
+
+    # Test scalar call
+    var xi_s = Scalar[nm.f64](3.7)
+    var yi_s = pc(xi_s)
+    var py_yi_s = Float64(py=py_pc(3.7))
+    assert_almost_equal(
+        yi_s,
+        py_yi_s,
+        atol=2e-2,
+        msg="PchipInterpolator scalar call should be close to SciPy",
+    )
+
+    # Test boundary clamping
+    assert_almost_equal(
+        pc(Scalar[nm.f64](0.0)),
+        sin(0.0),
+        atol=1e-12,
+        msg="PchipInterpolator at left boundary",
+    )
+    assert_almost_equal(
+        pc(Scalar[nm.f64](10.0)),
+        sin(10.0),
+        atol=1e-12,
+        msg="PchipInterpolator at right boundary",
+    )
+
+
+def test_pchip_functional_interface() raises:
+    """Test pchip_interpolate functional interface against SciPy."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping pchip functional interface test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+    var yi = pchip_interpolate(x, y, xi)
+    var yi_via_interp = interp[nm.f64, type="pchip"](xi, x, y)
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_yi = scipy_interpolate.pchip_interpolate(py_x, py_y, py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=2e-2,
+            msg="pchip_interpolate should be close to SciPy",
+        )
+        assert_almost_equal(
+            yi_via_interp.item(i),
+            yi.item(i),
+            atol=1e-12,
+            msg="interp[type='pchip'] should match pchip_interpolate exactly",
+        )
+
+
+def test_pchip_monotone_data_stays_monotone() raises:
+    """PCHIP's defining property: monotonic data stays monotonic between
+    knots, unlike a cubic spline, which can overshoot and introduce a
+    local extremum that isn't in the data."""
+    var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0], [5])
+    var y = nm.array[nm.f64]([0.0, 0.0, 0.0, 10.0, 10.0], [5])
+    var pc = PchipInterpolator(x, y)
+
+    var xi = nm.linspace[nm.f64](0.0, 4.0, 81)
+    var yi = pc(xi)
+
+    var prev = yi.item(0)
+    for i in range(1, yi.size):
+        var cur = yi.item(i)
+        assert_true(
+            cur >= prev - 1e-10,
+            "PCHIP interpolant decreased between knots of non-decreasing"
+            " data at index "
+            + String(i)
+            + ": "
+            + String(cur)
+            + " < "
+            + String(prev),
+        )
+        prev = cur
+
+
+def test_pchip_linear_data_reproduces_line() raises:
+    """PCHIP on perfectly linear data should reproduce the line exactly."""
+    var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0], [5])
+    var y = nm.array[nm.f64]([1.0, 3.0, 5.0, 7.0, 9.0], [5])  # y = 2x + 1
+    var pc = PchipInterpolator(x, y)
+
+    var xi = nm.linspace[nm.f64](0.0, 4.0, 17)
+    var yi = pc(xi)
+    for i in range(yi.size):
+        var expected = 2.0 * xi.item(i) + 1.0
+        assert_almost_equal(
+            yi.item(i),
+            expected,
+            atol=1e-10,
+            msg="PCHIP on linear data should reproduce the line exactly",
+        )
+
+
+def test_pchip_n2_linear() raises:
+    """PchipInterpolator with exactly 2 points is just the connecting line."""
+    var x = nm.array[nm.f64]([0.0, 2.0], [2])
+    var y = nm.array[nm.f64]([1.0, 5.0], [2])
+    var pc = PchipInterpolator(x, y)
+
+    assert_almost_equal(pc(Scalar[nm.f64](1.0)), 3.0, atol=1e-10)
+    assert_almost_equal(pc(Scalar[nm.f64](0.5)), 2.0, atol=1e-10)
 
 
 def main() raises:
