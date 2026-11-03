@@ -74,11 +74,10 @@ Access fundamental physical constants from CODATA 2022:
 ### Linear Algebra (`scijo.linalg`)
 Linear algebra, built on NuMojo's linalg primitives:
 - **Decompositions**: `lu` (pivoted, `A == P @ L @ U`), `qr` (reduced, Householder), `cholesky` (lower/upper)
-- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
+- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `eig`/`eigvals` (general non-symmetric, via complex-arithmetic shifted QR), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
 - **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv` (SVD-based, rank-deficient OK), `lstsq` — all accept 1-D or 2-D right-hand sides
 - **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`2`/`inf`), `det`, `trace`
 - Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
-- The general (non-symmetric) eigenvalue problem (`eig`/`eigvals`, possibly complex eigenvalues) is not yet available
 
 ### Optimization (`scijo.optimize`)
 Scalar and multi-dimensional root-finding, and scalar and multi-dimensional
@@ -436,7 +435,6 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 
 ### Near Term
 - An analytic-gradient overload for `scijo.optimize.minimize`'s BFGS/CG methods (finite differences only today)
-- The general (non-symmetric) eigenvalue problem for `scijo.linalg.eig`/`eigvals`, where eigenvalues may be complex
 
 ### Future
 - **Optimization**: Curve fitting
