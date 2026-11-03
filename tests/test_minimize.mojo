@@ -127,7 +127,7 @@ def test_minimize_unsupported_method_raises() raises:
     var x0 = nm.fromstring[sj.f64]("[1]")
     var raised = False
     try:
-        _ = minimize[sj.f64, f, method="Powell"](x0)
+        _ = minimize[sj.f64, f, method="Nedler-Mead-Typo"](x0)
     except:
         raised = True
     assert_true(raised, "Should raise error for an unsupported method")
@@ -228,6 +228,155 @@ def test_minimize_bfgs_args_free_overload() raises:
 
     var x0 = nm.fromstring[sj.f64]("[2, -2]")
     var result = minimize[sj.f64, scaled_sphere, method="BFGS"](x0)
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 0.0, atol=1e-3)
+    assert_almost_equal(result.x.item(1), 0.0, atol=1e-3)
+
+
+def test_minimize_powell_quadratic_bowl() raises:
+    """F(x, y) = (x - 3)^2 + (y + 1)^2, minimum at (3, -1)."""
+
+    def f[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = x.item(0) - 3.0
+        var b = x.item(1) + 1.0
+        return a * a + b * b
+
+    var x0 = nm.fromstring[sj.f64]("[0, 0]")
+    var result = minimize[sj.f64, f, method="Powell"](x0)
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 3.0, atol=1e-3)
+    assert_almost_equal(result.x.item(1), -1.0, atol=1e-3)
+    assert_almost_equal(result.fun, 0.0, atol=1e-5)
+    assert_equal(result.method, "Powell")
+
+
+def test_minimize_powell_rosenbrock() raises:
+    """Classic Rosenbrock banana function, minimum at (1, 1)."""
+
+    def rosenbrock[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = 1.0 - x.item(0)
+        var b = x.item(1) - x.item(0) * x.item(0)
+        return a * a + 100.0 * b * b
+
+    var x0 = nm.fromstring[sj.f64]("[-1.2, 1.0]")
+    var result = minimize[sj.f64, rosenbrock, method="Powell"](x0, maxiter=500)
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 1.0, atol=1e-2)
+    assert_almost_equal(result.x.item(1), 1.0, atol=1e-2)
+
+
+def test_minimize_powell_with_bounds() raises:
+    """The unconstrained minimum (3, -1) lies outside [0, 2] x [-5, 5];
+    the bounded minimizer should instead land on the x=2 boundary.
+    """
+
+    def f[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = x.item(0) - 3.0
+        var b = x.item(1) + 1.0
+        return a * a + b * b
+
+    var x0 = nm.fromstring[sj.f64]("[0, 0]")
+    var lo = nm.fromstring[sj.f64]("[0, -5]")
+    var hi = nm.fromstring[sj.f64]("[2, 5]")
+    var result = minimize[sj.f64, f, method="Powell"](x0, bounds=(lo^, hi^))
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 2.0, atol=1e-2)
+    assert_almost_equal(result.x.item(1), -1.0, atol=1e-2)
+
+
+def test_minimize_lbfgsb_quadratic_bowl() raises:
+    """F(x, y) = (x - 3)^2 + (y + 1)^2, minimum at (3, -1)."""
+
+    def f[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = x.item(0) - 3.0
+        var b = x.item(1) + 1.0
+        return a * a + b * b
+
+    var x0 = nm.fromstring[sj.f64]("[0, 0]")
+    var result = minimize[sj.f64, f, method="L-BFGS-B"](x0)
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 3.0, atol=1e-3)
+    assert_almost_equal(result.x.item(1), -1.0, atol=1e-3)
+    assert_almost_equal(result.fun, 0.0, atol=1e-5)
+    assert_equal(result.method, "L-BFGS-B")
+
+
+def test_minimize_lbfgsb_rosenbrock() raises:
+    """Classic Rosenbrock banana function, minimum at (1, 1)."""
+
+    def rosenbrock[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = 1.0 - x.item(0)
+        var b = x.item(1) - x.item(0) * x.item(0)
+        return a * a + 100.0 * b * b
+
+    var x0 = nm.fromstring[sj.f64]("[-1.2, 1.0]")
+    var result = minimize[sj.f64, rosenbrock, method="L-BFGS-B"](
+        x0, maxiter=2000
+    )
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 1.0, atol=1e-2)
+    assert_almost_equal(result.x.item(1), 1.0, atol=1e-2)
+
+
+def test_minimize_lbfgsb_with_bounds() raises:
+    """The unconstrained minimum (3, -1) lies outside [0, 2] x [-5, 5];
+    the bounded minimizer should instead land on the x=2 boundary.
+    """
+
+    def f[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = x.item(0) - 3.0
+        var b = x.item(1) + 1.0
+        return a * a + b * b
+
+    var x0 = nm.fromstring[sj.f64]("[0, 0]")
+    var lo = nm.fromstring[sj.f64]("[0, -5]")
+    var hi = nm.fromstring[sj.f64]("[2, 5]")
+    var result = minimize[sj.f64, f, method="L-BFGS-B"](x0, bounds=(lo^, hi^))
+    assert_equal(result.success, True)
+    assert_almost_equal(result.x.item(0), 2.0, atol=1e-2)
+    assert_almost_equal(result.x.item(1), -1.0, atol=1e-2)
+
+
+def test_minimize_powell_with_args() raises:
+    """F(x) = a * ||x||^2, with `a` threaded through `args`."""
+
+    def scaled_sphere[
+        dtype: DType
+    ](
+        x: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> Scalar[dtype]:
+        var a = args.value()[0]
+        return a * (x.item(0) * x.item(0) + x.item(1) * x.item(1))
+
+    var x0 = nm.fromstring[sj.f64]("[1, 1]")
+    var arglist: List[Scalar[sj.f64]] = [2.0]
+    var result = minimize[sj.f64, scaled_sphere, method="Powell"](
+        x0, args=arglist^
+    )
     assert_equal(result.success, True)
     assert_almost_equal(result.x.item(0), 0.0, atol=1e-3)
     assert_almost_equal(result.x.item(1), 0.0, atol=1e-3)

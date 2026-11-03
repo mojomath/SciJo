@@ -19,7 +19,7 @@ Available Functions
 - `brent`             — Brent root-finding method.
 - `root`              — Find a root of a vector-valued function (multivariate Newton).
 - `minimize_scalar`   — Minimize a scalar function.
-- `minimize`          — Minimize a scalar-valued function of several variables (Nelder-Mead).
+- `minimize`          — Minimize a scalar-valued function of several variables (Nelder-Mead, BFGS, CG, Powell, L-BFGS-B).
 - `least_squares`     — Nonlinear least squares (Levenberg-Marquardt).
 - `curve_fit`         — Fit a parametric model to `(xdata, ydata)` data.
 
