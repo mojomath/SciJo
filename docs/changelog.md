@@ -24,6 +24,12 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.fft.rfftn`/`irfftn`** and **`rfft2`/`irfft2`**, N-dimensional
+  real-input FFT: the real-FFT trick (`rfft`) is applied to the last
+  requested axis while the input is still real, matching NumPy's own
+  `rfftn` algorithm; every other requested axis uses the ordinary complex
+  `fft`/`ifft`. `irfftn`'s `s` parameter only controls the last axis's
+  output length, unlike NumPy's per-axis `s`.
 
 ## [v0.4.0] - 2026-10-26
 ### Added

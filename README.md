@@ -59,6 +59,8 @@ Fast Fourier Transform operations:
 - **`fftn`** / **`ifftn`**: N-dimensional forward/inverse FFT over one or more axes
 - **`fft2`** / **`ifft2`**: 2-dimensional forward/inverse FFT (convenience wrapper over `fftn`/`ifftn`)
 - **`rfft`** / **`irfft`**: Real-input FFT and its inverse
+- **`rfftn`** / **`irfftn`**: N-dimensional real-input FFT over one or more axes
+- **`rfft2`** / **`irfft2`**: 2-dimensional real-input FFT (convenience wrapper over `rfftn`/`irfftn`)
 - Supports complex arrays (power-of-2 sizes per transformed axis)
 - Compatible with NumPy's FFT conventions
 

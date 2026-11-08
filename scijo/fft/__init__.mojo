@@ -17,6 +17,10 @@ Available Functions
 - `ifft2`        — Compute the 2-dimensional inverse FFT (last two axes by default).
 - `rfft`         — Compute the FFT of a real array, returning N//2+1 bins.
 - `irfft`        — Compute the inverse FFT returning a real array.
+- `rfftn`        — Compute the N-dimensional real-input forward FFT over one or more axes.
+- `irfftn`       — Compute the N-dimensional inverse real-input FFT over one or more axes.
+- `rfft2`        — Compute the 2-dimensional real-input forward FFT (last two axes by default).
+- `irfft2`       — Compute the 2-dimensional inverse real-input FFT (last two axes by default).
 - `fftfreq`      — Frequency bin centres for fft output.
 - `rfftfreq`     — Frequency bin centres for rfft output (non-negative only).
 - `fftshift`     — Shift zero-frequency component to the centre of the array.
@@ -58,4 +62,10 @@ from .helpers import (
     ifftshift,
     next_fast_len,
     rfftfreq,
+)
+from .rfftn import (
+    irfft2,
+    irfftn,
+    rfft2,
+    rfftn,
 )

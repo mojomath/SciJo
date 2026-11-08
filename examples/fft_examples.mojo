@@ -1,6 +1,7 @@
 """
 A tour of `scijo.fft`: forward/inverse FFT on complex arrays, real FFT
-(`rfft`/`irfft`), and the frequency-domain helper functions.
+(`rfft`/`irfft`), N-dimensional real FFT (`rfftn`/`irfftn`/`rfft2`/
+`irfft2`), and the frequency-domain helper functions.
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -20,6 +21,10 @@ from scijo.fft import (
     ifft2,
     rfft,
     irfft,
+    rfftn,
+    irfftn,
+    rfft2,
+    irfft2,
     fftfreq,
     rfftfreq,
     fftshift,
@@ -33,6 +38,7 @@ def main() raises:
     fft_ifft_example()
     fftn_example()
     rfft_irfft_example()
+    rfftn_irfftn_example()
     frequency_helpers()
 
 
@@ -128,6 +134,41 @@ def rfft_irfft_example() raises:
     var x_rec = irfft(freqs, 8)
     print("irfft(freqs, n=8) -> reconstructs the padded 8-length signal:")
     print(x_rec)
+
+
+# ===----------------------------------------------------------------------=== #
+# rfftn / irfftn / rfft2 / irfft2 on real N-D input
+# ===----------------------------------------------------------------------=== #
+
+
+def rfftn_irfftn_example() raises:
+    print()
+    print("=" * 80)
+    print("RFFTN / IRFFTN / RFFT2 / IRFFT2: real N-D input, shape (4, 4)")
+    print("=" * 80)
+
+    var arr = nm.linspace[f64](0.0, 15.0, 16).reshape(Shape(4, 4))
+    print("Input (4x4 real samples):")
+    print(arr)
+
+    var freq = rfftn(arr)  # transform over every axis (equivalent to rfft2)
+    print("rfftn(arr) -> shape (4, 3):")
+    print(freq)
+
+    var freq2 = rfft2(arr)  # convenience wrapper for the last two axes
+    print("rfft2(arr) - same result via the rfft2 wrapper:")
+    print(freq2)
+
+    var time = irfftn[f64](freq, s=4)
+    print("irfftn(rfftn(arr), s=4) - recovers the input:")
+    print(time)
+
+    var time2 = irfft2[f64](freq2, s=4)
+    print(
+        "irfft2(rfft2(arr), s=4) - same roundtrip via the rfft2/irfft2"
+        " wrappers:"
+    )
+    print(time2)
 
 
 # ===----------------------------------------------------------------------=== #
