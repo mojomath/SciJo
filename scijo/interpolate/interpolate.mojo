@@ -4,13 +4,14 @@
 # ===----------------------------------------------------------------------=== #
 """Linear Interpolation (`scijo.interpolate.interpolate`)
 =========================================================
-Linear interpolation utilities for 1-D data. Provides a reusable
-`LinearInterpolator` and a functional `interp1d` interface.
+Interpolation utilities for 1-D and N-D data. Provides reusable
+`LinearInterpolator`/`interp1d` for 1-D data, and `RegularGridInterpolator`/
+`interpn` for data sampled on a regular (rectilinear) grid in N dimensions.
 
 Examples
 --------
     ```mojo
-    from scijo.interpolate import interp1d
+    from scijo.interpolate import interp1d, RegularGridInterpolator
 
     var x = nm.arange[f64](0.0, 1.0, 0.5)
     var y = nm.array[f64]([0.0, 0.25, 1.0])
@@ -19,6 +20,11 @@ Examples
     var yq2 = interp(nm.array[f64]([0.1, 0.5, 0.9]))
     ```
 """
+
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
+from std.utils.numerics import nan
 
 # ===----------------------------------------------------------------------=== #
 # External
@@ -948,3 +954,393 @@ def _interp1d_akima_interpolate[
     """
     var ak = Akima1DInterpolator[dtype](x, y)
     return ak(xi)
+
+
+# ===----------------------------------------------------------------------=== #
+# RegularGridInterpolator
+# ===----------------------------------------------------------------------=== #
+
+
+def _rgi_grid_interval[
+    dtype: DType
+](x: NDArray[dtype], value: Scalar[dtype]) raises -> Tuple[Int, Scalar[dtype]]:
+    """Locates the grid cell and fractional offset for one axis.
+
+    Example: idx, t = _rgi_grid_interval(x, value)
+
+    Out-of-bounds values resolve to the first or last interval, allowing the
+    caller to extrapolate. Both ascending and descending axes are supported.
+    A singleton axis resolves to `(0, 0)`.
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        x: Strictly monotonic 1-D coordinate array for one axis.
+        value: The coordinate value to locate.
+
+    Returns:
+        A tuple `(idx, t)` where `idx` is the lower grid index and `t` is
+        the fractional position between `x[idx]` and `x[idx + 1]`.
+    """
+    var n = x.size
+    if n == 1:
+        return (0, 0.0)
+
+    var ascending = x.unsafe_load(n - 1) > x.unsafe_load(0)
+    var lo = 0
+    var hi = n - 1
+    while hi - lo > 1:
+        var mid = (lo + hi) // 2
+        if ascending:
+            if value < x.unsafe_load(mid):
+                hi = mid
+            else:
+                lo = mid
+        else:
+            if value > x.unsafe_load(mid):
+                hi = mid
+            else:
+                lo = mid
+
+    var x0 = x.unsafe_load(lo)
+    var x1 = x.unsafe_load(lo + 1)
+    var t: Scalar[dtype] = 0.0
+    if x1 != x0:
+        t = (value - x0) / (x1 - x0)
+    return (lo, t)
+
+
+def _rgi_in_bounds[
+    dtype: DType
+](
+    points: List[NDArray[dtype]], xi: List[Scalar[dtype]], ndim: Int
+) raises -> Bool:
+    """Checks whether a query point lies within the grid's domain.
+
+    Example: ok = _rgi_in_bounds(points, xi, ndim)
+    """
+    for d in range(ndim):
+        var first = points[d].unsafe_load(0)
+        var last = points[d].unsafe_load(points[d].size - 1)
+        var x_min = first
+        var x_max = last
+        if first > last:
+            x_min = last
+            x_max = first
+        if xi[d] < x_min or xi[d] > x_max:
+            return False
+    return True
+
+
+def _rgi_linear_eval[
+    dtype: DType
+](
+    points: List[NDArray[dtype]],
+    values: NDArray[dtype],
+    xi: List[Scalar[dtype]],
+    ndim: Int,
+) raises -> Scalar[dtype]:
+    """Multilinear interpolation at one query point.
+
+    Example: yq = _rgi_linear_eval(points, values, xi, ndim)
+
+    Locates the hyper-rectangular grid cell containing `xi` along each axis,
+    then blends the `2^ndim` surrounding grid values by the product of each
+    axis's fractional weight. Out-of-bounds coordinates extrapolate through
+    the nearest boundary interval. Singleton axes contribute their sole value.
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        points: Sorted 1-D coordinate arrays, one per axis.
+        values: The grid of function values, one dimension per axis in
+            `points`, in the same order.
+        xi: The query point coordinates, length `ndim`.
+        ndim: The number of grid axes.
+
+    Returns:
+        The interpolated value at `xi`.
+    """
+    var idx = List[Int]()
+    var t = List[Scalar[dtype]]()
+    for d in range(ndim):
+        var pair = _rgi_grid_interval(points[d], xi[d])
+        idx.append(pair[0])
+        t.append(pair[1])
+
+    var result: Scalar[dtype] = 0.0
+    var n_corners = 1 << ndim
+    for mask in range(n_corners):
+        var weight: Scalar[dtype] = 1.0
+        var flat: Int = 0
+        for d in range(ndim):
+            var bit = (mask >> d) & 1
+            if points[d].size == 1:
+                if bit == 1:
+                    weight = 0.0
+                continue
+            if bit == 1:
+                weight *= t[d]
+                flat += (idx[d] + 1) * values.strides[d]
+            else:
+                weight *= 1.0 - t[d]
+                flat += idx[d] * values.strides[d]
+        result += weight * values.unsafe_load(flat)
+
+    return result
+
+
+def _rgi_nearest_eval[
+    dtype: DType
+](
+    points: List[NDArray[dtype]],
+    values: NDArray[dtype],
+    xi: List[Scalar[dtype]],
+    ndim: Int,
+) raises -> Scalar[dtype]:
+    """Nearest-grid-point lookup at one query point.
+
+    Example: yq = _rgi_nearest_eval(points, values, xi, ndim)
+    """
+    var flat: Int = 0
+    for d in range(ndim):
+        var pair = _rgi_grid_interval(points[d], xi[d])
+        var nearest = pair[0]
+        if pair[1] > 0.5:
+            nearest += 1
+        flat += nearest * values.strides[d]
+    return values.unsafe_load(flat)
+
+
+struct RegularGridInterpolator[dtype: DType = DType.float64](Copyable, Movable):
+    """A callable interpolator for data on a regular (rectilinear) grid.
+
+    Stores per-axis coordinate arrays and the grid of values sampled at
+    their outer product, and provides a callable interface that linearly
+    (or nearest-neighbor) interpolates at arbitrary points in N dimensions.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import RegularGridInterpolator
+        from scijo.prelude import *
+
+        var x = nm.arange[f64](0.0, 3.0, 1.0)
+        var y = nm.arange[f64](0.0, 3.0, 1.0)
+        var values = nm.zeros[f64](Shape(3, 3))
+        # values[i, j] = x[i] + y[j]
+        var points: List[nm.NDArray[f64]] = [x, y]
+        var rgi = RegularGridInterpolator[f64](points^, values)
+        var yq = rgi([Scalar[f64](0.5), Scalar[f64](1.5)])
+        ```
+    """
+
+    var points: List[NDArray[Self.dtype]]
+    """Sorted 1-D coordinate arrays, one per axis."""
+    var values: NDArray[Self.dtype]
+    """Grid of function values, one dimension per axis in `points`."""
+    var method: String
+    """Interpolation method: `"linear"` or `"nearest"`."""
+    var bounds_error: Bool
+    """If True, raise error when interpolating outside the grid domain."""
+    var fill_value: Optional[Scalar[Self.dtype]]
+    """Value for out-of-bounds points when bounds_error is False. If None,
+    out-of-bounds points are extrapolated."""
+    var ndim: Int
+    """The number of grid axes."""
+
+    def __init__(
+        out self,
+        points: List[NDArray[Self.dtype]],
+        values: NDArray[Self.dtype],
+        method: String = "linear",
+        bounds_error: Bool = True,
+        fill_value: Optional[Scalar[Self.dtype]] = nan[Self.dtype](),
+    ) raises:
+        """Initializes the regular grid interpolator.
+
+        Args:
+            points: Strictly ascending or descending 1-D coordinate arrays,
+                one per axis. Singleton axes are accepted.
+            values: The grid of function values. Must have `len(points)`
+                dimensions, with `values.shape[d] == points[d].size`.
+            method: Interpolation method, `"linear"` or `"nearest"`.
+            bounds_error: If True, raise error when interpolating outside
+                the grid domain. If False, use fill_value, or extrapolate if
+                fill_value is None.
+            fill_value: Value to use for points outside the grid domain
+                when bounds_error is False. Defaults to NaN. If None,
+                extrapolate through the nearest boundary interval.
+
+        Raises:
+            Error: If method is unsupported, if points/values are
+                inconsistent in shape, or if an axis is not strictly
+                monotonic.
+
+        Examples:
+            `RegularGridInterpolator(points, values, method="nearest")`
+        """
+        comptime assert (
+            Self.dtype.is_floating_point()
+        ), "RegularGridInterpolator requires a floating-point dtype"
+        if method != "linear" and method != "nearest":
+            raise Error(
+                "method must be 'linear' or 'nearest', got '" + method + "'"
+            )
+
+        var ndim = len(points)
+        if ndim == 0:
+            raise Error("points must contain at least one axis")
+        if values.ndim != ndim:
+            raise Error("values must have one dimension per entry in points")
+
+        for d in range(ndim):
+            if points[d].size == 0:
+                raise Error("each axis in points must contain at least 1 point")
+            if points[d].size != values.shape[d]:
+                raise Error(
+                    "points["
+                    + String(d)
+                    + "] length must match values.shape["
+                    + String(d)
+                    + "]"
+                )
+            if points[d].size > 1:
+                var ascending = points[d].item(1) > points[d].item(0)
+                if points[d].item(1) == points[d].item(0):
+                    raise Error(
+                        "each axis in points must be strictly monotonic"
+                    )
+                for i in range(2, points[d].size):
+                    var previous = points[d].item(i - 1)
+                    var current = points[d].item(i)
+                    if (ascending and current <= previous) or (
+                        not ascending and current >= previous
+                    ):
+                        raise Error(
+                            "each axis in points must be strictly monotonic"
+                        )
+
+        self.points = points.copy()
+        self.values = values.copy()
+        self.method = method
+        self.bounds_error = bounds_error
+        self.fill_value = fill_value
+        self.ndim = ndim
+
+    def __call__(
+        self, xi: List[Scalar[Self.dtype]]
+    ) raises -> Scalar[Self.dtype]:
+        """Interpolates at a single N-dimensional point.
+
+        Example: yq = rgi([Scalar[dtype](0.5), Scalar[dtype](1.5)])
+
+        Args:
+            xi: The query point coordinates, one per axis.
+
+        Returns:
+            The interpolated value at xi.
+
+        Raises:
+            Error: If xi's length doesn't match ndim, or if bounds_error is
+                True and xi is outside the grid domain.
+        """
+        if len(xi) != self.ndim:
+            raise Error("xi must have length ndim")
+
+        if not _rgi_in_bounds(self.points, xi, self.ndim):
+            if self.bounds_error:
+                raise Error("Interpolation point is outside the grid domain")
+            if self.fill_value:
+                return self.fill_value.value()
+
+        if self.method == "nearest":
+            return _rgi_nearest_eval(self.points, self.values, xi, self.ndim)
+        return _rgi_linear_eval(self.points, self.values, xi, self.ndim)
+
+    def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
+        """Interpolates at one or more N-dimensional points.
+
+        Example: yq = rgi(xi_array)  # xi_array has shape (..., ndim)
+
+        Args:
+            xi: Query points with shape `(..., ndim)`.
+
+        Returns:
+            Interpolated values with shape `xi.shape[:-1]`. A single query
+            with shape `(ndim,)` returns shape `(1,)`.
+
+        Raises:
+            Error: If xi's last dimension doesn't match `ndim`, or if
+                bounds_error is True and any row of xi is outside the grid
+                domain.
+        """
+        if xi.ndim == 0 or xi.shape[xi.ndim - 1] != self.ndim:
+            raise Error("xi must have shape (..., ndim)")
+
+        var output_shape = List[Int]()
+        for d in range(xi.ndim - 1):
+            output_shape.append(xi.shape[d])
+        if len(output_shape) == 0:
+            output_shape.append(1)
+
+        var query_count = xi.size // self.ndim
+        var result = NDArray[Self.dtype](Shape(output_shape))
+        for i in range(query_count):
+            var point = List[Scalar[Self.dtype]]()
+            for d in range(self.ndim):
+                point.append(xi.item(i * self.ndim + d))
+            result.unsafe_store(i, self(point))
+
+        return result^
+
+
+def interpn[
+    dtype: DType
+](
+    points: List[NDArray[dtype]],
+    values: NDArray[dtype],
+    xi: NDArray[dtype],
+    method: String = "linear",
+    bounds_error: Bool = True,
+    fill_value: Optional[Scalar[dtype]] = nan[dtype](),
+) raises -> NDArray[dtype]:
+    """Interpolates on a regular (rectilinear) grid in N dimensions.
+
+    Example: yq = interpn(points, values, xi, method="linear")
+
+    A one-shot functional interface, equivalent to constructing a
+    `RegularGridInterpolator` and calling it on `xi`.
+
+    Parameters:
+        dtype: The floating-point data type.
+
+    Args:
+        points: Sorted 1-D coordinate arrays, one per axis.
+        values: The grid of function values, one dimension per axis.
+        xi: Query points with shape `(..., ndim)`.
+        method: Interpolation method, `"linear"` or `"nearest"`.
+        bounds_error: If True, raise error when interpolating outside the
+            grid domain.
+        fill_value: Value to use for points outside the grid domain when
+            bounds_error is False. Defaults to NaN. If None, extrapolate
+            through the nearest boundary interval.
+
+    Returns:
+        Interpolated values with shape `xi.shape[:-1]`. A single query with
+        shape `(ndim,)` returns shape `(1,)`.
+
+    Raises:
+        Error: If method is unsupported, if points/values/xi are
+            inconsistent in shape, or if bounds_error is True and any
+            query point is outside the grid domain.
+    """
+    var rgi = RegularGridInterpolator[dtype](
+        points, values, method, bounds_error, fill_value
+    )
+    return rgi(xi)

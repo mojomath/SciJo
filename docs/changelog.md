@@ -24,6 +24,14 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.interpolate.RegularGridInterpolator`** and **`interpn`**, N-D
+  interpolation on a regular (rectilinear) grid:
+  - `method="linear"` (multilinear) or `"nearest"`.
+  - Supports ascending or descending axes, singleton axes, and batched
+    queries of arbitrary leading shape (`xi.shape == (..., ndim)`).
+  - Out-of-bounds control via `bounds_error`/`fill_value` (default `nan`);
+    `fill_value=None` extrapolates through the nearest boundary interval
+    instead of raising or filling.
 
 ## [v0.4.0] - 2026-10-26
 ### Added

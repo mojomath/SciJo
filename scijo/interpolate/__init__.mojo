@@ -10,11 +10,13 @@ array-based evaluation.
 
 Available Functions
 -------------------
-- `interp1d`              — Create a callable linear interpolator or interpolate directly.
-- `interp`                — Functional interpolation interface (linear, cubic, akima).
-- `LinearInterpolator`    — A reusable callable linear interpolation object.
-- `CubicSpline`           — A callable natural cubic spline interpolator.
-- `Akima1DInterpolator`   — A callable Akima piecewise cubic interpolator.
+- `interp1d`                  — Create a callable linear interpolator or interpolate directly.
+- `interp`                    — Functional interpolation interface (linear, cubic, akima).
+- `interpn`                   — Functional N-D interpolation on a regular grid.
+- `LinearInterpolator`        — A reusable callable linear interpolation object.
+- `CubicSpline`                — A callable natural cubic spline interpolator.
+- `Akima1DInterpolator`        — A callable Akima piecewise cubic interpolator.
+- `RegularGridInterpolator`    — A callable N-D interpolator for data on a regular grid.
 
 Examples
 --------
@@ -42,5 +44,7 @@ from .interpolate import (
     CubicSpline,
     interp,
     interp1d,
+    interpn,
     LinearInterpolator,
+    RegularGridInterpolator,
 )

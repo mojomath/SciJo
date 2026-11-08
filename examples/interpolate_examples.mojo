@@ -1,6 +1,8 @@
 """
 A tour of `scijo.interpolate`: linear, cubic-spline and Akima 1-D
-interpolation, both as callable objects and via the functional `interp`.
+interpolation, both as callable objects and via the functional `interp`,
+plus N-D interpolation on a regular grid via `RegularGridInterpolator`/
+`interpn`.
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -16,6 +18,8 @@ from scijo.interpolate import (
     CubicSpline,
     Akima1DInterpolator,
     interp,
+    interpn,
+    RegularGridInterpolator,
 )
 from scijo.prelude import *
 
@@ -25,6 +29,7 @@ def main() raises:
     bounds_behavior()
     cubic_and_akima()
     functional_interp()
+    regular_grid_interpolation()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -143,3 +148,69 @@ def functional_interp() raises:
     except e:
         print("cubic + extrapolate raises:")
         print(" ", e)
+
+
+# ===----------------------------------------------------------------------=== #
+# RegularGridInterpolator / interpn
+# ===----------------------------------------------------------------------=== #
+
+
+def regular_grid_interpolation() raises:
+    print()
+    print("=" * 80)
+    print("REGULAR GRID INTERPOLATION: RegularGridInterpolator / interpn")
+    print("=" * 80)
+
+    # f(x, y) = x + 2*y, sampled on a 4x3 grid.
+    var x = nm.arange[f64](0.0, 4.0, 1.0)
+    var y = nm.arange[f64](0.0, 3.0, 1.0)
+    var values = nm.zeros[f64](Shape(4, 3))
+    for i in range(4):
+        for j in range(3):
+            values.store(i, j, val=x.item(i) + 2.0 * y.item(j))
+
+    var points: List[nm.NDArray[f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[f64](points, values)
+
+    var pt: List[Scalar[f64]] = [Scalar[f64](0.5), Scalar[f64](1.5)]
+    print("rgi([0.5, 1.5]) =", rgi(pt))  # exact: 0.5 + 2*1.5 = 3.5
+
+    var xi = nm.fromstring[f64]("[[0.5, 0.5], [2.5, 1.5]]")
+    print("rgi(batch) =", rgi(xi))
+
+    var rgi_nearest = RegularGridInterpolator[f64](
+        points, values, method="nearest"
+    )
+    var nearest_pt: List[Scalar[f64]] = [
+        Scalar[f64](0.9),
+        Scalar[f64](0.4),
+    ]
+    print("nearest([0.9, 0.4]) =", rgi_nearest(nearest_pt))
+
+    # Out-of-domain behavior: bounds_error (default), fill_value, or
+    # extrapolation when fill_value=None.
+    try:
+        _ = rgi([Scalar[f64](10.0), Scalar[f64](0.0)])
+    except e:
+        print("bounds_error=True on an out-of-domain point raises:")
+        print(" ", e)
+
+    var rgi_fill = RegularGridInterpolator[f64](
+        points, values, bounds_error=False, fill_value=-1.0
+    )
+    print(
+        "bounds_error=False, fill_value=-1.0 ->",
+        rgi_fill([Scalar[f64](10.0), Scalar[f64](0.0)]),
+    )
+
+    var rgi_extrapolate = RegularGridInterpolator[f64](
+        points, values, bounds_error=False, fill_value=None
+    )
+    print(
+        "bounds_error=False, fill_value=None ->",
+        rgi_extrapolate([Scalar[f64](4.0), Scalar[f64](1.0)]),
+    )
+
+    # One-shot functional interface.
+    var yq = interpn[f64](points, values, xi)
+    print("interpn(points, values, xi) =", yq)

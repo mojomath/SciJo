@@ -5,7 +5,7 @@ Tests for Interpolation Module.
 # ===----------------------------------------------------------------------=== #
 # Stdlib
 # ===----------------------------------------------------------------------=== #
-from std.math import sin
+from std.math import isnan, sin
 from std.python import (
     Python,
     PythonObject,
@@ -29,7 +29,9 @@ from scijo.interpolate import (
     CubicSpline,
     interp,
     interp1d,
+    interpn,
     LinearInterpolator,
+    RegularGridInterpolator,
 )
 
 
@@ -957,6 +959,405 @@ def test_akima_sparse_knots() raises:
             atol=2e-2,
             msg="Akima sparse knots should match SciPy",
         )
+
+
+def test_regular_grid_interpolator_2d_linear() raises:
+    """Bilinear interpolation on a 2-D grid: values[i, j] = x[i] + 2*y[j]."""
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0, 3.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 4))
+    for i in range(3):
+        for j in range(4):
+            values.store(i, j, val=x.item(i) + 2.0 * y.item(j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+
+    var pt: List[Scalar[nm.f64]] = [Scalar[nm.f64](0.5), Scalar[nm.f64](1.5)]
+    var result = rgi(pt)
+    assert_almost_equal(
+        result,
+        0.5 + 2.0 * 1.5,
+        atol=1e-10,
+        msg="Bilinear interpolation on an affine function should be exact",
+    )
+
+
+def test_regular_grid_interpolator_matches_scipy() raises:
+    """2-D RegularGridInterpolator (linear) vs. SciPy on a non-affine function.
+    """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping RegularGridInterpolator test")
+        return
+
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0, 3.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(4, 3))
+    for i in range(4):
+        for j in range(3):
+            values.store(
+                i, j, val=x.item(i) * x.item(i) + y.item(j) * y.item(j)
+            )
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+
+    var xi = nm.fromstring[nm.f64]("[[0.5, 0.5], [2.5, 1.5], [1.2, 0.3]]")
+    var result = rgi(xi)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0))
+    var py_y = np.array(Python.list(0.0, 1.0, 2.0))
+    var py_values = np.add.outer(py_x**2, py_y**2)
+    var py_rgi = scipy_interpolate.RegularGridInterpolator(
+        Python.tuple(py_x, py_y), py_values, method="linear"
+    )
+    var py_xi = np.array(
+        Python.list(
+            Python.list(0.5, 0.5),
+            Python.list(2.5, 1.5),
+            Python.list(1.2, 0.3),
+        )
+    )
+    var py_result = py_rgi(py_xi)
+
+    for i in range(result.size):
+        assert_almost_equal(
+            result.item(i),
+            Float64(py=py_result[i]),
+            atol=1e-10,
+            msg="RegularGridInterpolator should match SciPy for point "
+            + String(i),
+        )
+
+
+def test_regular_grid_interpolator_nearest() raises:
+    """Method="nearest" should snap to the closer grid point along each axis."""
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 2))
+    for i in range(3):
+        for j in range(2):
+            values.store(i, j, val=Float64(10 * i + j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values, method="nearest")
+
+    var pt: List[Scalar[nm.f64]] = [Scalar[nm.f64](0.9), Scalar[nm.f64](0.4)]
+    var result = rgi(pt)
+    assert_almost_equal(
+        result, 10.0, atol=1e-10, msg="Nearest should snap to (1, 0) = 10"
+    )
+
+
+def test_regular_grid_interpolator_bounds_error() raises:
+    """Bounds_error=True should raise for an out-of-domain query point."""
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 2))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+
+    var raised = False
+    try:
+        var pt: List[Scalar[nm.f64]] = [
+            Scalar[nm.f64](5.0),
+            Scalar[nm.f64](0.5),
+        ]
+        _ = rgi(pt)
+    except:
+        raised = True
+    assert_true(raised, msg="Out-of-domain point should raise")
+
+
+def test_regular_grid_interpolator_fill_value() raises:
+    """Bounds_error=False with fill_value set returns fill_value out of domain.
+    """
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 2))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](
+        points, values, bounds_error=False, fill_value=-999.0
+    )
+
+    var pt: List[Scalar[nm.f64]] = [Scalar[nm.f64](5.0), Scalar[nm.f64](0.5)]
+    var result = rgi(pt)
+    assert_almost_equal(
+        result,
+        -999.0,
+        atol=1e-10,
+        msg="Out-of-domain point should return fill_value",
+    )
+
+
+def test_regular_grid_interpolator_extrapolation_matches_scipy() raises:
+    """`fill_value=None` extrapolates through the boundary interval."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping RGI extrapolation test")
+        return
+
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 2))
+    for i in range(3):
+        for j in range(2):
+            values.store(i, j, val=x.item(i) + y.item(j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](
+        points, values, bounds_error=False, fill_value=None
+    )
+
+    var pt: List[Scalar[nm.f64]] = [Scalar[nm.f64](5.0), Scalar[nm.f64](0.5)]
+    var result = rgi(pt)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0))
+    var py_y = np.array(Python.list(0.0, 1.0))
+    var py_values = np.add.outer(py_x, py_y)
+    var py_rgi = scipy_interpolate.RegularGridInterpolator(
+        Python.tuple(py_x, py_y),
+        py_values,
+        bounds_error=False,
+        fill_value=None,
+    )
+    var py_result = Float64(py=py_rgi(Python.list(5.0, 0.5))[0])
+
+    assert_almost_equal(
+        result,
+        py_result,
+        atol=1e-10,
+        msg="RegularGridInterpolator extrapolation should match SciPy",
+    )
+
+
+def test_regular_grid_interpolator_default_fill_is_nan() raises:
+    """The default out-of-bounds fill matches SciPy's NaN default."""
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var points: List[nm.NDArray[nm.f64]] = [x^]
+    var rgi = RegularGridInterpolator[nm.f64](
+        points, values, bounds_error=False
+    )
+
+    var result = rgi([Scalar[nm.f64](2.0)])
+    assert_true(isnan(result), msg="Default out-of-bounds fill should be NaN")
+
+
+def test_regular_grid_interpolator_descending_matches_scipy() raises:
+    """Strictly descending grid axes are accepted and match SciPy."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping descending-grid test")
+        return
+
+    var x = nm.fromstring[nm.f64]("[3.0, 2.0, 0.0]")
+    var y = nm.fromstring[nm.f64]("[2.0, 1.0, -1.0]")
+    var values = nm.NDArray[nm.f64](nm.Shape(3, 3), order="F")
+    for i in range(3):
+        for j in range(3):
+            values.store(i, j, val=x.item(i) * x.item(i) + 2.0 * y.item(j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+    var xi = nm.fromstring[nm.f64]("[[2.5, 1.5], [1.0, 0.0]]")
+    var result = rgi(xi)
+
+    var py_x = np.array(Python.list(3.0, 2.0, 0.0))
+    var py_y = np.array(Python.list(2.0, 1.0, -1.0))
+    var py_values = np.add.outer(py_x**2, 2.0 * py_y)
+    var py_rgi = scipy_interpolate.RegularGridInterpolator(
+        Python.tuple(py_x, py_y), py_values
+    )
+    var py_xi = np.array(
+        Python.list(Python.list(2.5, 1.5), Python.list(1.0, 0.0))
+    )
+    var py_result = py_rgi(py_xi)
+
+    for i in range(result.size):
+        assert_almost_equal(
+            result.item(i),
+            Float64(py=py_result[i]),
+            atol=1e-10,
+            msg="Descending-grid interpolation should match SciPy",
+        )
+
+
+def test_regular_grid_interpolator_singleton_axis_matches_scipy() raises:
+    """Singleton axes remain constant during interpolation and extrapolation."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping singleton-axis test")
+        return
+
+    var x = nm.fromstring[nm.f64]("[1.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 2.0]")
+    var values = nm.fromstring[nm.f64]("[[10.0, 14.0]]")
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](
+        points, values, bounds_error=False, fill_value=None
+    )
+    var xi = nm.fromstring[nm.f64]("[[-5.0, 1.0], [5.0, 3.0]]")
+    var result = rgi(xi)
+
+    var py_x = np.array(Python.list(1.0))
+    var py_y = np.array(Python.list(0.0, 2.0))
+    var py_values = np.array(Python.list(Python.list(10.0, 14.0)))
+    var py_rgi = scipy_interpolate.RegularGridInterpolator(
+        Python.tuple(py_x, py_y),
+        py_values,
+        bounds_error=False,
+        fill_value=None,
+    )
+    var py_xi = np.array(
+        Python.list(Python.list(-5.0, 1.0), Python.list(5.0, 3.0))
+    )
+    var py_result = py_rgi(py_xi)
+
+    for i in range(result.size):
+        assert_almost_equal(
+            result.item(i),
+            Float64(py=py_result[i]),
+            atol=1e-10,
+            msg="Singleton-axis interpolation should match SciPy",
+        )
+
+
+def test_interpn_functional_interface() raises:
+    """`interpn` should match constructing and calling RegularGridInterpolator.
+    """
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 3))
+    for i in range(3):
+        for j in range(3):
+            values.store(i, j, val=x.item(i) * y.item(j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var xi = nm.fromstring[nm.f64]("[[0.5, 0.5], [1.5, 1.5]]")
+    var result = interpn[nm.f64](points, values, xi)
+
+    assert_almost_equal(result.item(0), 0.25, atol=1e-10, msg="interpn point 0")
+    assert_almost_equal(result.item(1), 2.25, atol=1e-10, msg="interpn point 1")
+
+
+def test_regular_grid_interpolator_query_shapes_match_scipy() raises:
+    """Query arrays shaped `(ndim,)` and `(..., ndim)` match SciPy."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
+    except:
+        print("SciPy not available, skipping RGI query-shape test")
+        return
+
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0, 2.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(3, 2))
+    for i in range(3):
+        for j in range(2):
+            values.store(i, j, val=x.item(i) + 2.0 * y.item(j))
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+
+    var single_xi = nm.fromstring[nm.f64]("[0.5, 0.25]")
+    var single_result = rgi(single_xi)
+    var batch_xi = nm.fromstring[nm.f64](
+        "[[[0.5, 0.25], [1.5, 0.75]], [[0.25, 0.5], [1.75, 0.5]]]"
+    )
+    var batch_result = rgi(batch_xi)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0))
+    var py_y = np.array(Python.list(0.0, 1.0))
+    var py_values = np.add.outer(py_x, 2.0 * py_y)
+    var py_rgi = scipy_interpolate.RegularGridInterpolator(
+        Python.tuple(py_x, py_y), py_values
+    )
+    var py_single_xi = np.array(Python.list(0.5, 0.25))
+    var py_batch_xi = np.array(
+        Python.list(
+            Python.list(Python.list(0.5, 0.25), Python.list(1.5, 0.75)),
+            Python.list(Python.list(0.25, 0.5), Python.list(1.75, 0.5)),
+        )
+    )
+    var py_single_result = py_rgi(py_single_xi)
+    var py_batch_result = py_rgi(py_batch_xi)
+
+    assert_true(
+        single_result.shape == nm.Shape(1),
+        msg="A single query should produce shape (1,)",
+    )
+    assert_almost_equal(
+        single_result.item(0),
+        Float64(py=py_single_result[0]),
+        atol=1e-10,
+        msg="Single-query result should match SciPy",
+    )
+    assert_true(
+        batch_result.shape == nm.Shape(2, 2),
+        msg="Leading query dimensions should be preserved",
+    )
+    for i in range(batch_result.size):
+        assert_almost_equal(
+            batch_result.item(i),
+            Float64(py=py_batch_result.reshape(-1)[i]),
+            atol=1e-10,
+            msg="Higher-rank query result should match SciPy",
+        )
+
+
+def test_regular_grid_interpolator_3d() raises:
+    """3-D RegularGridInterpolator sanity check on an affine function."""
+    var x = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var y = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var z = nm.fromstring[nm.f64]("[0.0, 1.0]")
+    var values = nm.zeros[nm.f64](nm.Shape(2, 2, 2))
+    for i in range(2):
+        for j in range(2):
+            for k in range(2):
+                values.store(
+                    i,
+                    j,
+                    k,
+                    val=x.item(i) + 2.0 * y.item(j) + 4.0 * z.item(k),
+                )
+
+    var points: List[nm.NDArray[nm.f64]] = [x^, y^, z^]
+    var rgi = RegularGridInterpolator[nm.f64](points, values)
+
+    var pt: List[Scalar[nm.f64]] = [
+        Scalar[nm.f64](0.5),
+        Scalar[nm.f64](0.25),
+        Scalar[nm.f64](0.75),
+    ]
+    var result = rgi(pt)
+    assert_almost_equal(
+        result,
+        0.5 + 2.0 * 0.25 + 4.0 * 0.75,
+        atol=1e-10,
+        msg="3-D trilinear interpolation on an affine function should be exact",
+    )
 
 
 def main() raises:

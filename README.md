@@ -53,6 +53,14 @@ Numerical integration with adaptive algorithms:
 - Out-of-bounds control via `bounds_error` / `fill_value`
 - Compatible with NuMojo arrays
 
+N-D data interpolation on a regular (rectilinear) grid:
+- **`RegularGridInterpolator`** / **`interpn`**: `method="linear"` or `"nearest"`
+  on data sampled on an N-dimensional regular grid (`scipy.interpolate.RegularGridInterpolator`/
+  `interpn`-compatible), supporting ascending or descending axes, singleton
+  axes, and batched queries of arbitrary leading shape
+- Out-of-bounds control via `bounds_error` / `fill_value` (defaults to `nan`);
+  `fill_value=None` extrapolates through the nearest boundary interval
+
 ### FFT (`scijo.fft`)
 Fast Fourier Transform operations:
 - **`fft`** / **`ifft`**: Forward/inverse FFT using the Cooley-Tukey algorithm
