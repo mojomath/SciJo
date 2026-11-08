@@ -2,7 +2,9 @@
 A tour of `scijo.linalg`: matrix decompositions (`lu`, `qr`, `cholesky`),
 eigenvalues/SVD (`eigh`, `eigvalsh`, `svd`, `svdvals`, `matrix_rank`,
 `cond`), linear system solvers (`solve`, `solve_triangular`, `inv`,
-`pinv`, `lstsq`), and norms (`norm`, `det`, `trace`).
+`pinv`, `lstsq`), norms (`norm`, `det`, `trace`), and matrix
+functions/structured matrices (`expm`, `block_diag`, `toeplitz`,
+`null_space`, `orth`).
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -20,23 +22,28 @@ import numojo as nm
 # SciJo
 # ===----------------------------------------------------------------------=== #
 from scijo.linalg import (
+    block_diag,
     cholesky,
     cond,
     det,
     eigh,
     eigvalsh,
+    expm,
     inv,
     lstsq,
     lu,
     matmul,
     matrix_rank,
     norm,
+    null_space,
+    orth,
     pinv,
     qr,
     solve,
     solve_triangular,
     svd,
     svdvals,
+    toeplitz,
     trace,
 )
 from scijo.prelude import *
@@ -47,6 +54,7 @@ def main() raises:
     eigenvalues_and_svd()
     solving()
     norms_and_scalars()
+    matrix_functions()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -143,3 +151,35 @@ def norms_and_scalars() raises:
     var A = nm.fromstring[f64]("[[1, 2], [3, 4]]")
     print("det(A):", det(A))
     print("trace(A):", trace(A))
+
+
+# ===----------------------------------------------------------------------=== #
+# Matrix functions and structured matrices
+# ===----------------------------------------------------------------------=== #
+
+
+def matrix_functions() raises:
+    print()
+    print("=" * 80)
+    print("MATRIX FUNCTIONS: expm, block_diag, toeplitz, null_space, orth")
+    print("=" * 80)
+
+    var A = nm.fromstring[f64]("[[0, 1], [-1, 0]]")
+    print("expm([[0, 1], [-1, 0]]) (a rotation by 1 radian):")
+    print(expm(A))
+
+    var B1 = nm.fromstring[f64]("[[1, 2], [3, 4]]")
+    var B2 = nm.fromstring[f64]("[[5]]")
+    var blocks: List[nm.NDArray[f64]] = [B1^, B2^]
+    print("block_diag([[1,2],[3,4]], [[5]]):")
+    print(block_diag(blocks))
+
+    var c = nm.fromstring[f64]("[1, 2, 3]")
+    print("toeplitz([1, 2, 3]) (symmetric):")
+    print(toeplitz(c))
+
+    var singular = nm.fromstring[f64]("[[1, 2], [2, 4]]")
+    print("null_space([[1, 2], [2, 4]]) (rank-deficient):")
+    print(null_space(singular))
+    print("orth([[1, 2], [2, 4]]):")
+    print(orth(singular))

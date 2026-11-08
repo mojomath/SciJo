@@ -27,6 +27,11 @@ Available Functions
 - `norm`               — Vector/matrix norms.
 - `det`                — Determinant.
 - `trace`              — Sum of the diagonal elements.
+- `expm`               — Matrix exponential (scaling-and-squaring, Padé[6/6]).
+- `block_diag`         — Block-diagonal matrix from a list of matrices.
+- `toeplitz`           — Toeplitz matrix from its first column/row.
+- `null_space`         — Orthonormal basis for the null space.
+- `orth`               — Orthonormal basis for the column space (range).
 
 Also re-exported from `numojo.linalg` for convenience: `matmul`, `dot`,
 `outer`, `kron`, `tensordot`, `cross`, `diagonal`.
@@ -78,6 +83,13 @@ from .decompositions import (
 from .eigen import (
     eigh,
     eigvalsh,
+)
+from .matrix_fns import (
+    block_diag,
+    expm,
+    null_space,
+    orth,
+    toeplitz,
 )
 from .norms import norm
 from .solving import (

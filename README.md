@@ -77,6 +77,7 @@ Linear algebra, built on NuMojo's linalg primitives:
 - **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
 - **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv` (SVD-based, rank-deficient OK), `lstsq` — all accept 1-D or 2-D right-hand sides
 - **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`2`/`inf`), `det`, `trace`
+- **Matrix functions/structured matrices**: `expm` (scaling-and-squaring, Padé[6/6]), `block_diag`, `toeplitz`, `null_space`/`orth` (via the Gram matrix's eigendecomposition)
 - Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
 - The general (non-symmetric) eigenvalue problem (`eig`/`eigvals`, possibly complex eigenvalues) is not yet available
 

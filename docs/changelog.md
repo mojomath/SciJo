@@ -24,6 +24,17 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.linalg.expm`**, the matrix exponential, via scaling-and-squaring
+  with a diagonal Padé[6/6] approximant (Moler & Van Loan) - not SciPy's
+  higher-order Padé[13/13].
+- **`scijo.linalg.block_diag`** and **`scijo.linalg.toeplitz`**, structured
+  matrix construction. `block_diag` takes a `List[NDArray[dtype]]` rather
+  than SciPy's variadic `*arrs`.
+- **`scijo.linalg.null_space`** and **`scijo.linalg.orth`**, orthonormal
+  bases for a matrix's null space and column space, via the
+  eigendecomposition of the Gram matrix (`A^T @ A`/`A @ A^T`, using the
+  existing `eigh`) rather than the SVD - simpler, but squares the
+  condition number relative to an SVD-based implementation.
 
 ## [v0.4.0] - 2026-10-26
 ### Added
