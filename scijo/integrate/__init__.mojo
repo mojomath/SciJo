@@ -11,6 +11,10 @@ fixed-sample integration rules for discrete data.
 Available Functions
 -------------------
 - `quad`        — General-purpose adaptive quadrature (Gauss-Kronrod).
+- `fixed_quad`  — Fixed-order Gauss-Legendre quadrature (no adaptivity).
+- `dblquad`     — Double integral over a region bounded by functions of x.
+- `tplquad`     — Triple integral over a region bounded by functions of x, y.
+- `nquad`       — Integral of an N-variable function over a hyperrectangle.
 - `trapezoid`   — Composite trapezoidal rule for discrete data.
 - `simpson`     — Simpson's rule for discrete data.
 - `romb`        — Romberg integration with Richardson extrapolation.
@@ -47,6 +51,12 @@ Examples
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
+from .fixed_quad import (
+    dblquad,
+    fixed_quad,
+    nquad,
+    tplquad,
+)
 from .fixed_sample import (
     cumulative_simpson,
     cumulative_trapezoid,

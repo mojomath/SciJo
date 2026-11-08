@@ -24,6 +24,21 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.integrate.fixed_quad`**, fixed-order (no adaptivity, no error
+  estimate) Gauss-Legendre quadrature, plus **`dblquad`**, **`tplquad`**,
+  and **`nquad`** for multidimensional integration:
+  - `dblquad`/`tplquad` bound the inner variable(s) by functions of the
+    outer variable(s) (`gfun`/`hfun`, `qfun`/`rfun`), matching SciPy's
+    argument order (innermost variable first).
+  - `nquad` integrates over a hyperrectangle of constant per-axis bounds;
+    unlike SciPy's `nquad`, bounds given as callables of the outer
+    variables are not supported here (`dblquad`/`tplquad` already cover
+    that for 2 and 3 dimensions).
+  - All three use fixed-order tensor-product Gauss-Legendre quadrature
+    (`n` points per axis), not SciPy's adaptive QUADPACK-based nested
+    quadrature - `quad`'s own integrand-function type is non-raising, so
+    an adaptive `quad` call can't be nested inside a closure passed back
+    into `quad` for an outer axis.
 
 ## [v0.4.0] - 2026-10-26
 ### Added

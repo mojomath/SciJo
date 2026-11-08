@@ -1,7 +1,8 @@
 """
-A tour of `scijo.integrate`: adaptive quadrature of a function (`quad`) and
-fixed-sample integration of discrete data (`trapezoid`, `simpson`, `romb`,
-and their cumulative variants).
+A tour of `scijo.integrate`: adaptive quadrature of a function (`quad`),
+fixed-order and multidimensional quadrature (`fixed_quad`, `dblquad`,
+`tplquad`, `nquad`), and fixed-sample integration of discrete data
+(`trapezoid`, `simpson`, `romb`, and their cumulative variants).
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -14,6 +15,10 @@ import numojo as nm
 from scijo.integrate import (
     quad,
     QAG_GK61,
+    fixed_quad,
+    dblquad,
+    tplquad,
+    nquad,
     trapezoid,
     simpson,
     romb,
@@ -25,6 +30,8 @@ from scijo.prelude import *
 
 def main() raises:
     quad_example()
+    fixed_quad_example()
+    multidim_quad_example()
     fixed_sample_example()
     romberg_example()
     cumulative_example()
@@ -59,6 +66,101 @@ def quad_example() raises:
 
     var result_qags = quad[f64, integrand, method="qags"](a=0.0, b=1.0)
     print("method='qags':           integral =", result_qags.integral)
+
+
+# ===----------------------------------------------------------------------=== #
+# fixed_quad: fixed-order Gauss-Legendre quadrature (no adaptivity)
+# ===----------------------------------------------------------------------=== #
+
+
+def fixed_quad_example() raises:
+    print()
+    print("=" * 80)
+    print(
+        "FIXED_QUAD: fixed-order Gauss-Legendre quadrature of x^2 over [0, 1]"
+    )
+    print("=" * 80)
+
+    # x^2 is degree 2, so an n=2 Gauss-Legendre rule is already exact.
+    var result = fixed_quad[f64, integrand](a=0.0, b=1.0, n=2)
+    print("fixed_quad(x^2, n=2) =", result, " (exact: 1/3)")
+
+
+# ===----------------------------------------------------------------------=== #
+# dblquad / tplquad / nquad: multidimensional quadrature
+# ===----------------------------------------------------------------------=== #
+
+
+def xy[
+    dtype: DType
+](y: Scalar[dtype], x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return x * y
+
+
+def lower_bound[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 0.0
+
+
+def upper_bound[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 1.0
+
+
+def xyz[
+    dtype: DType
+](z: Scalar[dtype], y: Scalar[dtype], x: Scalar[dtype]) capturing -> Scalar[
+    dtype
+]:
+    return x * y * z
+
+
+def q_bound[
+    dtype: DType
+](x: Scalar[dtype], y: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 0.0
+
+
+def r_bound[
+    dtype: DType
+](x: Scalar[dtype], y: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 1.0
+
+
+def nd_product[
+    dtype: DType
+](
+    x: List[Scalar[dtype]], args: Optional[List[Scalar[dtype]]]
+) capturing -> Scalar[dtype]:
+    var total: Scalar[dtype] = 1.0
+    for v in x:
+        total *= v
+    return total
+
+
+def multidim_quad_example() raises:
+    print()
+    print("=" * 80)
+    print("DBLQUAD / TPLQUAD / NQUAD: multidimensional quadrature")
+    print("=" * 80)
+
+    # Integral of x*y over the unit square = 1/4.
+    var dbl_result = dblquad[f64, xy, lower_bound, upper_bound](0.0, 1.0)
+    print("dblquad(x*y, unit square) =", dbl_result.integral, " (exact: 1/4)")
+
+    # Integral of x*y*z over the unit cube = 1/8.
+    var tpl_result = tplquad[
+        f64, xyz, q_bound, r_bound, lower_bound, upper_bound
+    ](0.0, 1.0)
+    print("tplquad(x*y*z, unit cube) =", tpl_result.integral, " (exact: 1/8)")
+
+    # nquad: same integral as tplquad, but as a general N-D hyperrectangle
+    # integration with constant bounds.
+    var ranges: List[Tuple[Scalar[f64], Scalar[f64]]] = [
+        (Scalar[f64](0.0), Scalar[f64](1.0)),
+        (Scalar[f64](0.0), Scalar[f64](1.0)),
+        (Scalar[f64](0.0), Scalar[f64](1.0)),
+    ]
+    var nd_result = nquad[f64, nd_product](ranges)
+    print("nquad(x*y*z, unit cube) =  ", nd_result.integral, " (exact: 1/8)")
 
 
 # ===----------------------------------------------------------------------=== #

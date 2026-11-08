@@ -38,6 +38,10 @@ Numerical integration with adaptive algorithms:
   - `method="qag"` - adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
   - `method="qags"` - adaptive + Wynn epsilon extrapolation
   - Rule constants: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`
+- **`fixed_quad`**: Fixed-order Gauss-Legendre quadrature (no adaptivity, no error estimate)
+- **`dblquad`** / **`tplquad`**: Double/triple integrals over regions bounded by functions of the outer variable(s)
+- **`nquad`**: Integral of an N-variable function over a hyperrectangle (constant bounds)
+  - `dblquad`/`tplquad`/`nquad` use fixed-order tensor-product Gauss-Legendre quadrature, not adaptive QUADPACK
 - **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
 - **`simpson`**: Simpson's rule for discrete data
 - **`romb`**: Romberg integration with Richardson extrapolation
