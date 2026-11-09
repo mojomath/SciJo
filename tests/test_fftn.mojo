@@ -204,6 +204,46 @@ def test_fftn_negative_axis() raises:
     print("fftn(axes=[-1]) matches fftn(axes=[1]) - PASSED")
 
 
+def test_fftn_non_power_of_two_shape_matches_numpy() raises:
+    """A non-power-of-2 axis length (3x5) exercises the Bluestein path
+    through `fftn`/`ifftn`, which both delegate to `fft`/`_ifft_unnormalized`.
+    """
+    var np: PythonObject
+    try:
+        np = Python.import_module("numpy")
+    except:
+        print(
+            "NumPy not available, skipping"
+            " test_fftn_non_power_of_two_shape_matches_numpy"
+        )
+        return
+
+    var arr = ComplexNDArray[nm.cf64](NDArrayShape(3, 5))
+    var real = np.zeros(Python.tuple(3, 5), dtype=np.float64)
+    var imag = np.zeros(Python.tuple(3, 5), dtype=np.float64)
+    for i in range(3):
+        for j in range(5):
+            var re = Float64(i * 5 + j) * 0.1 - 1.0
+            var im = Float64(i) * 0.3
+            arr[nm.Item(i, j)] = ComplexSIMD[nm.cf64](re, im)
+            real[i][j] = re
+            imag[i][j] = im
+
+    var result = fftn[nm.cf64](arr)
+
+    var np_arr = np.array(real, dtype=np.complex128)
+    np_arr.imag = imag
+    var np_result = np.fft.fft2(np_arr)
+    compare_complex_2d[nm.cf64](
+        result, np_result, "fftn(3x5, Bluestein) matches numpy fft2"
+    )
+
+    var back = ifftn[nm.cf64](result)
+    compare_complex_2d[nm.cf64](
+        back, np_arr, "ifftn(3x5, Bluestein) roundtrip matches input"
+    )
+
+
 def test_fftn_invalid_axis_raises() raises:
     var arr = _make_2d_arr()
     var caught_error = False

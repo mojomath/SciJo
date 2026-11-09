@@ -5,13 +5,14 @@
 """N-Dimensional Fast Fourier Transform (`scijo.fft.fftn`)
 ==========================================================
 Forward and inverse FFT over one or more axes of an N-dimensional complex
-array, built on top of the 1-D Cooley-Tukey `fft`/`ifft` in
-`scijo.fft.fastfourier`. Each requested axis is transformed independently by
-applying the 1-D transform to every line along that axis.
+array, built on top of the 1-D `fft`/`ifft` in `scijo.fft.fastfourier`
+(any length, not just powers of 2 - see that module's docstring). Each
+requested axis is transformed independently by applying the 1-D transform
+to every line along that axis.
 
 Constraints
 -----------
-- The length of every transformed axis must be a power of 2.
+- None on axis length: every transformed axis may be any length.
 
 Examples
 --------
@@ -162,8 +163,7 @@ def fftn[
         cdtype: The data type of the complex elements (ComplexDType).
 
     Args:
-        arr: Input complex array to transform. The length of every
-            transformed axis must be a power of 2.
+        arr: Input complex array to transform.
         axes: Axes over which to compute the transform. Defaults to all
             axes, transformed in order. Negative axes count from the end.
 
@@ -173,7 +173,6 @@ def fftn[
 
     Raises:
         Error: If an axis is out of bounds.
-        Error: If a transformed axis's length is not a power of 2.
 
     Examples:
         ```mojo
@@ -210,8 +209,7 @@ def ifftn[
         cdtype: The data type of the complex elements (ComplexDType).
 
     Args:
-        arr: Input complex array to transform. The length of every
-            transformed axis must be a power of 2.
+        arr: Input complex array to transform.
         axes: Axes over which to compute the transform. Defaults to all
             axes. Negative axes count from the end.
 
@@ -221,7 +219,6 @@ def ifftn[
 
     Raises:
         Error: If an axis is out of bounds.
-        Error: If a transformed axis's length is not a power of 2.
 
     Examples:
         ```mojo
@@ -272,8 +269,7 @@ def fft2[
 
     Args:
         arr: Input complex array to transform. Must have at least 2
-            dimensions, and the length of each transformed axis must be a
-            power of 2.
+            dimensions.
         axes: The two axes to transform. Defaults to the last two axes.
             Negative axes count from the end.
 
@@ -282,7 +278,6 @@ def fft2[
 
     Raises:
         Error: If an axis is out of bounds.
-        Error: If a transformed axis's length is not a power of 2.
 
     Examples:
         ```mojo
@@ -312,8 +307,7 @@ def ifft2[
 
     Args:
         arr: Input complex array to transform. Must have at least 2
-            dimensions, and the length of each transformed axis must be a
-            power of 2.
+            dimensions.
         axes: The two axes to transform. Defaults to the last two axes.
             Negative axes count from the end.
 
@@ -322,7 +316,6 @@ def ifft2[
 
     Raises:
         Error: If an axis is out of bounds.
-        Error: If a transformed axis's length is not a power of 2.
 
     Examples:
         ```mojo
