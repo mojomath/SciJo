@@ -5,7 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- **`scijo.fft`** arbitrary-length support: `fft`/`ifft` (and the axes they
+  drive in `fftn`/`ifftn`/`fft2`/`ifft2`) no longer require a power-of-2
+  length - every other length now goes through Bluestein's algorithm
+  (still `O(n log n)`, reusing the existing radix-2 engine for the
+  convolution it reduces to). `rfft` no longer zero-pads a non-power-of-2
+  input to the next power of 2; it now transforms the exact input length,
+  matching NumPy/SciPy. `irfft` no longer rounds its output length up to
+  a power of 2, and its conjugate-symmetry mirroring is now correct for
+  odd output lengths too (previously only exercised with even lengths,
+  since every length was rounded up to a power of 2 beforehand).
+
 ### Added
+- **`scijo.interpolate.PchipInterpolator`** and **`pchip_interpolate`**,
+  a shape-preserving piecewise cubic Hermite interpolator (Fritsch-Carlson
+  slopes): unlike `CubicSpline`, it never overshoots or introduces a local
+  extremum between two points that isn't already in the data. Also
+  reachable via `interp[type="pchip"]`.
 - **`scijo.optimize.least_squares`**, nonlinear least squares via
   Levenberg-Marquardt (`method="lm"`, the only method currently
   supported), with a finite-difference Jacobian. Bounds, analytic
@@ -36,6 +53,17 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
     as for `"BFGS"`/`"CG"`.
   - Both accept a new `bounds=(lo, hi)` argument for simple box
     constraints; every other method ignores it.
+- **`scijo.linalg.eig`** and **`scijo.linalg.eigvals`**, the general
+  (non-symmetric) eigenvalue problem:
+  - A shifted-QR iteration (Wilkinson shift from the trailing 2x2
+    submatrix) carried out entirely in complex arithmetic, so a complex
+    eigenvalue converges to its own 1x1 diagonal entry the same way a
+    real one does - no separate real/complex case split.
+  - `eig`'s eigenvectors come from shifted inverse iteration against the
+    converged eigenvalues, on the original matrix cast to complex.
+  - Deliberately not implemented: Hessenberg reduction as a pre-step (an
+    `O(n^3)` -> `O(n^2)` per-iteration speedup, not a correctness gap;
+    NuMojo's own real-only `eig` also skips it).
 
 ## [v0.4.0] - 2026-10-26
 ### Added

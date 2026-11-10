@@ -29,7 +29,9 @@ from scijo.linalg import (
     cholesky,
     cond,
     det,
+    eig,
     eigh,
+    eigvals,
     eigvalsh,
     inv,
     lstsq,
@@ -245,6 +247,122 @@ def test_eigh_matches_numpy() raises:
     for i in range(len(w)):
         assert_almost_equal(
             w.item(i), Float64(py=py_w[i]), atol=1e-8, msg="eigh vs numpy"
+        )
+
+
+def test_eigvals_real_eigenvalues() raises:
+    """Upper-triangular matrix: eigenvalues are the diagonal, 2 and 3."""
+    var A = nm.fromstring[sj.f64]("[[2, 1], [0, 3]]")
+    var w = eigvals(A)
+    var vals = List[Float64]()
+    for i in range(len(w)):
+        assert_almost_equal(Float64(w.item(i).im), 0.0, atol=1e-8)
+        vals.append(Float64(w.item(i).re))
+    if vals[0] > vals[1]:
+        vals[0], vals[1] = vals[1], vals[0]
+    assert_almost_equal(vals[0], 2.0, atol=1e-8)
+    assert_almost_equal(vals[1], 3.0, atol=1e-8)
+
+
+def test_eig_reconstructs_general_real() raises:
+    """A @ v[:, i] == w[i] * v[:, i] for a non-symmetric real-eigenvalue matrix.
+    """
+    var A = nm.fromstring[sj.f64]("[[2, 1], [0, 3]]")
+    var result = eig(A)
+    var w = result[0].copy()
+    var v = result[1].copy()
+    var n = A.shape[0]
+
+    for col in range(n):
+        var lam = w.item(col)
+        for row in range(n):
+            var lhs_re: Float64 = 0.0
+            var lhs_im: Float64 = 0.0
+            for k in range(n):
+                var a = Float64(A.item(row, k))
+                var vk = v.item(k, col)
+                lhs_re += a * Float64(vk.re)
+                lhs_im += a * Float64(vk.im)
+            var vrc = v.item(row, col)
+            var rhs_re = Float64(lam.re) * Float64(vrc.re) - Float64(
+                lam.im
+            ) * Float64(vrc.im)
+            var rhs_im = Float64(lam.re) * Float64(vrc.im) + Float64(
+                lam.im
+            ) * Float64(vrc.re)
+            assert_almost_equal(lhs_re, rhs_re, atol=1e-6)
+            assert_almost_equal(lhs_im, rhs_im, atol=1e-6)
+
+
+def test_eig_complex_conjugate_pair() raises:
+    """[[0, -1], [1, 0]] has eigenvalues +-1j (a 90-degree rotation)."""
+    var A = nm.fromstring[sj.f64]("[[0, -1], [1, 0]]")
+    var w = eigvals(A)
+
+    var re0 = Float64(w.item(0).re)
+    var im0 = Float64(w.item(0).im)
+    var re1 = Float64(w.item(1).re)
+    var im1 = Float64(w.item(1).im)
+
+    assert_almost_equal(re0, 0.0, atol=1e-8)
+    assert_almost_equal(re1, 0.0, atol=1e-8)
+    # The two imaginary parts are +1 and -1, in some order.
+    assert_almost_equal(im0 + im1, 0.0, atol=1e-8)
+    assert_almost_equal(abs(im0), 1.0, atol=1e-8)
+    assert_almost_equal(abs(im1), 1.0, atol=1e-8)
+
+
+def test_eigvals_matches_scipy() raises:
+    var np: PythonObject
+    var scipy_linalg: PythonObject
+    try:
+        np = Python.import_module("numpy")
+        scipy_linalg = Python.import_module("scipy.linalg")
+    except:
+        print("SciPy not available, skipping eigvals comparison test")
+        return
+
+    var A = nm.fromstring[sj.f64]("[[4, 1, 0], [1, 0, -2], [0, 1, 2]]")
+    var w = eigvals(A)
+
+    var py_A = np.array(
+        Python.list(
+            Python.list(4.0, 1.0, 0.0),
+            Python.list(1.0, 0.0, -2.0),
+            Python.list(0.0, 1.0, 2.0),
+        )
+    )
+    var py_w = scipy_linalg.eigvals(py_A)
+
+    var n = len(w)
+    var scijo_keys = List[Float64]()
+    var scipy_keys = List[Float64]()
+    for i in range(n):
+        scijo_keys.append(
+            Float64(w.item(i).re) * 1000.0 + Float64(w.item(i).im)
+        )
+        scipy_keys.append(
+            Float64(py=py_w[i].real) * 1000.0 + Float64(py=py_w[i].imag)
+        )
+    # Simple insertion sort on both small lists.
+    for i in range(1, n):
+        var key = scijo_keys[i]
+        var j = i - 1
+        while j >= 0 and scijo_keys[j] > key:
+            scijo_keys[j + 1] = scijo_keys[j]
+            j -= 1
+        scijo_keys[j + 1] = key
+    for i in range(1, n):
+        var key = scipy_keys[i]
+        var j = i - 1
+        while j >= 0 and scipy_keys[j] > key:
+            scipy_keys[j + 1] = scipy_keys[j]
+            j -= 1
+        scipy_keys[j + 1] = key
+
+    for i in range(n):
+        assert_almost_equal(
+            scijo_keys[i], scipy_keys[i], atol=1e-6, msg="eigvals vs scipy"
         )
 
 

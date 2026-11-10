@@ -1,8 +1,8 @@
 """
 A tour of `scijo.linalg`: matrix decompositions (`lu`, `qr`, `cholesky`),
-eigenvalues/SVD (`eigh`, `eigvalsh`, `svd`, `svdvals`, `matrix_rank`,
-`cond`), linear system solvers (`solve`, `solve_triangular`, `inv`,
-`pinv`, `lstsq`), and norms (`norm`, `det`, `trace`).
+eigenvalues/SVD (`eigh`, `eigvalsh`, `eig`, `eigvals`, `svd`, `svdvals`,
+`matrix_rank`, `cond`), linear system solvers (`solve`, `solve_triangular`,
+`inv`, `pinv`, `lstsq`), and norms (`norm`, `det`, `trace`).
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -23,7 +23,9 @@ from scijo.linalg import (
     cholesky,
     cond,
     det,
+    eig,
     eigh,
+    eigvals,
     eigvalsh,
     inv,
     lstsq,
@@ -91,6 +93,15 @@ def eigenvalues_and_svd() raises:
     print(w_v[1])
     print("eigvalsh(A):")
     print(eigvalsh(A))
+
+    # General (non-symmetric) matrices may have complex eigenvalues -
+    # here, a 90-degree rotation has eigenvalues +-1j.
+    var Rot = nm.fromstring[f64]("[[0, -1], [1, 0]]")
+    print("eigvals(Rot):")
+    print(eigvals(Rot))
+    var w_v_general = eig(Rot)
+    print("eig(Rot) eigenvectors (columns):")
+    print(w_v_general[1])
 
     var B = nm.fromstring[f64]("[[1, 2], [3, 4], [5, 6]]")
     var usvt = svd(B)

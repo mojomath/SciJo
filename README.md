@@ -49,7 +49,8 @@ Numerical integration with adaptive algorithms:
 - **`LinearInterpolator`** / **`interp1d`**: Linear interpolation, callable object and functional interface
 - **`CubicSpline`**: Natural cubic spline interpolator (`scipy.interpolate.CubicSpline`-compatible)
 - **`Akima1DInterpolator`**: Akima piecewise cubic interpolator (`scipy.interpolate.Akima1DInterpolator`-compatible)
-- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`
+- **`PchipInterpolator`** / **`pchip_interpolate`**: Shape-preserving piecewise cubic Hermite interpolator (`scipy.interpolate.PchipInterpolator`-compatible), callable object and functional interface
+- **`interp`**: Functional interface supporting `type="linear"`, `"cubic"`, `"akima"`, `"pchip"`
 - Out-of-bounds control via `bounds_error` / `fill_value`
 - Compatible with NuMojo arrays
 
@@ -59,7 +60,9 @@ Fast Fourier Transform operations:
 - **`fftn`** / **`ifftn`**: N-dimensional forward/inverse FFT over one or more axes
 - **`fft2`** / **`ifft2`**: 2-dimensional forward/inverse FFT (convenience wrapper over `fftn`/`ifftn`)
 - **`rfft`** / **`irfft`**: Real-input FFT and its inverse
-- Supports complex arrays (power-of-2 sizes per transformed axis)
+- Arbitrary-length support: power-of-2 lengths use the Cooley-Tukey radix-2
+  algorithm directly; every other length uses Bluestein's algorithm
+  (still `O(n log n)`) - no length is silently padded
 - Compatible with NumPy's FFT conventions
 
 ### Physical Constants (`scijo.constants`)
@@ -74,11 +77,10 @@ Access fundamental physical constants from CODATA 2022:
 ### Linear Algebra (`scijo.linalg`)
 Linear algebra, built on NuMojo's linalg primitives:
 - **Decompositions**: `lu` (pivoted, `A == P @ L @ U`), `qr` (reduced, Householder), `cholesky` (lower/upper)
-- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
+- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `eig`/`eigvals` (general non-symmetric, via complex-arithmetic shifted QR), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
 - **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv` (SVD-based, rank-deficient OK), `lstsq` — all accept 1-D or 2-D right-hand sides
 - **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`2`/`inf`), `det`, `trace`
 - Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
-- The general (non-symmetric) eigenvalue problem (`eig`/`eigvals`, possibly complex eigenvalues) is not yet available
 
 ### Optimization (`scijo.optimize`)
 Scalar and multi-dimensional root-finding, and scalar and multi-dimensional
@@ -239,7 +241,7 @@ def main() raises:
 
 ### Interpolation
 ```mojo
-from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
+from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator, PchipInterpolator
 import numojo as nm
 
 def main() raises:
@@ -257,6 +259,10 @@ def main() raises:
     # Akima
     var ak = Akima1DInterpolator(x, y)
     print(ak(Scalar[nm.f64](3.7)))
+
+    # PCHIP (shape-preserving: won't overshoot monotonic data)
+    var pc = PchipInterpolator(x, y)
+    print(pc(Scalar[nm.f64](3.7)))
 ```
 
 ### FFT
@@ -439,7 +445,6 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 
 ### Near Term
 - An analytic-gradient overload for `scijo.optimize.minimize`'s BFGS/CG methods (finite differences only today)
-- The general (non-symmetric) eigenvalue problem for `scijo.linalg.eig`/`eigvals`, where eigenvalues may be complex
 
 ### Future
 - **Optimization**: Curve fitting
