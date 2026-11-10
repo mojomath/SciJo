@@ -578,6 +578,255 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
 
 # ===----------------------------------------------------------------------=== #
+# PCHIP
+# ===----------------------------------------------------------------------=== #
+
+
+def _pchip_edge_derivative[
+    dtype: DType
+](
+    h0: Scalar[dtype], h1: Scalar[dtype], m0: Scalar[dtype], m1: Scalar[dtype]
+) -> Scalar[dtype]:
+    """The one-sided, monotonicity-clipped PCHIP boundary derivative.
+
+    `h0`/`m0` are the spacing/secant-slope of the interval touching the
+    boundary; `h1`/`m1` are the next interval in. Shared by both ends: the
+    right end calls this with its own two intervals in the same "nearest
+    first" order (see Fritsch & Carlson 1980, the non-not-a-knot default
+    SciPy's `PchipInterpolator` also uses).
+    """
+    var d = ((2.0 * h0 + h1) * m0 - h0 * m1) / (h0 + h1)
+    if d * m0 <= 0:
+        return 0.0
+    if m0 * m1 <= 0 and abs(d) > 3.0 * abs(m0):
+        return 3.0 * m0
+    return d
+
+
+def _pchip_slopes[
+    dtype: DType
+](x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[dtype]:
+    """Computes the PCHIP derivative at every data point.
+
+    Interior points use the Fritsch-Carlson weighted-harmonic-mean slope,
+    zeroed at local extrema (so the interpolant stays monotonic on every
+    interval where the data is monotonic); endpoints use a one-sided
+    three-point estimate, clipped to preserve the same property there.
+
+    References:
+        Fritsch, F. N., & Carlson, R. E. (1980). "Monotone Piecewise Cubic
+        Interpolation." SIAM Journal on Numerical Analysis, 17(2), 238-246.
+    """
+    var n = x.size
+
+    var h = NDArray[dtype](Shape(n - 1))
+    var m = NDArray[dtype](Shape(n - 1))
+    for i in range(n - 1):
+        var hi = x.unsafe_load(i + 1) - x.unsafe_load(i)
+        h.unsafe_store(i, hi)
+        m.unsafe_store(i, (y.unsafe_load(i + 1) - y.unsafe_load(i)) / hi)
+
+    if n == 2:
+        var d2 = NDArray[dtype](Shape(2))
+        d2.unsafe_store(0, m.unsafe_load(0))
+        d2.unsafe_store(1, m.unsafe_load(0))
+        return d2^
+
+    var d = NDArray[dtype](Shape(n))
+    for i in range(1, n - 1):
+        var m_prev = m.unsafe_load(i - 1)
+        var m_next = m.unsafe_load(i)
+        if m_prev * m_next <= 0:
+            d.unsafe_store(i, 0.0)
+        else:
+            var w1 = 2.0 * h.unsafe_load(i) + h.unsafe_load(i - 1)
+            var w2 = h.unsafe_load(i) + 2.0 * h.unsafe_load(i - 1)
+            d.unsafe_store(i, (w1 + w2) / (w1 / m_prev + w2 / m_next))
+
+    d.unsafe_store(
+        0,
+        _pchip_edge_derivative[dtype](
+            h.unsafe_load(0),
+            h.unsafe_load(1),
+            m.unsafe_load(0),
+            m.unsafe_load(1),
+        ),
+    )
+    d.unsafe_store(
+        n - 1,
+        _pchip_edge_derivative[dtype](
+            h.unsafe_load(n - 2),
+            h.unsafe_load(n - 3),
+            m.unsafe_load(n - 2),
+            m.unsafe_load(n - 3),
+        ),
+    )
+    return d^
+
+
+struct PchipInterpolator[dtype: DType = DType.float64](Copyable, Movable):
+    """A callable, shape-preserving piecewise cubic Hermite interpolator.
+
+    Builds a piecewise cubic Hermite polynomial whose derivatives at the
+    data points are chosen (via `_pchip_slopes`, the Fritsch-Carlson
+    method) so the interpolant never overshoots the data or introduces an
+    extremum between two points that doesn't already exist in the data -
+    unlike `CubicSpline`, which only constrains continuity, not shape.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import PchipInterpolator
+
+        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+        var y = x * x
+        var pc = PchipInterpolator(x, y)
+        var yi = pc(nm.linspace[nm.f64](0.5, 9.5, 10))
+        ```
+    """
+
+    var x: NDArray[Self.dtype]
+    var y: NDArray[Self.dtype]
+    var _d: NDArray[Self.dtype]
+
+    def __init__(
+        out self, x: NDArray[Self.dtype], y: NDArray[Self.dtype]
+    ) raises:
+        """Constructs the PCHIP interpolator from data points.
+
+        Args:
+            x: Strictly increasing x-coordinates of the data points.
+            y: Y-coordinates of the data points, same length as x.
+
+        Raises:
+            Error: If inputs are invalid.
+        """
+        _validate_interpolation_input(x, y)
+        self.x = x.copy()
+        self.y = y.copy()
+        self._d = _pchip_slopes[Self.dtype](x, y)
+
+    def __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
+        """Evaluates the PCHIP interpolant at a single point.
+
+        Args:
+            xi: The query point.
+
+        Returns:
+            Interpolated value at xi. Clamped to boundary values if out of range.
+        """
+        var n = self.x.size
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
+        if xi <= x_min:
+            return self.y.unsafe_load(0)
+        if xi >= x_max:
+            return self.y.unsafe_load(n - 1)
+        var j: Int = _binary_search(self.x, xi) - 1
+        if j < 0:
+            j = 0
+        if j > n - 2:
+            j = n - 2
+        var h = self.x.unsafe_load(j + 1) - self.x.unsafe_load(j)
+        var s = (xi - self.x.unsafe_load(j)) / h
+        var s2 = s * s
+        var s3 = s2 * s
+        return (
+            (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
+            + (s3 - 2.0 * s2 + s) * h * self._d.unsafe_load(j)
+            + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
+            + (s3 - s2) * h * self._d.unsafe_load(j + 1)
+        )
+
+    def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
+        """Evaluates the PCHIP interpolant at an array of points.
+
+        Args:
+            xi: Array of query points.
+
+        Returns:
+            Array of interpolated values with the same shape as xi.
+        """
+        var n = self.x.size
+        var result: NDArray[Self.dtype] = NDArray[Self.dtype](xi.shape)
+        var x_min: Scalar[Self.dtype] = self.x.unsafe_load(0)
+        var x_max: Scalar[Self.dtype] = self.x.unsafe_load(n - 1)
+
+        for i in range(xi.size):
+            var xi_val: Scalar[Self.dtype] = xi.unsafe_load(i)
+            if xi_val <= x_min:
+                result.unsafe_store(i, self.y.unsafe_load(0))
+                continue
+            if xi_val >= x_max:
+                result.unsafe_store(i, self.y.unsafe_load(n - 1))
+                continue
+            var j: Int = _binary_search(self.x, xi_val) - 1
+            if j < 0:
+                j = 0
+            if j > n - 2:
+                j = n - 2
+            var h = self.x.unsafe_load(j + 1) - self.x.unsafe_load(j)
+            var s = (xi_val - self.x.unsafe_load(j)) / h
+            var s2 = s * s
+            var s3 = s2 * s
+            result.unsafe_store(
+                i,
+                (
+                    (2.0 * s3 - 3.0 * s2 + 1.0) * self.y.unsafe_load(j)
+                    + (s3 - 2.0 * s2 + s) * h * self._d.unsafe_load(j)
+                    + (-2.0 * s3 + 3.0 * s2) * self.y.unsafe_load(j + 1)
+                    + (s3 - s2) * h * self._d.unsafe_load(j + 1)
+                ),
+            )
+
+        return result^
+
+
+def pchip_interpolate[
+    dtype: DType = DType.float64
+](x: NDArray[dtype], y: NDArray[dtype], xi: NDArray[dtype]) raises -> NDArray[
+    dtype
+]:
+    """Interpolates y values at query points xi using PCHIP (functional interface).
+
+    Equivalent to `PchipInterpolator(x, y)(xi)`; use `PchipInterpolator`
+    directly when you need a reusable callable object for repeated
+    evaluations instead of a one-shot call.
+
+    Parameters:
+        dtype: The floating-point data type. Defaults to DType.float64.
+
+    Args:
+        x: X-coordinates of the data points, must be strictly increasing.
+        y: Y-coordinates of the data points, same length as x.
+        xi: Array of query points at which to interpolate.
+
+    Returns:
+        NDArray of interpolated values at the points xi.
+
+    Raises:
+        Error: If x and y have different lengths, have fewer than 2 points,
+            or x is not strictly increasing.
+
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.interpolate import pchip_interpolate
+        from scijo.prelude import *
+
+        var x = nm.linspace[f64](0.0, 10.0, 11)
+        var y = x * x
+        var yi = pchip_interpolate(x, y, nm.linspace[f64](0.5, 9.5, 10))
+        ```
+    """
+    var pc = PchipInterpolator[dtype](x, y)
+    return pc(xi)
+
+
+# ===----------------------------------------------------------------------=== #
 # interp1d (constructor)
 # ===----------------------------------------------------------------------=== #
 
@@ -653,7 +902,7 @@ def interp[
 
     Parameters:
         dtype: The floating-point data type. Defaults to DType.float64.
-        type: The interpolation method. Currently supported: "linear", "cubic", "akima".
+        type: The interpolation method. Currently supported: "linear", "cubic", "akima", "pchip".
         fill_method: Out-of-bounds handling: "interpolate" (clamp to boundary
             values) or "extrapolate" (linear extrapolation).
 
@@ -690,12 +939,14 @@ def interp[
         return _interp1d_cubic_interpolate(xi, x, y)
     elif type == "akima" and fill_method == "interpolate":
         return _interp1d_akima_interpolate(xi, x, y)
+    elif type == "pchip" and fill_method == "interpolate":
+        return _interp1d_pchip_interpolate(xi, x, y)
     else:
         raise Error(
             String(
                 "Invalid interpolation method: {} with fill_method: {}."
                 " Supported: type='linear' with fill_method='interpolate' or"
-                " 'extrapolate', and type='cubic'/'akima' with"
+                " 'extrapolate', and type='cubic'/'akima'/'pchip' with"
                 " fill_method='interpolate'"
             ).format(type, fill_method)
         )
@@ -948,3 +1199,17 @@ def _interp1d_akima_interpolate[
     """
     var ak = Akima1DInterpolator[dtype](x, y)
     return ak(xi)
+
+
+def _interp1d_pchip_interpolate[
+    dtype: DType
+](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
+    dtype
+]:
+    """PCHIP 1D interpolation with boundary clamping.
+
+    Delegates to `PchipInterpolator` so both entry points share one
+    implementation of the Fritsch-Carlson shape-preserving slopes.
+    """
+    var pc = PchipInterpolator[dtype](x, y)
+    return pc(xi)

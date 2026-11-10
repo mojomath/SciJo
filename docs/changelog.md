@@ -18,6 +18,11 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   since every length was rounded up to a power of 2 beforehand).
 
 ### Added
+- **`scijo.interpolate.PchipInterpolator`** and **`pchip_interpolate`**,
+  a shape-preserving piecewise cubic Hermite interpolator (Fritsch-Carlson
+  slopes): unlike `CubicSpline`, it never overshoots or introduces a local
+  extremum between two points that isn't already in the data. Also
+  reachable via `interp[type="pchip"]`.
 - **`scijo.optimize.least_squares`**, nonlinear least squares via
   Levenberg-Marquardt (`method="lm"`, the only method currently
   supported), with a finite-difference Jacobian. Bounds, analytic

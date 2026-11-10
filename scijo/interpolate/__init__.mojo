@@ -11,15 +11,17 @@ array-based evaluation.
 Available Functions
 -------------------
 - `interp1d`              — Create a callable linear interpolator or interpolate directly.
-- `interp`                — Functional interpolation interface (linear, cubic, akima).
+- `interp`                — Functional interpolation interface (linear, cubic, akima, pchip).
 - `LinearInterpolator`    — A reusable callable linear interpolation object.
 - `CubicSpline`           — A callable natural cubic spline interpolator.
 - `Akima1DInterpolator`   — A callable Akima piecewise cubic interpolator.
+- `PchipInterpolator`     — A callable, shape-preserving piecewise cubic Hermite interpolator.
+- `pchip_interpolate`     — Functional PCHIP interface; interpolates directly without a reusable object.
 
 Examples
 --------
     ```mojo
-    from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator
+    from scijo.interpolate import interp1d, CubicSpline, Akima1DInterpolator, PchipInterpolator
 
     var x = nm.arange[f64](0.0, 1.0, 0.5)
     var y = x * x
@@ -31,6 +33,9 @@ Examples
 
     var ak = Akima1DInterpolator(x, y)
     var yq_ak = ak(Scalar[f64](0.25))
+
+    var pc = PchipInterpolator(x, y)
+    var yq_pc = pc(Scalar[f64](0.25))
     ```
 """
 
@@ -43,4 +48,6 @@ from .interpolate import (
     interp,
     interp1d,
     LinearInterpolator,
+    pchip_interpolate,
+    PchipInterpolator,
 )
