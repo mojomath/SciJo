@@ -41,6 +41,17 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.linalg.eig`** and **`scijo.linalg.eigvals`**, the general
+  (non-symmetric) eigenvalue problem:
+  - A shifted-QR iteration (Wilkinson shift from the trailing 2x2
+    submatrix) carried out entirely in complex arithmetic, so a complex
+    eigenvalue converges to its own 1x1 diagonal entry the same way a
+    real one does - no separate real/complex case split.
+  - `eig`'s eigenvectors come from shifted inverse iteration against the
+    converged eigenvalues, on the original matrix cast to complex.
+  - Deliberately not implemented: Hessenberg reduction as a pre-step (an
+    `O(n^3)` -> `O(n^2)` per-iteration speedup, not a correctness gap;
+    NuMojo's own real-only `eig` also skips it).
 
 ## [v0.4.0] - 2026-10-26
 ### Added

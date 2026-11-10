@@ -15,6 +15,8 @@ Available Functions
 - `cholesky`           — Cholesky decomposition of a positive-definite matrix.
 - `eigh`               — Eigenvalues/eigenvectors of a symmetric matrix.
 - `eigvalsh`           — Eigenvalues of a symmetric matrix.
+- `eig`                — Eigenvalues/eigenvectors of a general (non-symmetric) matrix.
+- `eigvals`            — Eigenvalues of a general (non-symmetric) matrix.
 - `svd`                — Singular value decomposition, `A == U @ diag(s) @ Vt`.
 - `svdvals`            — Singular values only.
 - `matrix_rank`        — Estimated rank, via SVD.
@@ -42,12 +44,6 @@ Examples
     var x = solve(A, b)
     print(norm(x))
     ```
-
-Not Yet Implemented
---------------------
-The general (non-symmetric) eigenvalue problem, where eigenvalues may be
-complex, is not yet available and is tracked as future work.
-`eigh`/`eigvalsh` cover the symmetric case.
 """
 
 # ===----------------------------------------------------------------------=== #
@@ -76,7 +72,9 @@ from .decompositions import (
     qr,
 )
 from .eigen import (
+    eig,
     eigh,
+    eigvals,
     eigvalsh,
 )
 from .norms import norm
