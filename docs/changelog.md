@@ -41,6 +41,18 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `OdeResult` (`scijo.integrate.ode_utility`), the returned result type.
   - Other methods (RK23, DOP853, Radau, BDF, LSODA), event functions, and
     a standalone queryable dense-output object are not yet implemented.
+- **`scijo.optimize.minimize`**: `method="Powell"` and `method="L-BFGS-B"`.
+  - `"Powell"`: derivative-free sequential line minimization along a
+    rotating set of conjugate directions, with the classic acceleration
+    test (Press et al., *Numerical Recipes*) deciding whether to replace
+    a direction.
+  - `"L-BFGS-B"`: a projected-gradient variant of limited-memory BFGS
+    (two-loop recursion, projected Armijo line search, convergence on the
+    projected-gradient norm) - not the full active-set algorithm of Byrd,
+    Lu, Nocedal & Zhu (1995). Gradient estimated via finite differences,
+    as for `"BFGS"`/`"CG"`.
+  - Both accept a new `bounds=(lo, hi)` argument for simple box
+    constraints; every other method ignores it.
 - **`scijo.linalg.eig`** and **`scijo.linalg.eigvals`**, the general
   (non-symmetric) eigenvalue problem:
   - A shifted-QR iteration (Wilkinson shift from the trailing 2x2

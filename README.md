@@ -98,6 +98,9 @@ minimization:
 - **`minimize`**: Multi-dimensional minimization (`f: R^n -> R`)
   - `method="Nelder-Mead"` (default): derivative-free simplex method
   - `method="BFGS"` / `method="CG"`: gradient-based, with the gradient estimated via finite differences
+  - `method="Powell"`: derivative-free, sequential line minimization along a rotating set of conjugate directions
+  - `method="L-BFGS-B"`: limited-memory BFGS (projected-gradient variant), gradient via finite differences
+  - `method="Powell"` and `method="L-BFGS-B"` accept simple box constraints via `bounds=(lo, hi)`
 - **`least_squares`**: Nonlinear least squares (`f: R^n -> R^m`, minimizes `0.5 * sum(f(x)**2)`)
   - `method="lm"` (default and only method): Levenberg-Marquardt with a finite-difference Jacobian
 - **`curve_fit`**: Fits a parametric model to `(xdata, ydata)` data, via `least_squares`
